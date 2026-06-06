@@ -1980,9 +1980,57 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-</head>
+  </head>
 <body>
+  <div id="cortex-boot-loader" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:99998;background:#0a0a0a;font-family:'SF Pro Display','Inter',system-ui,sans-serif;transition:opacity 0.8s;overflow:hidden;">
+  <!-- Animated background -->
+  <div style="position:absolute;inset:0;opacity:0.2;"><div style="position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,0.3),transparent 70%);top:-200px;left:-200px;animation:load-float-a 7s ease-in-out infinite;"></div><div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(168,85,247,0.25),transparent 70%);bottom:-150px;right:-150px;animation:load-float-a 9s ease-in-out infinite reverse;"></div><div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,0.15),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation:load-float-a 11s ease-in-out infinite 2s;"></div></div>
+  <!-- Center card -->
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;z-index:1;">
+    <div style="position:relative;width:80px;height:80px;margin-bottom:12px;">
+      <div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(99,102,241,0.3);animation:load-ring 3s ease-in-out infinite;"></div>
+      <div style="position:absolute;inset:-6px;border-radius:50%;border:1px solid rgba(168,85,247,0.15);animation:load-ring 4s ease-in-out infinite 1s;"></div>
+      <div style="position:absolute;inset:-12px;border-radius:50%;border:1px solid rgba(16,185,129,0.1);animation:load-ring 5s ease-in-out infinite 2s;"></div>
+      <div style="position:absolute;inset:6px;border-radius:50%;background:linear-gradient(145deg,rgba(99,102,241,0.12),rgba(168,85,247,0.08));display:flex;align-items:center;justify-content:center;"><svg width="40" height="40" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#6366f1" stroke-width="1.5" opacity="0.3"/><path d="M24 8C24 8 30 18 30 24C30 30 24 40 24 40" stroke="url(#lg)" stroke-width="2" stroke-linecap="round"><animate attributeName="stroke-dasharray" values="0 100;20 100;0 100" dur="3s" repeatCount="indefinite"/></path><path d="M24 8C24 8 18 18 18 24C18 30 24 40 24 40" stroke="url(#lg)" stroke-width="2" stroke-linecap="round" opacity="0.5"><animate attributeName="stroke-dasharray" values="0 100;20 100;0 100" dur="3s" repeatCount="indefinite" begin="1.5s"/></path><circle cx="24" cy="24" r="4" fill="#a855f7"><animate attributeName="r" values="3;5;3" dur="2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.4;0.8;0.4" dur="2s" repeatCount="indefinite"/></circle><defs><linearGradient id="lg" x1="8" y1="8" x2="40" y2="40"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#a855f7"/><stop offset="100%" stop-color="#10b981"/></linearGradient></defs></svg></div>
+    </div>
+    <div style="font-size:24px;font-weight:900;letter-spacing:-0.5px;background:linear-gradient(135deg,#6366f1,#a855f7,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">CORTEX</div>
+    <div style="font-size:10px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:rgba(255,255,255,0.25);margin-top:2px;margin-bottom:24px;">Medical Education</div>
+    <div style="width:180px;height:3px;border-radius:4px;background:rgba(255,255,255,0.06);overflow:hidden;"><div style="height:100%;width:35%;border-radius:4px;background:linear-gradient(90deg,#6366f1,#a855f7,#10b981);animation:load-bar 1.8s ease-in-out infinite;"></div></div>
+    <div id="cortex-loader-status" style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:10px;min-height:16px;text-align:center;">Menyiapkan studio...</div>
+  </div>
+  <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);font-size:8px;color:rgba(255,255,255,0.1);letter-spacing:1px;z-index:1;">CORTEX-SHELL v2.0.0</div>
+  <style>
+    @keyframes load-float-a{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(25px,-25px) scale(1.05)}66%{transform:translate(-15px,15px) scale(0.95)}}
+    @keyframes load-ring{0%,100%{transform:scale(1);opacity:0.3}50%{transform:scale(1.12);opacity:0.6}}
+    @keyframes load-bar{0%{transform:translateX(-100%)}100%{transform:translateX(380%)}}
+  </style>
+  </div>
   <div id="root"></div>
+  <script>
+    // Boot loader - fun animated loading screen
+    (function() {
+      var loader = document.getElementById('cortex-boot-loader');
+      var status = document.getElementById('cortex-loader-status');
+      if (!loader) return;
+      var msgs = [
+        'Menyiapkan studio...','Menyalakan sinaps...','Memanaskan neural engine...',
+        'Mengaktifkan liquid glass...','Memuat materi pembelajaran...',
+        'Mengkalibrasi 6 tema...','Menyusun 21 surface...',
+        'Menata ulang page...','Hampir selesai...','Siap belajar!'
+      ];
+      var i = 0;
+      var iv = setInterval(function() {
+        i = (i + 1) % msgs.length;
+        if (status) status.textContent = msgs[i];
+      }, 500);
+      setTimeout(function() {
+        clearInterval(iv);
+        loader.style.opacity = '0';
+        setTimeout(function() { loader.style.display = 'none'; }, 800);
+      }, 4500);
+    })();
+  </script>
+
 
   <script type="text/babel">
 /* ios-frame.jsx */
@@ -4769,16 +4817,6 @@ function CortexPagesHubFab({ onNavigate, onSurfaceChange, mode, surfaceId, theme
   const compact = mode !== 'desktop';
   const allowFabDrag = mode === 'desktop';
   const [fabOpen, setFabOpen] = React.useState(false);
-  
-  // Progress summary data (from contentIndex for Page 19 preview)
-  const cortexProgressStats = React.useMemo(() => {
-    const domains = Array.isArray(contentIndex && contentIndex.lectureDomains) ? contentIndex.lectureDomains : [];
-    const examSets = Array.isArray(contentIndex && contentIndex.examSets) ? contentIndex.examSets : [];
-    const lectureCount = domains.reduce((s, d) => s + Number(d.moduleCount || (Array.isArray(d.modules) ? d.modules.length : 0)), 0);
-    const questionCount = examSets.reduce((s, e) => s + Number(e.questionCount || 0), 0);
-    const visuals = Array.isArray(visualManifest && visualManifest.assets) ? visualManifest.assets.length : 0;
-    return { lectureCount, examSetCount: examSets.length, questionCount, visualCount: visuals, domainCount: domains.length, loaded: contentIndexStatus === 'ready' };
-  }, [contentIndex, contentIndexStatus, visualManifest]);
   const [fabPos, setFabPos] = React.useState(null);
   const [fabGroup, setFabGroup] = React.useState('Search');
   const [fabActiveHub, setFabActiveHub] = React.useState(null);
@@ -5172,7 +5210,7 @@ function CortexPagesHubFab({ onNavigate, onSurfaceChange, mode, surfaceId, theme
                       onClick:()=>{
                         setFabOpen(false);
                         setFabActiveHub(null);
-                        onSelectLecture && onSelectLecture(module.id);
+                        onSelectLecture && onSelectLecture(module.id); onNavigate && onNavigate(9); onNavigate && onNavigate(9);
                       },
                       style:{
                         width:'100%',
@@ -10656,7 +10694,6 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
   const compact = mode !== 'desktop';
   const allowFabDrag = mode === 'desktop';
   const [fabOpen, setFabOpen] = React.useState(false);
-  
   // Progress summary data (from contentIndex for Page 19 preview)
   const cortexProgressStats = React.useMemo(() => {
     const domains = Array.isArray(contentIndex && contentIndex.lectureDomains) ? contentIndex.lectureDomains : [];
@@ -10666,7 +10703,7 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
     const visuals = Array.isArray(visualManifest && visualManifest.assets) ? visualManifest.assets.length : 0;
     return { lectureCount, examSetCount: examSets.length, questionCount, visualCount: visuals, domainCount: domains.length, loaded: contentIndexStatus === 'ready' };
   }, [contentIndex, contentIndexStatus, visualManifest]);
-  const [fabPos, setFabPos] = React.useState(null);
+    const [fabPos, setFabPos] = React.useState(null);
   const [fabGroup, setFabGroup] = React.useState('Search');
   const [fabActiveHub, setFabActiveHub] = React.useState(null);
   const fabDragRef = React.useRef({ active:false, moved:false, sx:0, sy:0, ox:0, oy:0 });
@@ -11083,89 +11120,131 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
         ),
       ),React.createElement('div', { style:{ display:'grid', gap:12 } },
         React.createElement(B1Card, { className:'cortex-motion-card', style:{
-          background:theme.colors.gradientCard || 'rgba(255,255,255,0.04)',
+          background:'rgba(10,10,26,0.44)',
           borderColor:DL.glassBorder,
-          marginBottom:12,
         }},
-          React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:12 }},
-            React.createElement('div', null,
-              React.createElement('div', { style:{ color:DL.sub, fontSize:11, fontWeight:900, letterSpacing:1.2 }}, 'QUICK STUDY'),
-              React.createElement('div', { style:{ color:DL.text, fontSize:24, fontWeight:950, lineHeight:1.08, marginTop:4 }}, !cortexProgressStats.loaded ? 'Dashboard' : 'Overview'),
-              React.createElement('div', { style:{ color:DL.sub, fontSize:12, lineHeight:1.55, marginTop:6, maxWidth:560 }},
-                !cortexProgressStats.loaded ? 'Generate content to start learning.' : 'Your content is ready. Tap any module or quiz to begin.')
-            ),
-            cortexProgressStats.loaded && React.createElement(CortexAtomPageButton, {
-              page:19,
-              title:'Full Stats',
-              sub:'Progress dashboard',
-              theme:currentTheme,
-              compact:true,
-              active:true,
-              onClick:function(){ onNavigate && onNavigate(19); },
-              style:{ minWidth:120 }
-            })
-          ),
-          cortexProgressStats.loaded
-            ? React.createElement('div', { className:'stagger-children', style:{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8, marginBottom:12 }},
-              [
-                { label:'Modules completed', value: '0/' + String(cortexProgressStats.lectureCount), color:currentTheme.colors.accent1 || DL.teal },
-                { label:'Quizzes taken', value: '0/' + String(cortexProgressStats.examSetCount), color:currentTheme.colors.accent2 || DL.green },
-                { label:'Questions answered', value: '0/' + String(cortexProgressStats.questionCount), color:currentTheme.colors.accent3 || DL.accent },
-                { label:'Visual assets', value: String(cortexProgressStats.visualCount), color:DL.gold },
-              ].map(function(item) {
-                return React.createElement('div', { key:item.label, style:{
-                  padding:'10px 8px', borderRadius:14,
-                  background:'rgba(255,255,255,0.04)',
-                  border:'1px solid rgba(255,255,255,0.06)',
-                  textAlign:'center',
-                }},
-                  React.createElement('div', { style:{ fontSize:16, fontWeight:900, color:item.color, lineHeight:1.1 }}, String(item.value)),
-                  React.createElement('div', { style:{ fontSize:8, color:DL.sub, marginTop:3, fontWeight:600, letterSpacing:0.3, textTransform:'uppercase' }}, item.label),
-                );
-              })
-            )
-            : React.createElement('div', { style:{ padding:'14px 12px', borderRadius:14, background:'rgba(255,255,255,0.03)', textAlign:'center', border:'1px dashed rgba(255,255,255,0.08)' }},
-                React.createElement('div', { style:{ fontSize:24, marginBottom:6 }}, '📚'),
-                React.createElement('div', { style:{ fontSize:12, color:DL.sub, lineHeight:1.5 }}, 'Belum ada konten. Generate JSON materi, soal, dan visual untuk mulai.'),
-              ),
-          cortexProgressStats.loaded && React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }},
+          React.createElement('div', { style:{ color:DL.text, fontSize:13, fontWeight:900, marginBottom:8 }}, 'Quick Actions'),
+          React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }},
             [
-              { label:'Library', sub:'Browse modules', icon:'📖', page:0 },
-              { label:'Practice', sub:'Quiz yourself', icon:'✏️', page:17 },
-              { label:'Flashcards', sub:'Quick recall', icon:'📏', page:18 },
-              { label:'Visuals', sub:'Image library', icon:'🖼️', page:12 },
+              { label:'Library', icon:'\U0001f4da', page:0 },
+              { label:'Quiz', icon:'\u270f\ufe0f', page:17 },
+              { label:'Flashcards', icon:'\U0001f4cf', page:18 },
+              { label:'Visuals', icon:'\U0001f5bc\ufe0f', page:12 },
+              { label:'AI Workspace', icon:'\U0001f916', page:20 },
+              { label:'Settings', icon:'\u2699\ufe0f', page:7 },
             ].map(function(btn) {
               return React.createElement('button', {
                 key:btn.label, type:'button',
                 onClick:function(){ onNavigate && onNavigate(btn.page); },
                 className:'cortex-motion-press',
                 style:{
-                  padding:'10px 8px', borderRadius:16, cursor:'pointer',
-                  background:'rgba(255,255,255,0.04)',
-                  border:'1px solid ' + DL.glassBorder,
-                  color:DL.text, textAlign:'center',
-                  transition:'all 0.2s ease',
+                  padding:'8px 6px', borderRadius:12, cursor:'pointer', textAlign:'center',
+                  background:'rgba(255,255,255,0.04)', border:'1px solid ' + DL.glassBorder,
+                  color:DL.text, transition:'all 0.15s ease',
                 }
               },
-                React.createElement('div', { style:{ fontSize:16, marginBottom:2 }}, btn.icon),
-                React.createElement('div', { style:{ fontSize:11, fontWeight:900 }}, btn.label),
-                React.createElement('div', { style:{ fontSize:8, color:DL.sub, marginTop:1 }}, btn.sub),
+                React.createElement('div', { style:{ fontSize:16, marginBottom:1 }}, btn.icon),
+                React.createElement('div', { style:{ fontSize:9, fontWeight:700 }}, btn.label),
               );
             })
-          )
+          ),
         ),
-        React.createElement(B1Card, { className:'cortex-motion-card', style:{
-          background:'rgba(10,10,26,0.44)',
-          borderColor:DL.glassBorder,
-        }},
-          React.createElement('div', { style:{ color:DL.text, fontSize:13, fontWeight:900, marginBottom:8 }}, 'Quick Actions'),
-          React.createElement('div', { style:{ color:DL.sub, fontSize:11, lineHeight:1.65 }},
-            cortexProgressStats.loaded
-              ? 'Pilih modul dari Content Browser (panel kiri) untuk mulai membaca, atau klik tombol Practice/Flashcards di atas.'
-              : 'Generate konten untuk mengaktifkan semua fitur belajar. Shell siap digunakan kapan saja.'),
-        ),
+
+    // macOS-style Bottom Dock
+    React.createElement('div', { style:{ marginBottom:16, padding:'4px 0' }},
+      React.createElement('div', { className:'cortex-dock-container', style:{
+        display:'flex', alignItems:'end', justifyContent:'center', gap:2,
+        padding:'4px 8px 6px', borderRadius:18,
+        background:'rgba(20,20,40,0.5)',
+        border:'1px solid rgba(255,255,255,0.08)',
+        backdropFilter:'blur(24px) saturate(180%)',
+        WebkitBackdropFilter:'blur(24px) saturate(180%)',
+        boxShadow:'0 4px 20px rgba(0,0,0,0.4)',
+        minHeight: compact ? 56 : 64,
+      }},
+        (function(){
+          var items = [
+            { id:'learn', label:'Belajar', icon:'\U0001f4da', color:'#10b981', pages:[3,9,10,11] },
+            { id:'practice', label:'Latihan', icon:'\u270f\ufe0f', color:'#6366f1', pages:[17,18,15,16] },
+            { id:'reference', label:'Referensi', icon:'\U0001f4cb', color:'#a855f7', pages:[12,13,14,22] },
+            { id:'tools', label:'Alat', icon:'\U0001f527', color:'#f59e0b', pages:[6,7,20,21] },
+            { id:'insight', label:'Progres', icon:'\U0001f4ca', color:'#06b6d4', pages:[2,19,4,3] },
+            { id:'support', label:'Bantuan', icon:'\u2753', color:'#ef4444', pages:[8,23] },
+          ];
+          var [dockHover, setDockHover] = React.useState(null);
+          var [dockOpen, setDockOpen] = React.useState(null);
+          
+          return React.createElement('div', { style:{ display:'flex', gap: compact ? 1 : 2, width:'100%', justifyContent:'center' }},
+            items.map(function(item) {
+              var isHover = dockHover === item.id;
+              var isOpen = dockOpen === item.id;
+              var s = isOpen ? 1.25 : (isHover ? 1.12 : 1);
+              
+              return React.createElement('div', {
+                key:item.id, style:{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center' },
+                onMouseEnter:function(){ setDockHover(item.id); },
+                onMouseLeave:function(){ setDockHover(null); },
+              },
+                // Sub-items popup (shown when open)
+                isOpen && React.createElement('div', { style:{
+                  position:'absolute', bottom:'calc(100% + 6px)', left:'50%', transform:'translateX(-50%)',
+                  display:'flex', gap:3, padding:'5px 7px',
+                  background:'rgba(12,12,28,0.92)', borderRadius:12,
+                  border:'1px solid rgba(255,255,255,0.1)',
+                  backdropFilter:'blur(12px)',
+                  whiteSpace:'nowrap', zIndex:10,
+                }},
+                  item.pages.map(function(pid) {
+                    var surf = CORTEX_MAIN_SURFACES.find(function(x){ return x.id === pid; });
+                    if (!surf) return null;
+                    return React.createElement('button', {
+                      key:pid, type:'button',
+                      onClick:function(){
+                        if (typeof onSurfaceChange === 'function') onSurfaceChange(pid);
+                        if (typeof onNavigate === 'function') onNavigate(pid);
+                        setDockOpen(null);
+                      },
+                      className:'cortex-motion-press',
+                      style:{
+                        padding:'4px 7px', borderRadius:8, cursor:'pointer',
+                        background:'rgba(255,255,255,0.05)', border:'none',
+                        color:DL.text, fontSize:10, fontWeight:600, lineHeight:1.15,
+                      }
+                    }, String(surf.label).replace(/ .*/,''));
+                  })
+                ),
+                // Icon button
+                React.createElement('button', {
+                  type:'button',
+                  onClick:function(){ setDockOpen(isOpen ? null : item.id); },
+                  className:'cortex-dock-item cortex-motion-press',
+                  'data-active':String(isOpen),
+                  style:{
+                    width: compact ? 44 : 48, height: compact ? 44 : 48,
+                    borderRadius:14, cursor:'pointer', border:'none',
+                    background:isOpen ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
+                    color:DL.text, fontSize: compact ? 18 : 20,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    transform:'scale(' + String(s) + ')',
+                    transition:'transform 0.35s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease',
+                    boxShadow:isOpen ? '0 0 20px ' + item.color + '44' : 'none',
+                    position:'relative', zIndex:2,
+                  }
+                }, item.icon),
+                React.createElement('div', { style:{
+                  fontSize:8, fontWeight:700,
+                  color:isHover ? DL.text : 'rgba(255,255,255,0.3)',
+                  marginTop:3, textAlign:'center', lineHeight:1.1,
+                  transition:'color 0.2s ease', whiteSpace:'nowrap',
+                  maxWidth:48, overflow:'hidden', textOverflow:'ellipsis',
+                }}, item.label),
+              );
+            })
+          );
+        })(),
       ),
-!showGlobalFab && React.createElement('div', { style:{
+    ),
+showGlobalFab && React.createElement('div', { style:{
       position:'fixed',
       zIndex:60,
       ...fabButtonPos,
@@ -12334,10 +12413,12 @@ function CortexLibraryShell() {
       visualAssets,
       selectedVisualId,
       onSelectVisual:setSelectedVisualId,
+      onSelectLecture: (id) => { setSelectedLectureId(id); setSelectedExamSetId(''); setSelectedExamSet(null); },
+      onSelectExamSet: (id) => { setSelectedExamSetId(id); setSelectedLectureId(''); setSelectedLecture(null); },
       moduleLoading,
       examLoading,
     };
-    if (isContentViewing) return renderContentPanel();
+    // [REMOVED] isContentViewing override
     if (page === 0) return React.createElement(CortexErrorBoundary, { key:`eb_${page}` },
       React.createElement(PageBatch0Kernel, { ...sharedProps, mode, surfaceId, onSurfaceChange:setSurfaceId, showGlobalFab:true })
     );
@@ -12705,7 +12786,7 @@ Object.assign(window, { CORTEX_LIBRARY_PAGES, PageBatch0Kernel, CortexLibraryShe
 
   <script src="./ai_workspace.local.js?v=20260604c" onerror="window.__CORTEX_AI_LOCAL_CONFIG__ = window.__CORTEX_AI_LOCAL_CONFIG__ || {};"></script>
 
-  <script type="text/babel">
+      <script type="text/babel">
     ReactDOM.createRoot(document.getElementById('root')).render(
       React.createElement(CortexErrorBoundary, null,
         React.createElement(CortexLibraryShell)

@@ -1,0 +1,37 @@
+{
+  "modules": [
+    {
+      "module_id": "shell_demo_01",
+      "title": "Getting Started with CORTEX-SHELL",
+      "overview": "This is a template demo module. Replace with your own content by generating JSON materials.",
+      "learning_goals": [
+        "Understand the CORTEX-SHELL template structure",
+        "Learn how to add your own content"
+      ],
+      "expanded_sections": [
+        {
+          "section_id": "s01",
+          "heading": "Welcome",
+          "subheading": "CORTEX-SHELL Template",
+          "content_blocks": [
+            {
+              "type": "paragraph",
+              "text": "Congratulations! Your CORTEX-SHELL is working. This is a demo module to show you how the content system works. Replace this with your own lecture materials by generating JSON modules using the CORTEX Pipeline."
+            }
+          ]
+        }
+      ],
+      "key_points": [
+        "CORTEX-SHELL is a template system",
+        "Content is stored as JSON files",
+        "Generate content with the CORTEX Pipeline"
+      ],
+      "glossary": [
+        {
+          "term": "CORTEX-SHELL",
+          "meaning": "A clean, reproducible shell template for the CORTEX medical education platform"
+        }
+      ]
+    }
+  ]
+}

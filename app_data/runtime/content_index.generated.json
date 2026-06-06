@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-06-07",
+  "lectureDomains": [
+    {
+      "id": "6e",
+      "title": "Neurology / Batch 1 6E.",
+      "summary": "Sample domain for CORTEX-SHELL template.",
+      "moduleCount": 2,
+      "modules": [
+        {
+          "id": "shell_demo_01",
+          "title": "Sample Module: Getting Started",
+          "sourceFile": "app_data/demo/module_01.json",
+          "sourceDocument": "template_readme.txt",
+          "topicTags": [
+            "Demo",
+            "Template"
+          ],
+          "status": "Draft_extracted",
+          "domainId": "6e",
+          "order": 1
+        }
+      ]
+    }
+  ],
+  "lectureModuleCount": 1,
+  "examSets": [],
+  "examSetCount": 0,
+  "examQuestionCount": 0
+}
