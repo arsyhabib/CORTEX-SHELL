@@ -1,0 +1,7 @@
+.DS_Store
+.env.local
+.env.*.local
+ai_workspace.local.js
+ai-proxy/.env
+*.backup.*
+node_modules/
