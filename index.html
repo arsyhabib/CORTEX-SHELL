@@ -10129,6 +10129,8 @@ function PageAIWorkspace({ onNavigate }) {
   const [ttsText, setTtsText] = React.useState(function(){return lsGet('cx_tts_text','');});
   const [ttsHistory, setTtsHistory] = React.useState(function(){return lsGet('cx_tts_history',[]);});
   const [ttsBusy, setTtsBusy] = React.useState(false);
+  const [msgActions, setMsgActions] = React.useState(null);
+  const [editState, setEditState] = React.useState(null);
   const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'Belum ada proxy yang dicek.', health:null });
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
   const chatBottomRef = React.useRef(null);
@@ -10237,11 +10239,22 @@ function PageAIWorkspace({ onNavigate }) {
     const id=extractInlineData(payload,'image');if(id)return{src:`data:${id.mimeType};base64,${id.data}`};
     return null;
   }
+  const TEXT_EXTS=['.txt','.md','.markdown','.json','.jsonl','.csv','.xml','.html','.htm','.css','.js','.ts','.jsx','.tsx','.py','.java','.cpp','.c','.h','.go','.rs','.php','.rb','.swift','.kt','.sh','.yaml','.yml','.toml','.ini','.sql'];
   function handleFileSelect(e){
     const file=e.target.files&&e.target.files[0];if(!file)return;
+    const ext='.'+file.name.split('.').pop().toLowerCase();
+    const isImg=file.type.startsWith('image/');
+    const isVid=file.type.startsWith('video/');
+    const isTextFile=file.type.startsWith('text/')||TEXT_EXTS.includes(ext);
     const reader=new FileReader();
-    reader.onload=function(ev){const dataUrl=ev.target.result;setUploadedFile({name:file.name,dataUrl,base64:dataUrl.split(',')[1],mimeType:file.type,type:file.type.startsWith('video')?'video':'image'});};
-    reader.readAsDataURL(file);e.target.value='';
+    if(isTextFile){
+      reader.onload=function(ev){setUploadedFile({name:file.name,text:ev.target.result,mimeType:file.type||'text/plain',type:'document',size:file.size,ext});}
+      reader.readAsText(file);
+    } else {
+      reader.onload=function(ev){const dataUrl=ev.target.result;setUploadedFile({name:file.name,dataUrl,base64:dataUrl.split(',')[1],mimeType:file.type,type:isImg?'image':isVid?'video':'document',size:file.size,ext});}
+      reader.readAsDataURL(file);
+    }
+    e.target.value='';
   }
   function downloadMedia(src,filename){const a=document.createElement('a');a.href=src;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);}
 
@@ -10264,12 +10277,20 @@ function PageAIWorkspace({ onNavigate }) {
   async function runChat(){
     const prompt=String(chatPrompt||'').trim();if(!prompt&&!uploadedFile)return;
     const attached=uploadedFile;
-    const userMsg={role:'user',text:prompt||'(lampiran media)',mediaUrl:attached?attached.dataUrl:null,mediaType:attached?attached.type:null};
+    const userMsg={role:'user',text:prompt||'(lampiran media)',
+      mediaUrl:attached&&attached.dataUrl?attached.dataUrl:null,
+      mediaType:attached?attached.type:null,
+      fileName:attached?attached.name:null,
+    };
     setChatFeed(prev=>[...prev,userMsg].slice(-MAX_HISTORY));
-    setChatPrompt('');setUploadedFile(null);setComposerBusy(chatModel);
+    setChatPrompt('');setUploadedFile(null);
+    runChatCore(prompt,chatFeed.slice(-MAX_HISTORY).concat([userMsg]),attached);
+  }
+  async function runChatCore(promptText,historyArr,attached){
+    setComposerBusy(chatModel);
     try{
       let text='';
-      const history=chatFeed.slice(-MAX_HISTORY);
+      const history=historyArr;
       function toAlternating(hist,userMsg,aiRole){const raw=[...hist.map(m=>({role:m.role==='assistant'?aiRole:'user',content:String(m.text||'')})),{role:'user',content:userMsg}];const out=[];for(const m of raw){if(out.length&&out[out.length-1].role===m.role)continue;out.push(m);}while(out.length&&out[0].role!=='user')out.shift();return out;}
       // Build Gemini contents[], injecting image inline_data into last user message
       function toGeminiContents(hist,userMsg,file){
@@ -10297,7 +10318,7 @@ function PageAIWorkspace({ onNavigate }) {
           return{role:m.role,content:m.content};
         });
       }
-      const pText=prompt||'(lampiran media)';
+      const pText=String(promptText||'').trim()||'(lampiran media)';
       const sysPrompts={
         gemini:'Kamu adalah Gemini, AI buatan Google, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
         openai:'Kamu adalah GPT-4.1 Nano, AI buatan OpenAI, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
@@ -10307,10 +10328,15 @@ function PageAIWorkspace({ onNavigate }) {
       };
       const sysTxt=sysPrompts[chatModel]||'';
       function withSysMsg(msgs,aiRole){return sysTxt?[{role:'user',content:sysTxt},{role:aiRole,content:'Siap, saya mengerti.'}, ...msgs]:msgs;}
+      // For text-extracted docs: prefix into message
+      const docPrefix=attached&&attached.type==='document'&&attached.text?`[File: ${attached.name}]\n\`\`\`\n${attached.text.slice(0,12000)}\n\`\`\`\n\n`:'';
+      const finalPrompt=docPrefix+pText;
+      // For binary docs (PDF/DOCX) with non-Gemini: warn
+      const hasBinaryDoc=attached&&attached.type==='document'&&!attached.text;
       if(chatModel==='gemini'){
         const gModel=providerModel('gemini','chat');
-        const gemContents=toGeminiContents(history,pText,attached);
-        const proxyMsgs=toMsgsWithImage(history,pText,'model',attached);
+        const gemContents=toGeminiContents(history,finalPrompt,attached&&attached.base64?attached:null);
+        const proxyMsgs=toMsgsWithImage(history,finalPrompt,'model',attached&&attached.base64?attached:null);
         const p=await cortexRequest({
           provider:'gemini',route:'/providers/gemini/chat',
           body:{model:gModel,messages:proxyMsgs,generationConfig:{temperature:0.7}},
@@ -10320,18 +10346,18 @@ function PageAIWorkspace({ onNavigate }) {
         text=extractText(p)||'Gemini tidak mengembalikan respons.';
       }
       else if(chatModel==='openai'){
-        const oMsgs=toMsgsWithImage(history,pText,'assistant',attached);
+        const oMsgs=toMsgsWithImage(history,finalPrompt,'assistant',attached&&!hasBinaryDoc?attached:null);
         const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...oMsgs]:oMsgs,temperature:0.7},directRoute:openaiChatUrl()});
         text=extractText(p)||'OpenAI tidak mengembalikan respons.';
       }
       else if(chatModel==='deepseek'){
-        const dMsgs=toAlternating(history,pText,'assistant');
+        const dMsgs=toAlternating(history,finalPrompt,'assistant');
         const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...dMsgs]:dMsgs,temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});
         text=extractText(p)||'DeepSeek tidak mengembalikan respons.';
       }
       else{
         const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');
-        const fMsgs=toMsgsWithImage(history,pText,'assistant',attached);
+        const fMsgs=toMsgsWithImage(history,finalPrompt,'assistant',attached&&!hasBinaryDoc?attached:null);
         const fSys=sysPrompts[chatModel]||'';
         const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fSys?[{role:'system',content:fSys},...fMsgs]:fMsgs,temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});
         text=extractText(p)||'Featherless tidak mengembalikan respons.';
@@ -10341,6 +10367,31 @@ function PageAIWorkspace({ onNavigate }) {
     finally{setComposerBusy('');}
   }
 
+  function regenerateMsg(idx){
+    // Find preceding user msg
+    let userIdx=idx;
+    while(userIdx>=0&&chatFeed[userIdx].role!=='user')userIdx--;
+    if(userIdx<0)return;
+    const uMsg=chatFeed[userIdx];
+    const newFeed=chatFeed.slice(0,userIdx+1).filter((_,i)=>i<=userIdx&&i!==idx);
+    const histBefore=chatFeed.slice(0,userIdx);
+    const newFeedFinal=[...histBefore];
+    setChatFeed(newFeedFinal);
+    const promptText=uMsg.text==='(lampiran media)'?'':uMsg.text;
+    const fakeUserMsg={...uMsg};
+    setChatFeed(prev=>[...prev,fakeUserMsg].slice(-MAX_HISTORY));
+    runChatCore(promptText,[...histBefore,fakeUserMsg],null);
+    setMsgActions(null);
+  }
+  function submitEdit(idx,newText){
+    if(!newText.trim())return;
+    const histBefore=chatFeed.slice(0,idx);
+    const editedMsg={...chatFeed[idx],text:newText};
+    const newFeed=[...histBefore,editedMsg];
+    setChatFeed(newFeed);
+    setEditState(null);setMsgActions(null);
+    runChatCore(newText,[...histBefore,editedMsg],null);
+  }
   async function runImageGen(){
     const prompt=String(imagePrompt||'').trim();if(!prompt)return;
     setImageBusy(true);
@@ -10662,6 +10713,9 @@ function PageAIWorkspace({ onNavigate }) {
           const mDef=chatModels.find(m=>m.id===msg.model);
           const bColor=mDef?mDef.color:DL.accent;
           const isErr=msg.model==='error';
+          const showActions=msgActions===i;
+          const isEditing=editState&&editState.idx===i;
+          const docTypes={'document':'📄','image':'🖼','video':'🎬','audio':'🎵'};
           return React.createElement('div',{
             key:i,
             style:{display:'flex',flexDirection:'column',alignItems:isUser?'flex-end':'flex-start',animation:'cortex-ai-msg-in 0.48s cubic-bezier(0.16,1,0.3,1) both'},
@@ -10676,8 +10730,9 @@ function PageAIWorkspace({ onNavigate }) {
             ),
             // Bubble
             React.createElement('div',{
+              onClick:function(){setMsgActions(showActions?null:i);if(isEditing)return;},
               style:{
-                maxWidth:'87%',padding:'12px 15px',lineHeight:1.65,fontSize:13,whiteSpace:'pre-wrap',
+                maxWidth:'87%',padding:'12px 15px',lineHeight:1.65,fontSize:13,
                 borderRadius:isUser?'20px 20px 6px 20px':'6px 20px 20px 20px',
                 background:isUser?DL.gradA:isErr?'rgba(239,68,68,0.1)':'rgba(255,255,255,0.065)',
                 border:isUser?'none':`1.5px solid ${isErr?DL.red+'55':bColor+'22'}`,
@@ -10685,8 +10740,10 @@ function PageAIWorkspace({ onNavigate }) {
                 boxShadow:isUser
                   ?`0 8px 24px ${DL.shadowColor},inset 0 1px 0 rgba(255,255,255,0.15)`
                   :`0 2px 12px rgba(0,0,0,0.15),inset 0 0 0 1px ${bColor}10`,
+                cursor:'pointer',
               }
             },
+              // Attachment badges
               isUser&&msg.mediaUrl&&msg.mediaType==='image'&&React.createElement('img',{
                 src:msg.mediaUrl,alt:'upload',
                 style:{width:'100%',borderRadius:12,marginBottom:10,display:'block',maxHeight:200,objectFit:'cover'},
@@ -10697,7 +10754,60 @@ function PageAIWorkspace({ onNavigate }) {
                 React.createElement(VideoIconSVG,{color:DL.accent}),
                 React.createElement('span',{style:{fontSize:11,color:DL.accent,fontWeight:700}},'Video attached'),
               ),
-              React.createElement(MarkdownText,{text:msg.text,isUser:isUser}),
+              isUser&&msg.fileName&&msg.mediaType==='document'&&React.createElement('div',{
+                style:{display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.12)',borderRadius:10,padding:'7px 11px',marginBottom:8}
+              },
+                React.createElement('span',{style:{fontSize:16}},'📄'),
+                React.createElement('span',{style:{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.9)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}},msg.fileName),
+              ),
+              // Message text or edit textarea
+              isEditing
+                ?React.createElement('div',{onClick:e=>e.stopPropagation()},
+                  React.createElement('textarea',{
+                    value:editState.text,
+                    onChange:e=>setEditState({idx:i,text:e.target.value}),
+                    rows:4,autoFocus:true,
+                    style:{width:'100%',resize:'vertical',padding:'8px',borderRadius:10,border:`1px solid ${DL.accent}66`,background:'rgba(0,0,0,0.3)',color:'#fff',fontSize:12,fontFamily:'inherit',outline:'none',marginBottom:8},
+                  }),
+                  React.createElement('div',{style:{display:'flex',gap:6,justifyContent:'flex-end'}},
+                    React.createElement('button',{onClick:()=>setEditState(null),style:{padding:'6px 12px',borderRadius:9,border:`1px solid rgba(255,255,255,0.2)`,background:'transparent',color:'rgba(255,255,255,0.7)',fontSize:10,fontWeight:700,cursor:'pointer'}},'Batal'),
+                    React.createElement('button',{onClick:()=>submitEdit(i,editState.text),style:{padding:'6px 14px',borderRadius:9,border:'none',background:DL.accent,color:'#fff',fontSize:10,fontWeight:800,cursor:'pointer'}},'Kirim ↵'),
+                  ),
+                )
+                :React.createElement(MarkdownText,{text:msg.text,isUser:isUser}),
+            ),
+            // Action toolbar
+            showActions&&!isEditing&&React.createElement('div',{
+              style:{display:'flex',gap:5,marginTop:5,padding:'4px 6px',borderRadius:14,background:'rgba(20,18,40,0.92)',border:`1px solid ${DL.glassBorder}`,backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',boxShadow:'0 4px 16px rgba(0,0,0,0.3)',flexWrap:'wrap'}
+            },
+              // Copy
+              React.createElement('button',{
+                onClick:function(e){e.stopPropagation();try{navigator.clipboard.writeText(msg.text);}catch(err){}setMsgActions(null);},
+                style:{padding:'5px 10px',borderRadius:9,border:'none',background:'transparent',color:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:4}
+              },
+                React.createElement('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('rect',{x:9,y:9,width:13,height:13,rx:2}),React.createElement('path',{d:'M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1'})),'Salin',
+              ),
+              // Edit (user only)
+              isUser&&React.createElement('button',{
+                onClick:function(e){e.stopPropagation();setEditState({idx:i,text:msg.text});setMsgActions(null);},
+                style:{padding:'5px 10px',borderRadius:9,border:'none',background:'transparent',color:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:4}
+              },
+                React.createElement('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7'}),React.createElement('path',{d:'M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z'})),'Edit',
+              ),
+              // Regenerate
+              !isErr&&React.createElement('button',{
+                onClick:function(e){e.stopPropagation();regenerateMsg(i);},
+                style:{padding:'5px 10px',borderRadius:9,border:'none',background:'transparent',color:DL.accent,fontSize:10,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:4}
+              },
+                React.createElement('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M1 4v6h6'}),React.createElement('path',{d:'M3.51 15a9 9 0 102.13-9.36L1 10'})),'Regenerate',
+              ),
+              // Delete msg
+              React.createElement('button',{
+                onClick:function(e){e.stopPropagation();setChatFeed(prev=>prev.filter((_,j)=>j!==i));setMsgActions(null);},
+                style:{padding:'5px 10px',borderRadius:9,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',gap:4}
+              },
+                React.createElement('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('polyline',{points:'3 6 5 6 21 6'}),React.createElement('path',{d:'M19 6l-1 14H6L5 6'}),React.createElement('path',{d:'M10 11v6'}),React.createElement('path',{d:'M14 11v6'})),'Hapus',
+              ),
             ),
           );
         }),
@@ -10733,6 +10843,7 @@ function PageAIWorkspace({ onNavigate }) {
         },
           uploadedFile.type==='image'&&React.createElement('img',{src:uploadedFile.dataUrl,style:{width:40,height:40,objectFit:'cover',borderRadius:10,border:`1px solid ${DL.glassBorder}`}}),
           uploadedFile.type==='video'&&React.createElement('div',{style:{width:40,height:40,borderRadius:10,background:`${DL.accent}15`,display:'flex',alignItems:'center',justifyContent:'center'}},React.createElement(VideoIconSVG,{color:DL.accent})),
+          uploadedFile.type==='document'&&React.createElement('div',{style:{width:40,height:40,borderRadius:10,background:`${DL.accentB}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}},'📄'),
           React.createElement('div',{style:{flex:1,minWidth:0}},
             React.createElement('div',{style:{fontSize:11,fontWeight:700,color:DL.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},uploadedFile.name),
             React.createElement('div',{style:{fontSize:9,color:DL.mute,marginTop:1}},uploadedFile.mimeType),
@@ -10755,7 +10866,7 @@ function PageAIWorkspace({ onNavigate }) {
         }),
         // Action row
         React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}},
-          React.createElement('input',{ref:fileInputRef,type:'file',accept:'image/*,video/*',onChange:handleFileSelect,style:{display:'none'}}),
+          React.createElement('input',{ref:fileInputRef,type:'file',accept:'image/*,video/*,audio/*,application/pdf,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.markdown,.json,.jsonl,.csv,.xml,.yaml,.yml,.toml,.py,.js,.ts,.html,.css,.sql,.sh,.env',onChange:handleFileSelect,style:{display:'none'}}),
           React.createElement('input',{ref:sttInputRef,type:'file',accept:'audio/*',onChange:handleSttFileSelect,style:{display:'none'}}),
           // Upload btn
           React.createElement('button',{
