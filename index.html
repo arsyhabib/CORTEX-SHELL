@@ -10130,8 +10130,8 @@ function PageAIWorkspace({ onNavigate }) {
     return '';
   }
   function providerImageQuality(p){return((runtime.providers||{})[p]||{}).imageQuality||'low';}
-  function geminiGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}
-  function geminiImagePredictUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predict?key=${encodeURIComponent(providerKey('gemini'))}`; }:generateContent?key=${encodeURIComponent(providerKey('gemini'))}`;}
+  function geminiGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent?key=${encodeURIComponent(providerKey('gemini'))}`; }
+  function geminiImagePredictUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predict?key=${encodeURIComponent(providerKey('gemini'))}`; }
   function geminiVideoGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predictLongRunning?key=${encodeURIComponent(providerKey('gemini'))}`;}
   function deepseekChatUrl(){return'https://api.deepseek.com/chat/completions';}
   function featherlessChatUrl(){return'https://api.featherless.ai/v1/chat/completions';}
