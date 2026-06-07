@@ -10087,6 +10087,11 @@ function PageAIWorkspace({ onNavigate }) {
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
   const chatBottomRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
+  const sttInputRef = React.useRef(null);
+  const [sttFile, setSttFile] = React.useState(null);
+  const [sttBusy, setSttBusy] = React.useState(false);
+  const [sttMode, setSttMode] = React.useState('transcribe');
+  const [sttHistory, setSttHistory] = React.useState(function(){return lsGet('cx_stt_history',[]);});
 
   const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
   React.useEffect(function(){lsSet('cx_surface',surface);},[surface]);
@@ -10096,6 +10101,7 @@ function PageAIWorkspace({ onNavigate }) {
   React.useEffect(function(){lsSet('cx_image_results',imageResults);},[imageResults]);
   React.useEffect(function(){lsSet('cx_tts_text',ttsText);},[ttsText]);
   React.useEffect(function(){lsSet('cx_tts_history',ttsHistory);},[ttsHistory]);
+  React.useEffect(function(){lsSet('cx_stt_history',sttHistory);},[sttHistory]);
   const proxyBase = React.useMemo(function(){ return String(runtime.proxyUrl||'').replace(/\/+$/,''); },[runtime.proxyUrl]);
   const directMode = React.useMemo(function(){
     const m=String(runtime.transportMode||'auto');
@@ -10242,6 +10248,33 @@ function PageAIWorkspace({ onNavigate }) {
     finally{setTtsBusy(false);}
   }
 
+  function handleSttFileSelect(e){
+    const file=e.target.files&&e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){setSttFile({name:file.name,base64:ev.target.result.split(',')[1],mimeType:file.type,size:file.size});}
+    reader.readAsDataURL(file);e.target.value='';
+  }
+  async function runSTT(){
+    if(!sttFile||sttBusy)return;
+    setSttBusy(true);
+    const prompt=sttMode==='summarize'
+      ?'Berikan ringkasan lengkap dari isi audio berikut dalam bahasa yang sama dengan audio, terstruktur dan mudah dibaca.'
+      :'Transkripsi seluruh isi audio berikut secara lengkap dan akurat. Pertahankan bahasa asli audio.';
+    try{
+      const p=await cortexRequest({
+        provider:'gemini',
+        route:'/providers/gemini/chat',
+        body:{model:providerModel('gemini','chat'),messages:[{role:'user',content:prompt}],generationConfig:{temperature:0.2}},
+        directRoute:geminiGenerateUrl(providerModel('gemini','chat')),
+        directBody:{model:providerModel('gemini','chat'),contents:[{parts:[{inline_data:{mime_type:sttFile.mimeType,data:sttFile.base64}},{text:prompt}]}],generationConfig:{temperature:0.2}},
+      });
+      const text=extractText(p)||'Gemini tidak mengembalikan hasil.';
+      setSttHistory(prev=>[{mode:sttMode,fileName:sttFile.name,text,ts:Date.now()},...prev].slice(0,10));
+      setSttFile(null);
+    }catch(err){
+      setSttHistory(prev=>[{mode:sttMode,fileName:sttFile.name,error:err&&err.message?err.message:'STT gagal.',ts:Date.now()},...prev].slice(0,10));
+    }finally{setSttBusy(false);}
+  }
   async function runProbe(kind){
     const R={
       gemini:{prov:'gemini',route:'/providers/gemini/chat',body:{model:providerModel('gemini','chat'),messages:[{role:'user',content:'Balas persis: GEMINI SIAP'}],generationConfig:{temperature:0}},dr:geminiGenerateUrl(providerModel('gemini','chat')),label:'Gemini'},
@@ -10539,6 +10572,7 @@ function PageAIWorkspace({ onNavigate }) {
         // Action row
         React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}},
           React.createElement('input',{ref:fileInputRef,type:'file',accept:'image/*,video/*',onChange:handleFileSelect,style:{display:'none'}}),
+          React.createElement('input',{ref:sttInputRef,type:'file',accept:'audio/*',onChange:handleSttFileSelect,style:{display:'none'}}),
           // Upload btn
           React.createElement('button',{
             onClick:()=>fileInputRef.current&&fileInputRef.current.click(),
@@ -10775,6 +10809,79 @@ function PageAIWorkspace({ onNavigate }) {
             ttsBusy?'Generating...':'Generate Speech',
           ),
         ),
+      ),
+
+      // STT: Audio Upload -> Text
+      React.createElement('div',{
+        style:{borderRadius:22,padding:14,background:`linear-gradient(160deg,${DL.accent}0e,rgba(0,0,0,0))`,border:`1px solid ${DL.accent}30`,backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)'}
+      },
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:12}},
+          React.createElement('div',{style:{width:36,height:36,borderRadius:12,background:`linear-gradient(135deg,${DL.accent},${DL.accentB})`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+            React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2.2,strokeLinecap:'round'},
+              React.createElement('path',{d:'M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z'}),
+              React.createElement('path',{d:'M19 10v2a7 7 0 01-14 0v-2'}),
+              React.createElement('line',{x1:12,y1:19,x2:12,y2:23}),
+              React.createElement('line',{x1:8,y1:23,x2:16,y2:23}),
+            ),
+          ),
+          React.createElement('div',{},
+            React.createElement('div',{style:{fontSize:14,fontWeight:900,color:DL.text}},'Audio → Teks'),
+            React.createElement('div',{style:{fontSize:10,color:DL.mute}},'Gemini · MP3, WAV, M4A, OGG'),
+          ),
+          React.createElement('div',{style:{marginLeft:'auto',display:'flex',gap:6}},
+            ['transcribe','summarize'].map(function(m){
+              return React.createElement('button',{key:m,onClick:function(){setSttMode(m);},
+                style:{padding:'5px 11px',borderRadius:20,border:`1px solid ${sttMode===m?DL.accent:DL.glassBorder}`,background:sttMode===m?`${DL.accent}22`:'transparent',color:sttMode===m?DL.accent:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',transition:'all 0.2s'}},
+                m==='transcribe'?'Transkripsi':'Ringkas');
+            }),
+          ),
+        ),
+        sttFile
+          ?React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'10px 14px',borderRadius:14,background:'rgba(255,255,255,0.05)',border:`1px solid ${DL.accent}33`,marginBottom:10}},
+            React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:DL.accent,strokeWidth:2,strokeLinecap:'round'},React.createElement('path',{d:'M9 18V5l12-2v13'}),React.createElement('circle',{cx:6,cy:18,r:3}),React.createElement('circle',{cx:18,cy:16,r:3})),
+            React.createElement('span',{style:{flex:1,fontSize:11,color:DL.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},sttFile.name),
+            React.createElement('span',{style:{fontSize:10,color:DL.mute,flexShrink:0}},`${(sttFile.size/1024).toFixed(0)} KB`),
+            React.createElement('button',{onClick:function(){setSttFile(null);},style:{background:'none',border:'none',color:DL.mute,cursor:'pointer',fontSize:14,lineHeight:1,padding:2}},'✕'),
+          )
+          :React.createElement('button',{onClick:function(){sttInputRef.current&&sttInputRef.current.click();},
+            style:{width:'100%',padding:'14px',borderRadius:14,border:`2px dashed ${DL.accent}40`,background:'transparent',color:DL.accent,fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10}},
+            React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.2,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'17 8 12 3 7 8'}),React.createElement('line',{x1:12,y1:3,x2:12,y2:15})),
+            'Upload File Audio',
+          ),
+        React.createElement('button',{
+          onClick:runSTT,disabled:!sttFile||sttBusy,
+          style:{width:'100%',padding:'12px',borderRadius:14,border:'none',background:(!sttFile||sttBusy)?'rgba(255,255,255,0.06)':`linear-gradient(135deg,${DL.accent},${DL.accentB})`,color:(!sttFile||sttBusy)?DL.mute:'#fff',fontSize:13,fontWeight:800,cursor:(!sttFile||sttBusy)?'not-allowed':'pointer',transition:'all 0.3s',display:'flex',alignItems:'center',justifyContent:'center',gap:7,position:'relative',overflow:'hidden'},
+        },
+          !sttBusy&&sttFile&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)',animation:'cortex-ai-shimmer-btn 2.5s ease-in-out infinite',pointerEvents:'none'}}),
+          sttBusy?'🔄 Memproses...':(sttMode==='summarize'?'✦ Ringkas Audio':'✦ Transkripsi Audio'),
+        ),
+      ),
+
+      // STT history
+      sttHistory.length>0&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+        React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 2px 2px'}},
+          React.createElement('span',{style:{fontSize:11,fontWeight:800,color:DL.accent}},`📝 ${sttHistory.length} / 10 Transkripsi`),
+          React.createElement('button',{onClick:function(){setSttHistory([]);},style:{fontSize:10,color:DL.mute,background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}},'Hapus semua'),
+        ),
+        sttHistory.map(function(item,idx){
+          if(item.error)return React.createElement('div',{key:idx,style:{padding:12,borderRadius:14,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
+            React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'⚠ Error: '+item.fileName),
+            React.createElement('div',{style:{fontSize:10,color:DL.sub,marginTop:3}},item.error),
+          );
+          return React.createElement('div',{key:idx,style:{borderRadius:16,border:`1px solid ${DL.accent}28`,background:'rgba(255,255,255,0.03)',overflow:'hidden',animation:'cortex-ai-result-iris 0.5s ease both'}},
+            React.createElement('div',{style:{padding:'10px 14px 8px',background:`${DL.accent}0a`,display:'flex',alignItems:'center',justifyContent:'space-between'}},
+              React.createElement('div',{},
+                React.createElement('span',{style:{fontSize:9,fontWeight:800,color:DL.accent,textTransform:'uppercase',letterSpacing:0.8}},item.mode==='summarize'?'Ringkasan':'Transkripsi'),
+                React.createElement('div',{style:{fontSize:10,color:DL.sub,marginTop:1}},item.fileName),
+              ),
+              React.createElement('div',{style:{display:'flex',gap:6}},
+                React.createElement('button',{onClick:function(){try{navigator.clipboard.writeText(item.text);}catch(e){}},style:{padding:'5px 10px',borderRadius:9,border:`1px solid ${DL.accent}33`,background:`${DL.accent}15`,color:DL.accent,fontSize:9,fontWeight:800,cursor:'pointer'}},'Copy'),
+                React.createElement('button',{onClick:function(){setSttHistory(prev=>prev.filter((_,i)=>i!==idx));},style:{padding:'5px 8px',borderRadius:9,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:9,fontWeight:800,cursor:'pointer'}},'✕'),
+              ),
+            ),
+            React.createElement('div',{style:{padding:'10px 14px 14px',fontSize:12,color:DL.text,lineHeight:1.7,maxHeight:200,overflowY:'auto',whiteSpace:'pre-wrap',wordBreak:'break-word'}},item.text),
+          );
+        }),
       ),
 
       // Audio history list
