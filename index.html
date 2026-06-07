@@ -642,6 +642,21 @@
 .cortex-motion-press:active {
   animation: jelly-press 0.82s cubic-bezier(0.18,1.08,0.28,1);
 }
+.cortex-chat-bubble {
+  position: relative;
+  transform-origin: center;
+  animation: buttery-pop 0.72s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.26s ease, border-color 0.24s ease, background 0.24s ease;
+  will-change: transform;
+}
+.cortex-chat-bubble:active {
+  animation: none !important;
+  transform: translateY(0) scale(1) !important;
+}
+.cortex-touch-active .cortex-chat-bubble {
+  animation: none !important;
+  transform: none !important;
+}
 .cortex-fab-launch-button:active {
   animation: cortex-fab-launch-jiggle 880ms cubic-bezier(0.18,1.14,0.28,1);
 }
@@ -2010,7 +2025,7 @@
 /* Mobile compatibility guardrails for iPhone/Android aspect ratios. */
 @media (max-width: 760px) {
   :root {
-    --cortex-mobile-fab-clearance: calc(92px + env(safe-area-inset-bottom));
+    --cortex-mobile-fab-clearance: calc(72px + env(safe-area-inset-bottom));
   }
   html, body {
     width: 100%;
@@ -5575,12 +5590,12 @@ const CORTEX_FAB_FEATURES = [
 ];
 
 const CORTEX_STUDIO_QUICK_ACTIONS = [
-  { id:'library', label:'Library', icon:'library', page:0 },
-  { id:'quiz', label:'Quiz', icon:'quiz', page:17 },
-  { id:'flashcards', label:'Flashcards', icon:'flashcards', page:18 },
-  { id:'visuals', label:'Visuals', icon:'visuals', page:12 },
-  { id:'ai', label:'AI Workspace', icon:'ai', page:20 },
-  { id:'settings', label:'Settings', icon:'settings', page:7 },
+  { id:'library', label:'Library', sub:'Browse lessons and decks', icon:'library', page:0 },
+  { id:'quiz', label:'Quiz', sub:'Check understanding', icon:'quiz', page:17 },
+  { id:'flashcards', label:'Flashcards', sub:'Review faster', icon:'flashcards', page:18 },
+  { id:'visuals', label:'Visuals', sub:'Media and assets', icon:'visuals', page:12 },
+  { id:'ai', label:'AI Workspace', sub:'Chat and multimodal', icon:'ai', page:20 },
+  { id:'settings', label:'Settings', sub:'Theme and behavior', icon:'settings', page:7 },
 ];
 
 const CORTEX_STUDIO_DOCK_ITEMS = [
@@ -12260,7 +12275,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             // Bubble
             React.createElement('div',{
               onClick:function(){setMsgActions(showActions?null:i);if(isEditing)return;},
-              className:'cortex-motion-card cortex-motion-press',
+              className:'cortex-chat-bubble',
               style:{
                 maxWidth:compactLayout?'100%':'87%',padding:compactLayout?'11px 13px':'12px 15px',lineHeight:1.65,fontSize:13,
                 borderRadius:isUser?'20px 20px 6px 20px':'6px 20px 20px 20px',
@@ -13910,7 +13925,9 @@ function getCortexViewportProfile() {
   const padTop = mode === 'desktop' ? (density === 'compact' ? 18 : 22) : (density === 'compact' ? 12 : 16);
   const padBottomValue = mode === 'desktop'
     ? 96
-    : Math.max(68, Math.min(Math.round(height * 0.12), mode === 'tablet' ? 104 : 100));
+    : mode === 'tablet'
+      ? Math.max(72, Math.min(Math.round(height * 0.1), 92))
+      : Math.max(60, Math.min(Math.round(height * 0.085), 78));
   const bottomClearance = `calc(${padBottomValue}px + env(safe-area-inset-bottom))`;
 
   return {
@@ -14543,20 +14560,35 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
           borderColor:DL.glassBorder,
         }},
           React.createElement('div', { style:{ color:DL.text, fontSize:13, fontWeight:900, marginBottom:8 }}, 'Quick Actions'),
-          React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }},
+          React.createElement('div', { style:{ display:'grid', gridTemplateColumns:mode === 'mobile' ? 'repeat(2, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', gap:10 }},
             CORTEX_STUDIO_QUICK_ACTIONS.map(function(btn) {
               return React.createElement('button', {
                 key:btn.id, type:'button',
                 onClick:function(){ onNavigate && onNavigate(btn.page); },
-                className:'cortex-motion-press',
+                className:'cortex-motion-card cortex-motion-press',
                 style:{
-                  padding:'10px 8px', borderRadius:14, cursor:'pointer', textAlign:'center',
-                  background:'rgba(255,255,255,0.04)', border:'1px solid ' + DL.glassBorder,
-                  color:DL.text, transition:'all 0.15s ease',
+                  minHeight:mode === 'mobile' ? 88 : 96,
+                  padding:'12px 12px', borderRadius:18, cursor:'pointer', textAlign:'left',
+                  background:'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))', border:'1px solid ' + DL.glassBorder,
+                  color:DL.text, transition:'all 0.24s cubic-bezier(0.16,1,0.3,1)',
+                  boxShadow:`inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 24px ${currentTheme.colors.shadowColor}`,
+                  display:'flex', alignItems:'center', gap:12,
                 }
               },
-                React.createElement('div', { style:{ display:'flex', justifyContent:'center', marginBottom:5 }}, React.createElement(CortexLuxeIcon, { name:btn.icon, size:18, color:'#ffffff', accent:currentTheme.colors.accent1 })),
-                React.createElement('div', { style:{ fontSize:9, fontWeight:700 }}, btn.label),
+                React.createElement('div', { style:{
+                  width:38, height:38, flex:'0 0 auto', borderRadius:14,
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  background:`linear-gradient(135deg, ${currentTheme.colors.accent1}24, ${currentTheme.colors.accent2}16)`,
+                  border:`1px solid ${DL.glassBorder}`,
+                  boxShadow:'inset 0 1px 0 rgba(255,255,255,0.1)',
+                }},
+                  React.createElement(CortexLuxeIcon, { name:btn.icon, size:18, color:'#ffffff', accent:currentTheme.colors.accent1 })
+                ),
+                React.createElement('div', { style:{ minWidth:0, flex:1 } },
+                  React.createElement('div', { style:{ fontSize:mode === 'mobile' ? 12 : 13, fontWeight:900, lineHeight:1.2, marginBottom:3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, btn.label),
+                  React.createElement('div', { style:{ fontSize:9, fontWeight:600, lineHeight:1.35, color:DL.mute, textWrap:'balance' }}, btn.sub),
+                ),
+                React.createElement('div', { style:{ flex:'0 0 auto', fontSize:14, fontWeight:900, color:currentTheme.colors.accent1, opacity:0.85 }}, '↗'),
               );
             })
           ),
