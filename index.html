@@ -10115,12 +10115,42 @@ function PageAIWorkspace({ onNavigate }) {
   function lsGet(key,def){try{const v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
   function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
   const [surface, setSurface] = React.useState(function(){return lsGet('cx_surface','assistant');});
-  const [chatModel, setChatModel] = React.useState(function(){return lsGet('cx_chat_model','gemini');});
+  function makeSession(model,feed){
+    return{id:'s'+Date.now()+Math.random().toString(36).slice(2,6),title:'Chat Baru',model:model||'gemini',
+      feed:feed||[{role:'assistant',model:'cortex',text:'Halo! Saya CORTEX AI Workspace. ✨\n\nPilih model di atas, lalu mulai chat!'}],
+      pinned:false,createdAt:Date.now(),updatedAt:Date.now()};
+  }
+  const [chatSessions, setChatSessions] = React.useState(function(){
+    const saved=lsGet('cx_sessions',null);
+    if(saved&&saved.length>0)return saved;
+    // migrate from old single-session
+    const oldFeed=lsGet('cx_chat_feed',null);
+    const oldModel=lsGet('cx_chat_model','gemini');
+    const s=makeSession(oldModel,oldFeed||undefined);
+    s.id='s-default';s.title='Chat 1';
+    return [s];
+  });
+  const [activeChatId, setActiveChatId] = React.useState(function(){
+    const saved=lsGet('cx_sessions',null);
+    const id=lsGet('cx_active_id',null);
+    if(id&&saved&&saved.find(function(s){return s.id===id;}))return id;
+    return (saved&&saved[0]&&saved[0].id)||'s-default';
+  });
+  const [dragOver, setDragOver] = React.useState(false);
+  const [sessionMenu, setSessionMenu] = React.useState(null);
+  const activeSession=React.useMemo(function(){return chatSessions.find(function(s){return s.id===activeChatId;})||chatSessions[0];},[chatSessions,activeChatId]);
+  const [chatModel, setChatModelRaw] = React.useState(function(){return activeSession?activeSession.model:'gemini';});
+  const [chatFeed, setChatFeedRaw] = React.useState(function(){return activeSession?activeSession.feed:[];});
+  function setChatModel(v){setChatModelRaw(v);setChatSessions(function(prev){return prev.map(function(s){return s.id===activeChatId?Object.assign({},s,{model:v}):s;});});}
+  function setChatFeed(fn){setChatFeedRaw(fn);setChatSessions(function(prev){return prev.map(function(s){
+    if(s.id!==activeChatId)return s;
+    const newFeed=typeof fn==='function'?fn(s.feed):fn;
+    const firstUser=newFeed.find(function(m){return m.role==='user';});
+    const title=firstUser?firstUser.text.replace(/[\n\r]/g,' ').slice(0,28)+(firstUser.text.length>28?'…':''):s.title;
+    return Object.assign({},s,{feed:newFeed,title,updatedAt:Date.now()});
+  });});}
   const [imageModel, setImageModel] = React.useState(function(){return lsGet('cx_image_model','gemini');});
   const [chatPrompt, setChatPrompt] = React.useState('');
-  const [chatFeed, setChatFeed] = React.useState(function(){
-    return lsGet('cx_chat_feed',[{ role:'assistant', model:'cortex', text:'Halo! Saya CORTEX AI Workspace. ✨\n\nPilih model di atas, lalu kirim pesan, upload gambar atau video, atau buka tab Visual & Audio untuk generate konten.' }]);
-  });
   const [composerBusy, setComposerBusy] = React.useState('');
   const [uploadedFile, setUploadedFile] = React.useState(null);
   const [imagePrompt, setImagePrompt] = React.useState('');
@@ -10151,13 +10181,17 @@ function PageAIWorkspace({ onNavigate }) {
 
   const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
   React.useEffect(function(){lsSet('cx_surface',surface);},[surface]);
-  React.useEffect(function(){lsSet('cx_chat_model',chatModel);},[chatModel]);
   React.useEffect(function(){lsSet('cx_image_model',imageModel);},[imageModel]);
-  React.useEffect(function(){lsSet('cx_chat_feed',chatFeed);},[chatFeed]);
   React.useEffect(function(){lsSet('cx_image_results',imageResults);},[imageResults]);
   React.useEffect(function(){lsSet('cx_tts_text',ttsText);},[ttsText]);
   React.useEffect(function(){lsSet('cx_tts_history',ttsHistory);},[ttsHistory]);
   React.useEffect(function(){lsSet('cx_stt_history',sttHistory);},[sttHistory]);
+  React.useEffect(function(){lsSet('cx_sessions',chatSessions);},[chatSessions]);
+  React.useEffect(function(){lsSet('cx_active_id',activeChatId);},[activeChatId]);
+  React.useEffect(function(){
+    const s=chatSessions.find(function(x){return x.id===activeChatId;});
+    if(s){setChatFeedRaw(s.feed);setChatModelRaw(s.model);}
+  },[activeChatId]);
   const proxyBase = React.useMemo(function(){ return String(runtime.proxyUrl||'').replace(/\/+$/,''); },[runtime.proxyUrl]);
   const directMode = React.useMemo(function(){
     const m=String(runtime.transportMode||'auto');
@@ -10285,6 +10319,48 @@ function PageAIWorkspace({ onNavigate }) {
     setChatFeed(prev=>[...prev,userMsg].slice(-MAX_HISTORY));
     setChatPrompt('');setUploadedFile(null);
     runChatCore(prompt,chatFeed.slice(-MAX_HISTORY).concat([userMsg]),attached);
+  }
+  function createSession(){
+    if(chatSessions.length>=10){alert('Maksimal 10 sesi chat.');return;}
+    const s=makeSession('gemini');
+    s.title='Chat '+(chatSessions.length+1);
+    setChatSessions(function(prev){return [...prev,s];});
+    setActiveChatId(s.id);
+    setSessionMenu(null);
+  }
+  function deleteSession(id){
+    if(chatSessions.length<=1){alert('Tidak bisa menghapus sesi terakhir.');return;}
+    const pinned=chatSessions.find(function(s){return s.id===id;});
+    if(pinned&&pinned.pinned&&!confirm('Hapus sesi yang di-pin?'))return;
+    setChatSessions(function(prev){return prev.filter(function(s){return s.id!==id;});});
+    if(activeChatId===id){
+      const remaining=chatSessions.filter(function(s){return s.id!==id;});
+      setActiveChatId(remaining[0]?remaining[0].id:'');
+    }
+    setSessionMenu(null);
+  }
+  function pinSession(id){
+    setChatSessions(function(prev){return prev.map(function(s){return s.id===id?Object.assign({},s,{pinned:!s.pinned}):s;});});
+    setSessionMenu(null);
+  }
+  function switchSession(id){
+    if(id===activeChatId){setSessionMenu(sessionMenu===id?null:id);return;}
+    setActiveChatId(id);setSessionMenu(null);setMsgActions(null);setEditState(null);
+  }
+  function processDroppedFile(file){
+    if(!file)return;
+    const ext='.'+file.name.split('.').pop().toLowerCase();
+    const isImg=file.type.startsWith('image/');
+    const isVid=file.type.startsWith('video/');
+    const isTextFile=file.type.startsWith('text/')||TEXT_EXTS.includes(ext);
+    const reader=new FileReader();
+    if(isTextFile){
+      reader.onload=function(ev){setUploadedFile({name:file.name,text:ev.target.result,mimeType:file.type||'text/plain',type:'document',size:file.size,ext});};
+      reader.readAsText(file);
+    } else {
+      reader.onload=function(ev){const d=ev.target.result;setUploadedFile({name:file.name,dataUrl:d,base64:d.split(',')[1],mimeType:file.type,type:isImg?'image':isVid?'video':'document',size:file.size,ext});};
+      reader.readAsDataURL(file);
+    }
   }
   async function runChatCore(promptText,historyArr,attached){
     setComposerBusy(chatModel);
@@ -10724,6 +10800,39 @@ function PageAIWorkspace({ onNavigate }) {
         }),
       ),
 
+      // ── Session Strip ────────────────────────────────────────────────────
+      React.createElement('div',{style:{display:'flex',gap:6,alignItems:'center',overflowX:'auto',paddingBottom:2},className:'hide-scrollbar'},
+        // Session cards
+        React.createElement('div',{style:{display:'flex',gap:5,flex:1,overflowX:'auto'},className:'hide-scrollbar'},
+          [...chatSessions].sort(function(a,b){return (b.pinned?1:0)-(a.pinned?1:0)||(a.createdAt-b.createdAt);}).map(function(sess){
+            const isActive=sess.id===activeChatId;
+            const mDef=chatModels.find(function(m){return m.id===sess.model;})||chatModels[0];
+            const showMenu=sessionMenu===sess.id;
+            return React.createElement('div',{key:sess.id,style:{position:'relative',flexShrink:0}},
+              React.createElement('button',{
+                onClick:function(){switchSession(sess.id);},
+                style:{display:'flex',alignItems:'center',gap:5,padding:'5px 9px 5px 7px',borderRadius:12,border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.1)',background:isActive?mDef.color+'1e':'rgba(255,255,255,0.05)',cursor:'pointer',transition:'all 0.2s',minWidth:0,maxWidth:120,color:isActive?mDef.color:DL.sub,outline:'none'}
+              },
+                sess.pinned&&React.createElement('span',{style:{fontSize:9,flexShrink:0}},'📌'),
+                React.createElement('span',{style:{fontSize:9,fontWeight:isActive?800:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:70}},sess.title),
+                React.createElement('span',{style:{fontSize:8,opacity:0.6,flexShrink:0}},sess.feed.length),
+              ),
+              showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:100,background:'rgba(14,12,30,0.97)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 8px 24px rgba(0,0,0,0.5)',backdropFilter:'blur(16px)'}},
+                React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},sess.pinned?'📌 Unpin':'📌 Pin Chat'),
+                React.createElement('button',{onClick:function(){deleteSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},'🗑 Hapus'),
+              ),
+            );
+          }),
+        ),
+        // Add new session button
+        React.createElement('button',{
+          onClick:createSession,
+          disabled:chatSessions.length>=10,
+          title:`${chatSessions.length}/10 sesi`,
+          style:{flexShrink:0,width:28,height:28,borderRadius:9,border:`1px dashed ${chatSessions.length>=10?DL.mute:DL.accent+'66'}`,background:'transparent',color:chatSessions.length>=10?DL.mute:DL.accent,fontSize:18,fontWeight:300,cursor:chatSessions.length>=10?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}
+        },'+'),
+      ),
+
       // ── Chat Feed ────────────────────────────────────────────────────────
       React.createElement('div',{
         className:'hide-scrollbar',
@@ -10845,19 +10954,27 @@ function PageAIWorkspace({ onNavigate }) {
         React.createElement('div',{ref:chatBottomRef}),
       ),
 
-      // ── Input Bar ────────────────────────────────────────────────────────
+      // ── Input Bar (with drag-and-drop) ────────────────────────────────────
       React.createElement('div',{
+        onDragOver:function(e){e.preventDefault();e.stopPropagation();setDragOver(true);},
+        onDragLeave:function(e){e.preventDefault();setDragOver(false);},
+        onDrop:function(e){
+          e.preventDefault();e.stopPropagation();setDragOver(false);
+          const file=e.dataTransfer.files&&e.dataTransfer.files[0];
+          if(file)processDroppedFile(file);
+        },
         style:{
           borderRadius:22,padding:12,
-          background:'rgba(10,10,26,0.7)',
-          border:`1.5px solid ${isThinking?activeChatModel.color+'55':DL.glassBorder}`,
+          background:dragOver?'rgba(168,85,247,0.12)':'rgba(10,10,26,0.7)',
+          border:dragOver?`2px dashed ${DL.accent}`:`1.5px solid ${isThinking?activeChatModel.color+'55':DL.glassBorder}`,
           backdropFilter:'blur(24px) saturate(180%)',
           WebkitBackdropFilter:'blur(24px) saturate(180%)',
           boxShadow:`0 8px 32px rgba(0,0,0,0.25)${isThinking?`,0 0 0 3px ${activeChatModel.color}18`:''}`,
-          transition:'border-color 0.3s ease,box-shadow 0.3s ease',
+          transition:'border-color 0.25s ease,box-shadow 0.3s ease,background 0.25s ease',
           animation:isThinking?'cortex-ai-card-glow-pulse 1.5s ease-in-out infinite':'cortex-ai-card-glow-pulse 4s ease-in-out infinite',
         }
       },
+        dragOver&&React.createElement('div',{style:{textAlign:'center',padding:'8px 0',color:DL.accent,fontSize:12,fontWeight:800,letterSpacing:0.5}},'⬆ Lepaskan file di sini'),
         // File preview
         uploadedFile&&React.createElement('div',{
           style:{display:'flex',alignItems:'center',gap:10,marginBottom:10,padding:'8px 10px',borderRadius:14,background:`${activeChatModel.color}10`,border:`1px solid ${activeChatModel.color}30`}
