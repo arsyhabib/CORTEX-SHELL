@@ -10225,12 +10225,55 @@ function PageAIWorkspace({ onNavigate }) {
       let text='';
       const history=chatFeed.slice(-MAX_HISTORY);
       function toAlternating(hist,userMsg,aiRole){const raw=[...hist.map(m=>({role:m.role==='assistant'?aiRole:'user',content:String(m.text||'')})),{role:'user',content:userMsg}];const out=[];for(const m of raw){if(out.length&&out[out.length-1].role===m.role)continue;out.push(m);}while(out.length&&out[0].role!=='user')out.shift();return out;}
-      function toGeminiContents(hist,userMsg){return toAlternating(hist,userMsg,'model').map(m=>({role:m.role,parts:[{text:m.content}]}));}
+      // Build Gemini contents[], injecting image inline_data into last user message
+      function toGeminiContents(hist,userMsg,file){
+        const msgs=toAlternating(hist,userMsg,'model');
+        return msgs.map(function(m,i){
+          if(i===msgs.length-1&&m.role==='user'&&file&&file.base64){
+            const parts=[];
+            if(file.base64)parts.push({inline_data:{mime_type:file.mimeType||'image/jpeg',data:file.base64}});
+            if(m.content&&m.content!=='(lampiran media)')parts.push({text:m.content});
+            return{role:'user',parts};
+          }
+          return{role:m.role,parts:[{text:m.content}]};
+        });
+      }
+      // Build OpenAI-format messages[], injecting image_url into last user message
+      function toMsgsWithImage(hist,userMsg,aiRole,file){
+        const msgs=toAlternating(hist,userMsg,aiRole);
+        return msgs.map(function(m,i){
+          if(i===msgs.length-1&&m.role==='user'&&file&&file.base64){
+            const parts=[];
+            parts.push({type:'image_url',image_url:{url:`data:${file.mimeType||'image/jpeg'};base64,${file.base64}`,detail:'auto'}});
+            if(m.content&&m.content!=='(lampiran media)')parts.push({type:'text',text:m.content});
+            return{role:'user',content:parts};
+          }
+          return{role:m.role,content:m.content};
+        });
+      }
       const pText=prompt||'(lampiran media)';
-      if(chatModel==='gemini'){const gModel=providerModel('gemini','chat');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/chat',body:{model:gModel,messages:toAlternating(history,pText,'model'),generationConfig:{temperature:0.7}},directRoute:geminiGenerateUrl(gModel),directBody:{model:gModel,contents:toGeminiContents(history,pText),generationConfig:{temperature:0.7}}});text=extractText(p)||'Gemini tidak mengembalikan respons.';}
-      else if(chatModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:toAlternating(history,pText,'assistant'),temperature:0.7},directRoute:openaiChatUrl()});text=extractText(p)||'OpenAI tidak mengembalikan respons.';}
-      else if(chatModel==='deepseek'){const dMsgs=toAlternating(history,pText,'assistant');const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:dMsgs,temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});text=extractText(p)||'DeepSeek tidak mengembalikan respons.';}
-      else{const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');const fMsgs=toAlternating(history,pText,'assistant');const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fMsgs,temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});text=extractText(p)||'Featherless tidak mengembalikan respons.';}
+      if(chatModel==='gemini'){
+        const gModel=providerModel('gemini','chat');
+        const gemContents=toGeminiContents(history,pText,attached);
+        const proxyMsgs=toMsgsWithImage(history,pText,'model',attached);
+        const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/chat',body:{model:gModel,messages:proxyMsgs,generationConfig:{temperature:0.7}},directRoute:geminiGenerateUrl(gModel),directBody:{model:gModel,contents:gemContents,generationConfig:{temperature:0.7}}});
+        text=extractText(p)||'Gemini tidak mengembalikan respons.';
+      }
+      else if(chatModel==='openai'){
+        const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:toMsgsWithImage(history,pText,'assistant',attached),temperature:0.7},directRoute:openaiChatUrl()});
+        text=extractText(p)||'OpenAI tidak mengembalikan respons.';
+      }
+      else if(chatModel==='deepseek'){
+        const dMsgs=toAlternating(history,pText,'assistant');
+        const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:dMsgs,temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});
+        text=extractText(p)||'DeepSeek tidak mengembalikan respons.';
+      }
+      else{
+        const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');
+        const fMsgs=toMsgsWithImage(history,pText,'assistant',attached);
+        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fMsgs,temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});
+        text=extractText(p)||'Featherless tidak mengembalikan respons.';
+      }
       setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}].slice(-MAX_HISTORY));
     }catch(err){setChatFeed(prev=>[...prev,{role:'assistant',model:'error',text:err&&err.message?err.message:'Terjadi kesalahan.'}].slice(-MAX_HISTORY));}
     finally{setComposerBusy('');}
