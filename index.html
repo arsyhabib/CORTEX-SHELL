@@ -2031,14 +2031,10 @@
     width: 100%;
     max-width: 100%;
     overflow-x: clip;
-    background: #060818;
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
   }
   .cortex-library-root {
     height: 100svh !important;
-    height: 100dvh !important;
-    min-height: -webkit-fill-available !important;
+    min-height: 100svh !important;
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: clip !important;
@@ -2178,6 +2174,7 @@
   .cortex-motion-page,
   [data-screen-label] > .hide-scrollbar {
     padding-top: 16px !important;
+    padding-bottom: calc(188px + env(safe-area-inset-bottom)) !important;
   }
   .cortex-motion-card {
     border-radius: 18px !important;
@@ -15879,7 +15876,7 @@ function CortexLibraryShell() {
     style:{
       width:'100vw',
       height:'100dvh',
-      minHeight:'-webkit-fill-available',
+      minHeight:'100vh',
       background:theme.colors.bg,
       color:theme.colors.text,
       overflow:'hidden',
