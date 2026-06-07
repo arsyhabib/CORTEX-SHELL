@@ -11037,6 +11037,9 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   const [ttsText, setTtsText] = React.useState(function(){return lsGet('cx_tts_text','');});
   const [ttsHistory, setTtsHistory] = React.useState(function(){return lsGet('cx_tts_history',[]);});
   const [ttsBusy, setTtsBusy] = React.useState(false);
+  const [ttsProvider, setTtsProvider] = React.useState(function(){return lsGet('cx_tts_provider','gemini');});
+  const [ttsVoice, setTtsVoice] = React.useState(function(){return lsGet('cx_tts_voice','Kore');});
+  const [videoGenModel, setVideoGenModel] = React.useState(function(){return lsGet('cx_video_gen_model','veo');});
   const [msgActions, setMsgActions] = React.useState(null);
   const [editState, setEditState] = React.useState(null);
   const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'Belum ada proxy yang dicek.', health:null });
@@ -11098,6 +11101,9 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   React.useEffect(function(){lsSet('cx_image_results',imageResults);},[imageResults]);
   React.useEffect(function(){lsSet('cx_tts_text',ttsText);},[ttsText]);
   React.useEffect(function(){lsSet('cx_tts_history',ttsHistory);},[ttsHistory]);
+  React.useEffect(function(){lsSet('cx_tts_provider',ttsProvider);},[ttsProvider]);
+  React.useEffect(function(){lsSet('cx_tts_voice',ttsVoice);},[ttsVoice]);
+  React.useEffect(function(){lsSet('cx_video_gen_model',videoGenModel);},[videoGenModel]);
   React.useEffect(function(){lsSet('cx_stt_history',sttHistory);},[sttHistory]);
   React.useEffect(function(){lsSet('cx_sessions',chatSessions);},[chatSessions]);
   React.useEffect(function(){lsSet('cx_active_id',activeChatId);},[activeChatId]);
@@ -11132,6 +11138,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   function featherlessChatUrl(){return'https://api.featherless.ai/v1/chat/completions';}
   function openaiChatUrl(){return'https://api.openai.com/v1/chat/completions';}
   function openaiImageUrl(){return'https://api.openai.com/v1/images/generations';}
+  function openaiTtsUrl(){return'https://api.openai.com/v1/audio/speech';}
+  function openaiVideoUrl(){return'https://api.openai.com/v1/video/generations';}
 
   async function cortexRequest({provider,route,body,directRoute,directBody,signal}){
     const sig=signal?{signal}:{};
@@ -11261,13 +11269,21 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     {id:'featherless-12b',label:'Gemma 3 12B',shortLabel:'Gemma 12B',provider:'Featherless',color:'#c084fc',ready:featherlessReady},
   ];
   const imageModels=[
-    {id:'gemini',label:'Gemini Flash Image',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
-    {id:'openai',label:'GPT Image 2',sub:'OpenAI Image',color:'#22c55e',bgGrad:'linear-gradient(135deg,#22c55e,#16a34a)'},
-    {id:'video',label:'Veo 3.1 Fast',sub:'Video Gen',color:'#a855f7',bgGrad:'linear-gradient(135deg,#a855f7,#6366f1)'},
+    {id:'gemini',label:'Gemini 3.1 Flash',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
+    {id:'openai-img1',label:'GPT Image 1',sub:'OpenAI gpt-image-1',color:'#22c55e',bgGrad:'linear-gradient(135deg,#22c55e,#16a34a)'},
+    {id:'openai-img2',label:'GPT Image 2',sub:'OpenAI gpt-image-2',color:'#34d399',bgGrad:'linear-gradient(135deg,#34d399,#059669)'},
+    {id:'video',label:'Video Gen',sub:'Veo / Sora',color:'#a855f7',bgGrad:'linear-gradient(135deg,#a855f7,#6366f1)'},
     {id:'featherless-vision',label:'Gemma Vision',sub:'Visual Q&A',color:'#c084fc',bgGrad:'linear-gradient(135deg,#c084fc,#a855f7)'},
   ];
+  const videoModels=[
+    {id:'veo',label:'Veo 3.1 Fast',sub:'Gemini · Google',color:'#06d6a0'},
+    {id:'sora',label:'Sora 2',sub:'OpenAI · Video',color:'#22c55e'},
+  ];
+  const geminiTtsVoices=['Aoede','Charon','Fenrir','Kore','Puck','Zephyr','Leda','Orus','Elara'];
+  const openaiTtsVoices=['alloy','ash','ballad','coral','echo','fable','nova','onyx','sage','shimmer'];
   const activeChatModel=chatModels.find(m=>m.id===chatModel)||chatModels[0];
   const activeImageModel=imageModels.find(m=>m.id===imageModel)||imageModels[0];
+  const activeVideoModel=videoModels.find(m=>m.id===videoGenModel)||videoModels[0];
 
   async function runChat(){
     const prompt=String(chatPrompt||'').trim();if(!prompt&&!uploadedFile)return;
@@ -11448,46 +11464,72 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     setImageBusy(true);
     try{
       if(imageModel==='video'){
-        const vModel=providerModel('gemini','video');
-        const opTemp=`pending-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
         const videoPrompt=reference
           ? `${promptText}\n\nGunakan referensi gambar terlampir sebagai acuan gaya, framing, dan subjek visual.`
           : promptText;
-        setImageResults(prev=>[{kind:'video-op',opName:opTemp,ts:Date.now(),aspect:videoAspectRatio,duration:videoDuration,pending:true},...prev].slice(0,10));
-        setVideoOps(function(prev){
-          return Object.assign({},prev,{[opTemp]:{status:'requesting',done:false,videoUrl:null,error:null,startTime:Date.now(),elapsed:0,prompt:videoPrompt}});
-        });
-        const p=await cortexRequest({
-          provider:'gemini',route:'/providers/gemini/video/generate',
-          body:{model:vModel,instances:[{prompt:videoPrompt}],parameters:{aspectRatio:videoAspectRatio,sampleCount:1}},
-          directRoute:geminiVideoGenerateUrl(vModel),
-          directBody:{model:vModel,instances:[{prompt:videoPrompt}],parameters:{aspectRatio:videoAspectRatio,sampleCount:1}},
-        });
-        const opName=p&&p.name?p.name:null;
-        if(opName){
-          setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{opName,pending:false}):item;}).slice(0,10));
-          setVideoOps(function(prev){
-            const draft=prev[opTemp]||{};
-            const next=Object.assign({},prev);
-            delete next[opTemp];
-            next[opName]=Object.assign({},draft,{status:'generating',done:false,videoUrl:null,error:null,startTime:draft.startTime||Date.now(),elapsed:0,prompt:videoPrompt});
-            return next;
-          });
-          startVideoPolling(opName);
+        if(videoGenModel==='sora'){
+          // Sora 2 via OpenAI video API
+          const opTemp=`sora-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+          setImageResults(prev=>[{kind:'video-op',opName:opTemp,ts:Date.now(),aspect:videoAspectRatio,duration:videoDuration,pending:true,provider:'sora'},...prev].slice(0,10));
+          setVideoOps(function(prev){return Object.assign({},prev,{[opTemp]:{status:'requesting',done:false,videoUrl:null,error:null,startTime:Date.now(),elapsed:0,prompt:videoPrompt,provider:'sora'}});});
+          try{
+            const p=await cortexRequest({
+              provider:'openai',route:'/providers/openai/video/generate',
+              body:{model:'sora',prompt:videoPrompt,width:1280,height:720,n_seconds:5,n_variants:1},
+              directRoute:openaiVideoUrl(),
+              directBody:{model:'sora',prompt:videoPrompt,width:1280,height:720,n_seconds:5,n_variants:1},
+            });
+            // Sora may return job_id or immediate video URL
+            const soraId=(p&&(p.id||p.job_id))||null;
+            const directUrl=(p&&p.data&&p.data[0]&&(p.data[0].url||p.data[0].video_url))||(p&&p.url)||null;
+            if(directUrl){
+              setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{opName:opTemp,pending:false}):item;}).slice(0,10));
+              setVideoOps(function(prev){return Object.assign({},prev,{[opTemp]:{status:'done',done:true,videoUrl:directUrl,videoDataUrl:null,error:null,startTime:prev[opTemp]&&prev[opTemp].startTime,elapsed:Date.now()-((prev[opTemp]&&prev[opTemp].startTime)||Date.now()),provider:'sora'}});});
+            }else if(soraId){
+              const opName=`sora/${soraId}`;
+              setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{opName,pending:false}):item;}).slice(0,10));
+              setVideoOps(function(prev){const draft=prev[opTemp]||{};const next=Object.assign({},prev);delete next[opTemp];next[opName]=Object.assign({},draft,{status:'generating',done:false,videoUrl:null,error:null,provider:'sora'});return next;});
+              // TODO: polling for Sora job would go here
+              setVideoOps(function(prev){return Object.assign({},prev,{[`sora/${soraId}`]:Object.assign({},prev[`sora/${soraId}`]||{},{status:'error',done:true,error:'Sora job polling belum tersedia. Cek OpenAI dashboard.'})});});
+            }else{
+              setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{pending:false,error:'Sora tidak mengembalikan video.'}):item;}).slice(0,10));
+              setVideoOps(function(prev){return Object.assign({},prev,{[opTemp]:Object.assign({},prev[opTemp]||{},{status:'error',done:true,error:'Sora tidak mengembalikan video.'})});});
+            }
+          }catch(soraErr){
+            setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{pending:false,error:soraErr&&soraErr.message?soraErr.message:'Sora gagal.'}):item;}).slice(0,10));
+            setVideoOps(function(prev){return Object.assign({},prev,{[opTemp]:Object.assign({},prev[opTemp]||{},{status:'error',done:true,error:soraErr&&soraErr.message?soraErr.message:'Sora gagal.'})});});
+          }
         }else{
-          setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{pending:false,error:'Video generation gagal: tidak ada operation name.'}):item;}).slice(0,10));
-          setVideoOps(function(prev){
-            return Object.assign({},prev,{[opTemp]:Object.assign({},prev[opTemp]||{},{status:'error',done:true,videoUrl:null,error:'Video generation gagal: tidak ada operation name.',elapsed:Date.now()-((prev[opTemp]&&prev[opTemp].startTime)||Date.now())})});
+          // Veo 3.1 Fast via Gemini
+          const vModel=providerModel('gemini','video');
+          const opTemp=`pending-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+          setImageResults(prev=>[{kind:'video-op',opName:opTemp,ts:Date.now(),aspect:videoAspectRatio,duration:videoDuration,pending:true,provider:'veo'},...prev].slice(0,10));
+          setVideoOps(function(prev){return Object.assign({},prev,{[opTemp]:{status:'requesting',done:false,videoUrl:null,error:null,startTime:Date.now(),elapsed:0,prompt:videoPrompt,provider:'veo'}});});
+          const p=await cortexRequest({
+            provider:'gemini',route:'/providers/gemini/video/generate',
+            body:{model:vModel,instances:[{prompt:videoPrompt}],parameters:{aspectRatio:videoAspectRatio,sampleCount:1}},
+            directRoute:geminiVideoGenerateUrl(vModel),
+            directBody:{model:vModel,instances:[{prompt:videoPrompt}],parameters:{aspectRatio:videoAspectRatio,sampleCount:1}},
           });
+          const opName=p&&p.name?p.name:null;
+          if(opName){
+            setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{opName,pending:false}):item;}).slice(0,10));
+            setVideoOps(function(prev){const draft=prev[opTemp]||{};const next=Object.assign({},prev);delete next[opTemp];next[opName]=Object.assign({},draft,{status:'generating',done:false,videoUrl:null,error:null,startTime:draft.startTime||Date.now(),elapsed:0,prompt:videoPrompt,provider:'veo'});return next;});
+            startVideoPolling(opName);
+          }else{
+            setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{pending:false,error:'Video generation gagal: tidak ada operation name.'}):item;}).slice(0,10));
+            setVideoOps(function(prev){return Object.assign({},prev,{[opTemp]:Object.assign({},prev[opTemp]||{},{status:'error',done:true,videoUrl:null,error:'Video generation gagal: tidak ada operation name.',elapsed:Date.now()-((prev[opTemp]&&prev[opTemp].startTime)||Date.now())})});});
+          }
         }
       }
-      else if(imageModel==='openai'){
-        const oSize=imageQuality==='high'?'1024x1024':imageQuality==='medium'?'1024x1024':'1024x1024';
+      else if(imageModel==='openai-img1'||imageModel==='openai-img2'){
+        const oModel=imageModel==='openai-img1'?'gpt-image-1':'gpt-image-2';
+        const oSize='1024x1024';
         const oPrompt=reference
           ? `${promptText}\n\nGunakan gambar referensi terlampir sebagai style guide visual.`
           : promptText;
         const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',
-          body:{model:providerModel('openai','image'),prompt:oPrompt,quality:imageQuality,size:oSize},
+          body:{model:oModel,prompt:oPrompt,quality:imageQuality,size:oSize},
           directRoute:openaiImageUrl()});
         const data=extractGeneratedImageData(p);
         if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt:oPrompt,ts:Date.now()},...prev].slice(0,10));
@@ -11537,22 +11579,41 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     const text=String(ttsText||'').trim();if(!text)return;
     setTtsBusy(true);
     try{
-      const ttsModel=providerModel('gemini','tts');
-      const p=await cortexRequest({
-        provider:'gemini',route:'/providers/gemini/tts',
-        body:{model:ttsModel,text,voiceName:'Kore'},
-        directRoute:geminiGenerateUrl(ttsModel),
-        directBody:{model:ttsModel,contents:[{parts:[{text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Kore'}}}}},
-      });
-      const id=extractInlineData(p,'audio');
-      if(id){
-        // Gemini TTS returns raw PCM (audio/pcm;rate=24000) which browsers can't play
-        // Convert to WAV by adding proper RIFF/WAV header
-        const isPcm=id.mimeType.toLowerCase().includes('pcm')||id.mimeType.toLowerCase().includes('l16');
-        const src=isPcm?pcmToWavDataUrl(id.data,id.mimeType):('data:'+id.mimeType+';base64,'+id.data);
-        if(src)setTtsHistory(prev=>[{src,mimeType:'audio/wav',label:text.slice(0,60)+(text.length>60?'...':''),ts:Date.now()},...prev].slice(0,20));
-        else setTtsHistory(prev=>[{error:'Konversi audio gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
-      }else setTtsHistory(prev=>[{error:'TTS tidak mengembalikan data audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
+      if(ttsProvider==='openai'){
+        const voice=openaiTtsVoices.includes(ttsVoice)?ttsVoice:'alloy';
+        let src;
+        if(proxyBase){
+          const r=await fetch(`${proxyBase}/providers/openai/audio/speech`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'tts-1-hd',input:text,voice})});
+          if(!r.ok){const e=await r.json().catch(function(){return{};});throw new Error((e.error&&e.error.message)||`HTTP ${r.status}`);}
+          const blob=await r.blob();
+          src=await new Promise(function(res,rej){const rd=new FileReader();rd.onloadend=function(){res(rd.result);};rd.onerror=rej;rd.readAsDataURL(blob);});
+        }else{
+          const key=providerKey('openai');if(!key)throw new Error('OpenAI API key belum diisi.');
+          const r=await fetch(openaiTtsUrl(),{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'tts-1-hd',input:text,voice})});
+          if(!r.ok){const e=await r.json().catch(function(){return{};});throw new Error((e.error&&e.error.message)||`HTTP ${r.status}`);}
+          const blob=await r.blob();
+          src=await new Promise(function(res,rej){const rd=new FileReader();rd.onloadend=function(){res(rd.result);};rd.onerror=rej;rd.readAsDataURL(blob);});
+        }
+        if(src)setTtsHistory(prev=>[{src,mimeType:'audio/mpeg',label:text.slice(0,60)+(text.length>60?'...':''),ts:Date.now(),provider:'openai',voice},...prev].slice(0,20));
+        else setTtsHistory(prev=>[{error:'TTS tidak menghasilkan audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
+      }else{
+        const voice=geminiTtsVoices.includes(ttsVoice)?ttsVoice:'Kore';
+        const ttsModel=providerModel('gemini','tts');
+        const p=await cortexRequest({
+          provider:'gemini',route:'/providers/gemini/tts',
+          body:{model:ttsModel,text,voiceName:voice},
+          directRoute:geminiGenerateUrl(ttsModel),
+          directBody:{model:ttsModel,contents:[{parts:[{text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:voice}}}}},
+        });
+        const id=extractInlineData(p,'audio');
+        if(id){
+          // Gemini TTS returns raw PCM which browsers can't play — convert to WAV
+          const isPcm=id.mimeType.toLowerCase().includes('pcm')||id.mimeType.toLowerCase().includes('l16');
+          const src=isPcm?pcmToWavDataUrl(id.data,id.mimeType):('data:'+id.mimeType+';base64,'+id.data);
+          if(src)setTtsHistory(prev=>[{src,mimeType:'audio/wav',label:text.slice(0,60)+(text.length>60?'...':''),ts:Date.now(),provider:'gemini',voice},...prev].slice(0,20));
+          else setTtsHistory(prev=>[{error:'Konversi audio gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
+        }else setTtsHistory(prev=>[{error:'TTS tidak mengembalikan data audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
+      }
     }catch(err){setTtsHistory(prev=>[{error:err&&err.message?err.message:'TTS gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
     finally{setTtsBusy(false);}
   }
@@ -12382,29 +12443,52 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       ),
 
       // Model selector grid
-      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))',gap:8}},
         imageModels.map(function(m){
           const active=imageModel===m.id;
           return React.createElement('button',{
-            key:m.id,onClick:()=>setImageModel(m.id),
+            key:m.id,onClick:function(){setImageModel(m.id);},
             style:{
-              display:'flex',alignItems:'center',gap:10,padding:'12px 14px',
-              borderRadius:18,border:`1.5px solid ${active?m.color:DL.glassBorder}`,
+              display:'flex',alignItems:'center',gap:8,padding:'10px 12px',
+              borderRadius:16,border:`1.5px solid ${active?m.color:DL.glassBorder}`,
               background:active?`${m.color}18`:'rgba(255,255,255,0.04)',
               color:active?m.color:DL.sub,cursor:'pointer',outline:'none',
               transition:'all 0.3s cubic-bezier(0.16,1,0.3,1)',
               boxShadow:active?`0 0 22px ${m.color}28`:'none',
-              animation:active?'bubbly-breathe 4s ease-in-out infinite':'none',
             },
           },
-            m.id==='video'?React.createElement(VideoIconSVG,{color:m.color}):React.createElement(ImageSparkSVG,{color:m.color}),
+            m.id==='video'?React.createElement(VideoIconSVG,{color:m.color,size:16}):React.createElement(ImageSparkSVG,{color:m.color,size:16}),
             React.createElement('div',{style:{textAlign:'left',flex:1,minWidth:0}},
-              React.createElement('div',{style:{fontSize:11,fontWeight:800,lineHeight:1.2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.label),
-              React.createElement('div',{style:{fontSize:9,opacity:0.65}},m.sub),
+              React.createElement('div',{style:{fontSize:10,fontWeight:800,lineHeight:1.2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.label),
+              React.createElement('div',{style:{fontSize:8,opacity:0.6}},m.sub),
             ),
-            active&&React.createElement('div',{style:{width:7,height:7,borderRadius:'50%',background:m.color,flexShrink:0,boxShadow:`0 0 10px ${m.color}`}}),
+            active&&React.createElement('div',{style:{width:6,height:6,borderRadius:'50%',background:m.color,flexShrink:0,boxShadow:`0 0 8px ${m.color}`}}),
           );
         }),
+      ),
+
+      // Video sub-model selector (shown when Video Gen is active)
+      imageModel==='video'&&React.createElement('div',{style:{padding:14,borderRadius:18,background:'rgba(168,85,247,0.06)',border:'1px solid rgba(168,85,247,0.2)'}},
+        React.createElement('div',{style:{fontSize:9,fontWeight:800,color:'rgba(168,85,247,0.7)',letterSpacing:0.5,textTransform:'uppercase',marginBottom:8}},'Video Engine'),
+        React.createElement('div',{style:{display:'flex',gap:6}},
+          videoModels.map(function(vm){
+            const vActive=videoGenModel===vm.id;
+            return React.createElement('button',{
+              key:vm.id,onClick:function(){setVideoGenModel(vm.id);},
+              style:{
+                flex:1,padding:'10px 8px',borderRadius:12,border:`1.5px solid ${vActive?vm.color:DL.glassBorder}`,
+                background:vActive?`${vm.color}18`:'rgba(255,255,255,0.03)',
+                color:vActive?vm.color:DL.sub,cursor:'pointer',outline:'none',
+                transition:'all 0.25s ease',display:'flex',flexDirection:'column',alignItems:'center',gap:4,
+                boxShadow:vActive?`0 0 18px ${vm.color}28`:'none',
+              },
+            },
+              React.createElement(VideoIconSVG,{color:vActive?vm.color:'rgba(255,255,255,0.3)',size:18}),
+              React.createElement('div',{style:{fontSize:10,fontWeight:800}},vm.label),
+              React.createElement('div',{style:{fontSize:8,opacity:0.6}},vm.sub),
+            );
+          }),
+        ),
       ),
 
       // Reference image
@@ -12650,30 +12734,59 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       // Hero: Mic + EQ
       React.createElement('div',{
         style:{
-          padding:'24px 20px',borderRadius:26,textAlign:'center',
-          background:`linear-gradient(160deg,${DL.teal}16,${DL.accent}0c,rgba(0,0,0,0))`,
-          border:`1px solid ${DL.teal}35`,
+          padding:'20px',borderRadius:26,textAlign:'center',
+          background:`linear-gradient(160deg,${ttsProvider==='openai'?'#22c55e':DL.teal}16,${DL.accent}0c,rgba(0,0,0,0))`,
+          border:`1px solid ${ttsProvider==='openai'?'#22c55e':DL.teal}35`,
           position:'relative',overflow:'hidden',
         }
       },
-        React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:160,height:160,borderRadius:'50%',background:`radial-gradient(circle,${DL.teal}10,transparent 65%)`,pointerEvents:'none'}}),
-        React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',gap:20,marginBottom:14}},
-          React.createElement(MicSVG,{active:ttsBusy,color:DL.teal,size:44}),
+        React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:160,height:160,borderRadius:'50%',background:`radial-gradient(circle,${ttsProvider==='openai'?'#22c55e':DL.teal}10,transparent 65%)`,pointerEvents:'none'}}),
+        React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',gap:20,marginBottom:10}},
+          React.createElement(MicSVG,{active:ttsBusy,color:ttsProvider==='openai'?'#22c55e':DL.teal,size:40}),
           React.createElement('div',{style:{textAlign:'left'}},
             React.createElement('div',{style:{fontSize:18,fontWeight:900,color:DL.text,lineHeight:1.1}},'Text to Speech'),
-            React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:3}},'Gemini 2.5 Flash TTS · Kore Voice'),
-            React.createElement('div',{style:{fontSize:10,color:DL.teal,marginTop:1,fontWeight:700}},ttsHistory.length>0?`✓ ${ttsHistory.length} audio tersimpan`:ttsBusy?'Generating...':'WAV · 24kHz'),
+            React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:3}},ttsProvider==='openai'?`TTS-1-HD · ${ttsVoice}`:`Gemini TTS · ${ttsVoice}`),
+            React.createElement('div',{style:{fontSize:10,color:ttsProvider==='openai'?'#22c55e':DL.teal,marginTop:1,fontWeight:700}},ttsHistory.length>0?`✓ ${ttsHistory.length} audio tersimpan`:ttsBusy?'Generating...':ttsProvider==='openai'?'MP3 · OpenAI':'WAV · 24kHz'),
           ),
         ),
         // Equalizer bars
         React.createElement('div',{style:{display:'flex',justifyContent:'center'}},
-          React.createElement(EqSVG,{active:ttsBusy||ttsHistory.length>0,color:DL.teal,bars:20}),
+          React.createElement(EqSVG,{active:ttsBusy||ttsHistory.length>0,color:ttsProvider==='openai'?'#22c55e':DL.teal,bars:20}),
+        ),
+      ),
+
+      // TTS Provider selector
+      React.createElement('div',{style:{padding:12,borderRadius:18,background:'rgba(255,255,255,0.03)',border:`1px solid ${DL.glassBorder}`}},
+        React.createElement('div',{style:{fontSize:9,fontWeight:800,color:DL.mute,letterSpacing:0.5,textTransform:'uppercase',marginBottom:8}},'TTS Engine'),
+        React.createElement('div',{style:{display:'flex',gap:6,marginBottom:10}},
+          [{id:'gemini',label:'Gemini TTS',sub:'2.5 Flash',color:DL.teal},{id:'openai',label:'OpenAI TTS',sub:'TTS-1-HD',color:'#22c55e'}].map(function(p){
+            const pa=ttsProvider===p.id;
+            return React.createElement('button',{
+              key:p.id,onClick:function(){setTtsProvider(p.id);setTtsVoice(p.id==='openai'?'alloy':'Kore');},
+              style:{flex:1,padding:'9px 8px',borderRadius:12,border:`1.5px solid ${pa?p.color:DL.glassBorder}`,background:pa?`${p.color}18`:'rgba(255,255,255,0.03)',color:pa?p.color:DL.sub,cursor:'pointer',outline:'none',transition:'all 0.25s ease',display:'flex',flexDirection:'column',alignItems:'center',gap:3,boxShadow:pa?`0 0 18px ${p.color}28`:'none'},
+            },
+              React.createElement('div',{style:{fontSize:11,fontWeight:800}},p.label),
+              React.createElement('div',{style:{fontSize:8,opacity:0.6}},p.sub),
+            );
+          }),
+        ),
+        // Voice selector
+        React.createElement('div',{style:{fontSize:9,fontWeight:800,color:DL.mute,letterSpacing:0.5,textTransform:'uppercase',marginBottom:6}},'Voice'),
+        React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:5}},
+          (ttsProvider==='openai'?openaiTtsVoices:geminiTtsVoices).map(function(v){
+            const va=ttsVoice===v;
+            const col=ttsProvider==='openai'?'#22c55e':DL.teal;
+            return React.createElement('button',{
+              key:v,onClick:function(){setTtsVoice(v);},
+              style:{padding:'5px 10px',borderRadius:9,border:`1px solid ${va?col:DL.glassBorder}`,background:va?`${col}20`:'rgba(255,255,255,0.03)',color:va?col:DL.sub,cursor:'pointer',outline:'none',fontSize:10,fontWeight:700,transition:'all 0.2s ease',boxShadow:va?`0 0 10px ${col}30`:'none'},
+            },v);
+          }),
         ),
       ),
 
       // Input + Generate
       React.createElement('div',{
-        style:{borderRadius:22,padding:14,background:'rgba(10,10,26,0.7)',border:`1px solid ${DL.teal}28`,backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}
+        style:{borderRadius:22,padding:14,background:'rgba(10,10,26,0.7)',border:`1px solid ${ttsProvider==='openai'?'#22c55e':DL.teal}28`,backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}
       },
         React.createElement('textarea',{
           value:ttsText,onChange:e=>setTtsText(e.target.value),
@@ -12690,11 +12803,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             className:'cortex-motion-press',
             style:{
               padding:'12px 22px',borderRadius:14,border:'none',
-              background:ttsBusy?'rgba(255,255,255,0.06)':`linear-gradient(135deg,${DL.teal},${DL.accent})`,
+              background:ttsBusy?'rgba(255,255,255,0.06)':ttsProvider==='openai'?`linear-gradient(135deg,#22c55e,#16a34a)`:`linear-gradient(135deg,${DL.teal},${DL.accent})`,
               color:ttsBusy?DL.mute:'#fff',fontSize:13,fontWeight:800,
               cursor:(ttsBusy||!ttsText.trim())?'not-allowed':'pointer',
               transition:'all 0.3s ease',
-              boxShadow:ttsBusy?'none':`0 8px 22px ${DL.teal}44`,
+              boxShadow:ttsBusy?'none':ttsProvider==='openai'?'0 8px 22px #22c55e44':`0 8px 22px ${DL.teal}44`,
               animation:ttsBusy?'cortex-ai-mic-pulse 1s ease-in-out infinite':'none',
               display:'flex',alignItems:'center',gap:7,flexShrink:0,
               position:'relative',overflow:'hidden',
