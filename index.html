@@ -10298,26 +10298,42 @@ function PageAIWorkspace({ onNavigate }) {
         });
       }
       const pText=prompt||'(lampiran media)';
+      const sysPrompts={
+        gemini:'Kamu adalah Gemini, AI buatan Google, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
+        openai:'Kamu adalah GPT-4.1 Nano, AI buatan OpenAI, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
+        deepseek:'Kamu adalah DeepSeek AI, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
+        featherless:'Kamu adalah Gemma 3 4B, model open-source buatan Google yang berjalan via Featherless AI di CORTEX AI Workspace. Kamu BUKAN Gemini. Jawab dalam bahasa yang sama dengan pesan pengguna.',
+        'featherless-12b':'Kamu adalah Gemma 3 12B, model open-source buatan Google yang berjalan via Featherless AI di CORTEX AI Workspace. Kamu BUKAN Gemini. Jawab dalam bahasa yang sama dengan pesan pengguna.',
+      };
+      const sysTxt=sysPrompts[chatModel]||'';
+      function withSysMsg(msgs,aiRole){return sysTxt?[{role:'user',content:sysTxt},{role:aiRole,content:'Siap, saya mengerti.'}, ...msgs]:msgs;}
       if(chatModel==='gemini'){
         const gModel=providerModel('gemini','chat');
         const gemContents=toGeminiContents(history,pText,attached);
         const proxyMsgs=toMsgsWithImage(history,pText,'model',attached);
-        const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/chat',body:{model:gModel,messages:proxyMsgs,generationConfig:{temperature:0.7}},directRoute:geminiGenerateUrl(gModel),directBody:{model:gModel,contents:gemContents,generationConfig:{temperature:0.7}}});
+        const p=await cortexRequest({
+          provider:'gemini',route:'/providers/gemini/chat',
+          body:{model:gModel,messages:proxyMsgs,generationConfig:{temperature:0.7}},
+          directRoute:geminiGenerateUrl(gModel),
+          directBody:{model:gModel,systemInstruction:{parts:[{text:sysTxt}]},contents:gemContents,generationConfig:{temperature:0.7}},
+        });
         text=extractText(p)||'Gemini tidak mengembalikan respons.';
       }
       else if(chatModel==='openai'){
-        const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:toMsgsWithImage(history,pText,'assistant',attached),temperature:0.7},directRoute:openaiChatUrl()});
+        const oMsgs=toMsgsWithImage(history,pText,'assistant',attached);
+        const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...oMsgs]:oMsgs,temperature:0.7},directRoute:openaiChatUrl()});
         text=extractText(p)||'OpenAI tidak mengembalikan respons.';
       }
       else if(chatModel==='deepseek'){
         const dMsgs=toAlternating(history,pText,'assistant');
-        const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:dMsgs,temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});
+        const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...dMsgs]:dMsgs,temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});
         text=extractText(p)||'DeepSeek tidak mengembalikan respons.';
       }
       else{
         const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');
         const fMsgs=toMsgsWithImage(history,pText,'assistant',attached);
-        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fMsgs,temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});
+        const fSys=sysPrompts[chatModel]||'';
+        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fSys?[{role:'system',content:fSys},...fMsgs]:fMsgs,temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});
         text=extractText(p)||'Featherless tidak mengembalikan respons.';
       }
       setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}].slice(-MAX_HISTORY));
