@@ -1198,6 +1198,32 @@
 .cortex-page-glyph polygon {
   vector-effect: non-scaling-stroke;
 }
+
+.cortex-luxe-icon {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  line-height:0;
+}
+
+.cortex-luxe-icon svg {
+  display:block;
+  overflow:visible;
+  filter:drop-shadow(0 4px 14px rgba(104, 78, 255, 0.18));
+}
+
+.cortex-button-icon-shell {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:18px;
+  height:18px;
+}
+
+.cortex-button-label:empty {
+  display:none;
+}
 @keyframes cortex-page-glyph-float {
   0%, 100% { transform: translate3d(0,0,0) rotate(0deg) scale(1); }
   50% { transform: translate3d(0,-1px,0) rotate(2deg) scale(1.03); }
@@ -4441,6 +4467,173 @@ function B1Progress({ value = 0, h = 5, color }) {
   );
 }
 
+function CortexLuxeIcon({ name = 'spark', size = 18, color = 'currentColor', accent = null }) {
+  const uid = React.useId ? React.useId().replace(/[:]/g, '') : `ico${Math.random().toString(36).slice(2, 8)}`;
+  const accentColor = accent || DL.gold || '#c4b5fd';
+  const stroke = {
+    fill:'none',
+    stroke:color,
+    strokeWidth:1.8,
+    strokeLinecap:'round',
+    strokeLinejoin:'round',
+  };
+  const fillGradId = `cortex-luxe-fill-${name}-${uid}`;
+  const glowGradId = `cortex-luxe-glow-${name}-${uid}`;
+  const sharedOrb = React.createElement(React.Fragment, null,
+    React.createElement('circle', { cx:'12', cy:'12', r:'10', fill:`url(#${fillGradId})`, opacity:'0.16' }),
+    React.createElement('circle', { cx:'12', cy:'12', r:'7.6', fill:`url(#${glowGradId})`, opacity:'0.14' })
+  );
+  const icons = {
+    spark: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M12 5.2l1.4 4.1 4.1 1.4-4.1 1.4-1.4 4.1-1.4-4.1-4.1-1.4 4.1-1.4L12 5.2z', ...stroke }),
+      React.createElement('circle', { cx:'17.2', cy:'7', r:'1.1', fill:accentColor },
+        React.createElement('animate', { attributeName:'opacity', values:'0.35;1;0.35', dur:'1.6s', repeatCount:'indefinite' })
+      )
+    ),
+    sidebar: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('rect', { x:'5.5', y:'5.5', width:'13', height:'13', rx:'4.2', ...stroke }),
+      React.createElement('path', { d:'M9 9h6M9 12h8M9 15h5', ...stroke }),
+      React.createElement('circle', { cx:'16.8', cy:'15.6', r:'1.4', fill:accentColor, opacity:'0.92' },
+        React.createElement('animate', { attributeName:'r', values:'1.1;1.8;1.1', dur:'2.4s', repeatCount:'indefinite' })
+      )
+    ),
+    search: React.createElement(React.Fragment, null,
+      React.createElement('circle', { cx:'10.5', cy:'10.5', r:'4.8', ...stroke }),
+      React.createElement('path', { d:'M14.2 14.2l4.3 4.3', ...stroke }),
+      React.createElement('path', { d:'M10.5 7.9a2.8 2.8 0 012.5 1.5', ...stroke, opacity:'0.52' })
+    ),
+    library: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M7.5 6.8h7.2a2 2 0 012 2v8.4a1.8 1.8 0 01-1.8 1.8H8.8a2.3 2.3 0 01-2.3-2.3V8.9a2.1 2.1 0 012.1-2.1z', ...stroke }),
+      React.createElement('path', { d:'M9.1 9.4h4.8M9.1 12.1h5.8M9.1 14.8h4.1', ...stroke }),
+      React.createElement('path', { d:'M15.8 7.7v7.8', ...stroke, opacity:'0.72' })
+    ),
+    quiz: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M8 6.8h5.2l2.8 2.8v7.6a1.8 1.8 0 01-1.8 1.8H8.7a1.8 1.8 0 01-1.8-1.8V8.6A1.8 1.8 0 018.7 6.8z', ...stroke }),
+      React.createElement('path', { d:'M13.2 6.8v2.4a1 1 0 001 1h2.4', ...stroke }),
+      React.createElement('path', { d:'M9.5 12.2l1.7 1.7 3.7-3.8', ...stroke }),
+      React.createElement('circle', { cx:'17.3', cy:'8.7', r:'1.2', fill:accentColor },
+        React.createElement('animate', { attributeName:'opacity', values:'0.45;1;0.45', dur:'1.8s', repeatCount:'indefinite' })
+      )
+    ),
+    flashcards: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('rect', { x:'6.4', y:'8.2', width:'8.7', height:'9.2', rx:'2.4', ...stroke }),
+      React.createElement('rect', { x:'9.2', y:'6.2', width:'8.4', height:'9.2', rx:'2.4', ...stroke, opacity:'0.88' }),
+      React.createElement('path', { d:'M11.4 9.6h3.9M11.4 12.1h2.7', ...stroke })
+    ),
+    visuals: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('rect', { x:'5.8', y:'6.5', width:'12.8', height:'11.5', rx:'3.2', ...stroke }),
+      React.createElement('path', { d:'M8.1 15l3.2-3.2 2.4 2.2 2.5-3.1 2 4.1', ...stroke }),
+      React.createElement('circle', { cx:'10.2', cy:'9.9', r:'1.4', fill:accentColor }),
+      React.createElement('circle', { cx:'16.9', cy:'8.5', r:'1.1', fill:color, opacity:'0.7' })
+    ),
+    ai: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('rect', { x:'7', y:'7', width:'10', height:'10', rx:'3.2', ...stroke }),
+      React.createElement('path', { d:'M9.8 10.1h4.4M9.8 13.1h4.4M12 7v-2.1M17 12h2M12 17v2.1M5 12H3', ...stroke }),
+      React.createElement('circle', { cx:'12', cy:'12', r:'1.6', fill:accentColor },
+        React.createElement('animate', { attributeName:'r', values:'1.2;2.1;1.2', dur:'2s', repeatCount:'indefinite' })
+      )
+    ),
+    settings: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('circle', { cx:'12', cy:'12', r:'2.8', ...stroke }),
+      React.createElement('path', { d:'M12 5.1v2.1M12 16.8v2.1M5.1 12h2.1M16.8 12h2.1M7.3 7.3l1.4 1.4M15.3 15.3l1.4 1.4M16.7 7.3l-1.4 1.4M8.7 15.3l-1.4 1.4', ...stroke })
+    ),
+    learn: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M7.2 8.2l4.8-2.1 4.8 2.1v7.2l-4.8 2.5-4.8-2.5V8.2z', ...stroke }),
+      React.createElement('path', { d:'M12 6.1v11.8M7.2 8.2l4.8 2.3 4.8-2.3', ...stroke })
+    ),
+    practice: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M7.1 8.3l3.3-3.3 6.4 6.4-3.3 3.3-6.4-6.4z', ...stroke }),
+      React.createElement('path', { d:'M13.4 6.6l1.6-1.6 3.1 3.1-1.6 1.6', ...stroke }),
+      React.createElement('path', { d:'M6 18l3.1-.8-.9-2.2-2.2-.9L6 18z', ...stroke })
+    ),
+    reference: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M8.1 6.6h7.4a2.3 2.3 0 012.3 2.3v8.9a1.7 1.7 0 01-1.7 1.7H9.8a2.5 2.5 0 01-2.5-2.5V8.5a1.9 1.9 0 011.9-1.9z', ...stroke }),
+      React.createElement('path', { d:'M9.4 10.1h6.5M9.4 12.9h4.8M9.4 15.6h5.7', ...stroke }),
+      React.createElement('path', { d:'M15.2 6.8c-.1 1.7.7 2.4 2.3 2.4', ...stroke, opacity:'0.7' })
+    ),
+    tools: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M14.7 6.6a3.4 3.4 0 00-4.9 4.2L6.6 14a1.7 1.7 0 102.4 2.4l3.2-3.2a3.4 3.4 0 004.2-4.9l-2 2-1.8-.2-.2-1.8 2-1.9z', ...stroke })
+    ),
+    insight: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M7.2 16V9.9M11.1 16V7.7M15 16v-4.1M18.1 18.3H5.9', ...stroke }),
+      React.createElement('circle', { cx:'11.1', cy:'7.7', r:'1.2', fill:accentColor }),
+      React.createElement('circle', { cx:'15', cy:'11.9', r:'1', fill:color, opacity:'0.74' })
+    ),
+    support: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M9.5 9.3a2.8 2.8 0 115 1.6c0 2-2.5 2.2-2.5 4', ...stroke }),
+      React.createElement('circle', { cx:'12', cy:'17', r:'1.1', fill:accentColor }),
+      React.createElement('path', { d:'M12 4.8a7.2 7.2 0 100 14.4 7.2 7.2 0 000-14.4z', ...stroke, opacity:'0.5' })
+    ),
+    whatsapp: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M12 5.4a6.1 6.1 0 00-5.2 9.4L6 18.6l3.9-.8a6.1 6.1 0 102.1-12.4z', ...stroke }),
+      React.createElement('path', { d:'M10.1 9.2c.3-.2.6-.1.8.2l.6 1c.1.2.1.4 0 .6l-.3.4c.4.9 1.1 1.7 2.1 2.1l.4-.3c.2-.1.4-.1.6 0l1 .6c.3.2.4.5.2.8l-.3.6c-.2.4-.7.6-1.1.5-3-.6-5.3-2.9-5.9-5.9-.1-.4.1-.9.5-1.1l.6-.3z', ...stroke })
+    ),
+    open: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M9 15l6-6M11 9h4v4', ...stroke }),
+      React.createElement('path', { d:'M8.3 8H6.8A1.8 1.8 0 005 9.8v7.4A1.8 1.8 0 006.8 19h7.4a1.8 1.8 0 001.8-1.8V15.7', ...stroke })
+    ),
+    home: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M6.4 11.1L12 6.7l5.6 4.4v6.7a1.5 1.5 0 01-1.5 1.5h-2.6v-4.1H10.5v4.1H7.9a1.5 1.5 0 01-1.5-1.5v-6.7z', ...stroke })
+    ),
+    studio: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('rect', { x:'6', y:'6.6', width:'12', height:'10.8', rx:'3.2', ...stroke }),
+      React.createElement('path', { d:'M9 10.1h6M9 13h4.5', ...stroke }),
+      React.createElement('circle', { cx:'16.8', cy:'8.4', r:'1.2', fill:accentColor })
+    ),
+    close: React.createElement(React.Fragment, null,
+      sharedOrb,
+      React.createElement('path', { d:'M8.2 8.2l7.6 7.6M15.8 8.2l-7.6 7.6', ...stroke })
+    ),
+  };
+  return React.createElement('span', { className:'cortex-luxe-icon', style:{ width:size, height:size } },
+    React.createElement('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none', xmlns:'http://www.w3.org/2000/svg', 'aria-hidden':'true' },
+      React.createElement('defs', null,
+        React.createElement('linearGradient', { id:fillGradId, x1:'4', y1:'4', x2:'20', y2:'20', gradientUnits:'userSpaceOnUse' },
+          React.createElement('stop', { offset:'0%', stopColor:color }),
+          React.createElement('stop', { offset:'100%', stopColor:accentColor })
+        ),
+        React.createElement('radialGradient', { id:glowGradId, cx:'0', cy:'0', r:'1', gradientUnits:'userSpaceOnUse', gradientTransform:'translate(9 8) rotate(46) scale(16.5)' },
+          React.createElement('stop', { offset:'0%', stopColor:'#ffffff', stopOpacity:'0.65' }),
+          React.createElement('stop', { offset:'100%', stopColor:accentColor, stopOpacity:'0' })
+        ),
+      ),
+      icons[name] || icons.spark || icons.search
+    )
+  );
+}
+
+function cortexRenderIcon(icon, options = {}) {
+  if (icon == null) return null;
+  if (React.isValidElement(icon)) return icon;
+  if (typeof icon === 'string') {
+    const shouldUseSvg = [
+      'spark', 'sidebar', 'search', 'library', 'quiz', 'flashcards', 'visuals',
+      'ai', 'settings', 'learn', 'practice', 'reference', 'tools', 'insight',
+      'support', 'whatsapp', 'open', 'home', 'studio', 'close'
+    ].includes(icon);
+    if (shouldUseSvg) return React.createElement(CortexLuxeIcon, { name:icon, ...options });
+  }
+  return React.createElement('span', { className:'cortex-button-icon-shell', 'aria-hidden':'true' }, icon);
+}
+
 /* ── Icon Circle ── */
 function B1Icon({ icon, size = 40, gradient, style }) {
   return React.createElement('div', { style:{
@@ -4450,7 +4643,7 @@ function B1Icon({ icon, size = 40, gradient, style }) {
     fontSize: size*0.44, flexShrink:0,
     boxShadow: `0 4px 14px ${DL.shadowColor}`,
     ...style,
-  }}, icon);
+  }}, cortexRenderIcon(icon, { size:Math.max(16, size * 0.54), color:DL.contrastText, accent:DL.gold }));
 }
 
 /* ── Section Title ── */
@@ -4600,6 +4793,7 @@ function CortexPageGlyph({ page, theme, variant = 0, compact = false }) {
 function B1Button({ label, icon, onClick, variant = 'primary', full, style, className }) {
   const [p, setP] = React.useState(false);
   const isPrimary = variant === 'primary';
+  const iconColor = isPrimary ? DL.contrastText : DL.text;
   return React.createElement('button', {
     type:'button',
     className:['b1-button', className].filter(Boolean).join(' '),
@@ -4631,7 +4825,10 @@ function B1Button({ label, icon, onClick, variant = 'primary', full, style, clas
       width: full ? '100%' : 'auto',
       ...style,
     }
-  }, icon, label);
+  },
+    cortexRenderIcon(icon, { size:18, color:iconColor, accent:DL.gold }),
+    React.createElement('span', { className:'cortex-button-label' }, label)
+  );
 }
 
 function CortexAtomPageButton({ page, title, sub, onClick, active = false, className, compact = false, style, theme, showKicker = true, ...rest }) {
@@ -4714,6 +4911,95 @@ const CORTEX_FAB_FEATURES = [
   { id:'lecture', title:'Lecture File', sub:'Dummy lecture rail', kicker:'Content', page:0, surfaceId:3 },
   { id:'help', title:'Help & Privacy', sub:'Support information', kicker:'Support', page:23 },
 ];
+
+const CORTEX_STUDIO_QUICK_ACTIONS = [
+  { id:'library', label:'Library', icon:'library', page:0 },
+  { id:'quiz', label:'Quiz', icon:'quiz', page:17 },
+  { id:'flashcards', label:'Flashcards', icon:'flashcards', page:18 },
+  { id:'visuals', label:'Visuals', icon:'visuals', page:12 },
+  { id:'ai', label:'AI Workspace', icon:'ai', page:20 },
+  { id:'settings', label:'Settings', icon:'settings', page:7 },
+];
+
+const CORTEX_STUDIO_DOCK_ITEMS = [
+  { id:'learn', label:'Belajar', icon:'learn', color:'#10b981', pages:[3,9,10,11] },
+  { id:'practice', label:'Latihan', icon:'practice', color:'#6366f1', pages:[17,18,15,16] },
+  { id:'reference', label:'Referensi', icon:'reference', color:'#a855f7', pages:[12,13,14,22] },
+  { id:'tools', label:'Alat', icon:'tools', color:'#f59e0b', pages:[6,7,20,21] },
+  { id:'insight', label:'Progres', icon:'insight', color:'#06b6d4', pages:[2,19,4,3] },
+  { id:'support', label:'Bantuan', icon:'support', color:'#ef4444', pages:[8,23] },
+];
+
+function CortexStudioDock({ compact, onNavigate, onSurfaceChange }) {
+  const [dockHover, setDockHover] = React.useState(null);
+  const [dockOpen, setDockOpen] = React.useState(null);
+  return React.createElement('div', { style:{ display:'flex', gap: compact ? 1 : 2, width:'100%', justifyContent:'center' }},
+    CORTEX_STUDIO_DOCK_ITEMS.map(function(item) {
+      const isHover = dockHover === item.id;
+      const isOpen = dockOpen === item.id;
+      const scale = isOpen ? 1.25 : (isHover ? 1.12 : 1);
+      return React.createElement('div', {
+        key:item.id,
+        style:{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center' },
+        onMouseEnter:function(){ setDockHover(item.id); },
+        onMouseLeave:function(){ setDockHover(null); },
+      },
+        isOpen && React.createElement('div', { style:{
+          position:'absolute', bottom:'calc(100% + 6px)', left:'50%', transform:'translateX(-50%)',
+          display:'flex', gap:3, padding:'5px 7px',
+          background:'rgba(12,12,28,0.92)', borderRadius:12,
+          border:'1px solid rgba(255,255,255,0.1)',
+          backdropFilter:'blur(12px)',
+          whiteSpace:'nowrap', zIndex:10,
+        }},
+          item.pages.map(function(pid) {
+            const surface = CORTEX_MAIN_SURFACES.find(function(entry){ return entry.id === pid; });
+            if (!surface) return null;
+            return React.createElement('button', {
+              key:pid,
+              type:'button',
+              onClick:function(){
+                if (typeof onSurfaceChange === 'function') onSurfaceChange(pid);
+                if (typeof onNavigate === 'function') onNavigate(pid);
+                setDockOpen(null);
+              },
+              className:'cortex-motion-press',
+              style:{
+                padding:'4px 7px', borderRadius:8, cursor:'pointer',
+                background:'rgba(255,255,255,0.05)', border:'none',
+                color:DL.text, fontSize:10, fontWeight:600, lineHeight:1.15,
+              }
+            }, String(surface.label).replace(/ .*/, ''));
+          })
+        ),
+        React.createElement('button', {
+          type:'button',
+          onClick:function(){ setDockOpen(isOpen ? null : item.id); },
+          className:'cortex-dock-item cortex-motion-press',
+          'data-active':String(isOpen),
+          style:{
+            width: compact ? 44 : 48, height: compact ? 44 : 48,
+            borderRadius:14, cursor:'pointer', border:'none',
+            background:isOpen ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
+            color:DL.text,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            transform:`scale(${scale})`,
+            transition:'transform 0.35s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease',
+            boxShadow:isOpen ? '0 0 20px ' + item.color + '44' : 'none',
+            position:'relative', zIndex:2,
+          }
+        }, React.createElement(CortexLuxeIcon, { name:item.icon, size:compact ? 19 : 21, color:'#ffffff', accent:item.color })),
+        React.createElement('div', { style:{
+          fontSize:8, fontWeight:700,
+          color:isHover ? DL.text : 'rgba(255,255,255,0.3)',
+          marginTop:3, textAlign:'center', lineHeight:1.1,
+          transition:'color 0.2s ease', whiteSpace:'nowrap',
+          maxWidth:48, overflow:'hidden', textOverflow:'ellipsis',
+        }}, item.label)
+      );
+    })
+  );
+}
 
 function CortexFabGridChip({ title, sub, kicker, active, onClick, accent, muted }) {
   return React.createElement('button', {
@@ -5489,7 +5775,7 @@ function B1SearchInput({ value, onChange, placeholder, autoFocus, style }) {
     backdropFilter:'blur(16px)', WebkitBackdropFilter:'blur(16px)',
     ...style,
   }, className:'b1-search-input'},
-    React.createElement('span', { style:{ fontSize:16, opacity:0.5 }}, '🔍'),
+    React.createElement(CortexLuxeIcon, { name:'search', size:18, color:DL.sub, accent:DL.accent }),
     React.createElement('input', {
       value, onChange: e => onChange(e.target.value),
       placeholder: placeholder || 'Cari...',
@@ -8357,13 +8643,13 @@ function PageImageCard({ onNavigate, visualManifest, visualManifestStatus, selec
           React.createElement('div', { style:{ display:'flex', flexDirection:'column', gap:8 }},
             React.createElement(B1Button, {
               label:'Open viewer',
-              icon:'↗',
+              icon:'open',
               full:true,
               onClick:()=>onNavigate(13),
             }),
             React.createElement(B1Button, {
               label:'Use as reference',
-              icon:'◎',
+              icon:'reference',
               full:true,
               variant:'ghost',
               onClick:()=>onSelectVisual(selectedAsset.id),
@@ -10694,15 +10980,16 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
   const compact = mode !== 'desktop';
   const allowFabDrag = mode === 'desktop';
   const [fabOpen, setFabOpen] = React.useState(false);
+  const lectureDomainsList = Array.isArray(contentIndex && contentIndex.lectureDomains) ? contentIndex.lectureDomains : [];
   // Progress summary data (from contentIndex for Page 19 preview)
   const cortexProgressStats = React.useMemo(() => {
-    const domains = Array.isArray(contentIndex && contentIndex.lectureDomains) ? contentIndex.lectureDomains : [];
+    const domains = lectureDomainsList;
     const examSets = Array.isArray(contentIndex && contentIndex.examSets) ? contentIndex.examSets : [];
     const lectureCount = domains.reduce((s, d) => s + Number(d.moduleCount || (Array.isArray(d.modules) ? d.modules.length : 0)), 0);
     const questionCount = examSets.reduce((s, e) => s + Number(e.questionCount || 0), 0);
     const visuals = Array.isArray(visualManifest && visualManifest.assets) ? visualManifest.assets.length : 0;
     return { lectureCount, examSetCount: examSets.length, questionCount, visualCount: visuals, domainCount: domains.length, loaded: contentIndexStatus === 'ready' };
-  }, [contentIndex, contentIndexStatus, visualManifest]);
+  }, [contentIndexStatus, lectureDomainsList, visualManifest]);
     const [fabPos, setFabPos] = React.useState(null);
   const [fabGroup, setFabGroup] = React.useState('Search');
   const [fabActiveHub, setFabActiveHub] = React.useState(null);
@@ -10848,6 +11135,12 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
   React.useEffect(() => {
     if (!allowFabDrag && fabPos) setFabPos(null);
   }, [allowFabDrag, fabPos]);
+
+  React.useEffect(() => {
+    if (!lectureDomainsList.length) return;
+    if (lectureDomainsList.some(domain => domain.id === fabGroup)) return;
+    setFabGroup(lectureDomainsList[0].id);
+  }, [fabGroup, lectureDomainsList]);
 
   return React.createElement('div', {
     'data-screen-label':'Studio-Main',
@@ -11061,7 +11354,7 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
         React.createElement('div', { style:{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:12 }},
           (!cortexProgressStats.loaded
             ? [{ id:'empty', label:'No content', count:0 }]
-            : (Array.isArray(contentIndex && contentIndex.lectureDomains) ? contentIndex.lectureDomains : [])
+            : lectureDomainsList
           ).map(function(domain) {
             if (domain.id === 'empty') {
               return React.createElement('div', { key:'empty', style:{ padding:'8px 10px', borderRadius:18, fontSize:10, color:DL.sub, fontStyle:'italic', background:'rgba(255,255,255,0.03)', border:'1px dashed rgba(255,255,255,0.1)' }}, 'Generate konten untuk mulai belajar');
@@ -11084,13 +11377,14 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
           })
         ),
         React.createElement('div', { style:{ fontSize:11, fontWeight:900, color:DL.mute, letterSpacing:1.1, textTransform:'uppercase', margin:'6px 0 8px' }},
-          cortexProgressStats.loaded ? String(fabGroup) + ' modules' : 'No modules loaded'
+          cortexProgressStats.loaded
+            ? String((lectureDomainsList.find(domain => domain.id === fabGroup) || lectureDomainsList[0] || {}).title || 'Modules').replace(/\.$/, '')
+            : 'No modules loaded'
         ),
         React.createElement('div', { style:{ display:'grid', gap:10, gridTemplateColumns:compact ? '1fr' : 'repeat(2, minmax(0,1fr))' }},
           (!cortexProgressStats.loaded ? [] : (function(){
-            const domains = Array.isArray(contentIndex && contentIndex.lectureDomains) ? contentIndex.lectureDomains : [];
-            const target = domains.find(function(d) { return d.id === fabGroup; });
-            const mods = target && Array.isArray(target.modules) ? target.modules : (domains.length > 0 && Array.isArray(domains[0].modules) ? domains[0].modules : []);
+            const target = lectureDomainsList.find(function(d) { return d.id === fabGroup; });
+            const mods = target && Array.isArray(target.modules) ? target.modules : (lectureDomainsList.length > 0 && Array.isArray(lectureDomainsList[0].modules) ? lectureDomainsList[0].modules : []);
             return mods;
           })()).map(function(mod) {
             return React.createElement('button', {
@@ -11125,25 +11419,18 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
         }},
           React.createElement('div', { style:{ color:DL.text, fontSize:13, fontWeight:900, marginBottom:8 }}, 'Quick Actions'),
           React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }},
-            [
-              { label:'Library', icon:'\U0001f4da', page:0 },
-              { label:'Quiz', icon:'\u270f\ufe0f', page:17 },
-              { label:'Flashcards', icon:'\U0001f4cf', page:18 },
-              { label:'Visuals', icon:'\U0001f5bc\ufe0f', page:12 },
-              { label:'AI Workspace', icon:'\U0001f916', page:20 },
-              { label:'Settings', icon:'\u2699\ufe0f', page:7 },
-            ].map(function(btn) {
+            CORTEX_STUDIO_QUICK_ACTIONS.map(function(btn) {
               return React.createElement('button', {
-                key:btn.label, type:'button',
+                key:btn.id, type:'button',
                 onClick:function(){ onNavigate && onNavigate(btn.page); },
                 className:'cortex-motion-press',
                 style:{
-                  padding:'8px 6px', borderRadius:12, cursor:'pointer', textAlign:'center',
+                  padding:'10px 8px', borderRadius:14, cursor:'pointer', textAlign:'center',
                   background:'rgba(255,255,255,0.04)', border:'1px solid ' + DL.glassBorder,
                   color:DL.text, transition:'all 0.15s ease',
                 }
               },
-                React.createElement('div', { style:{ fontSize:16, marginBottom:1 }}, btn.icon),
+                React.createElement('div', { style:{ display:'flex', justifyContent:'center', marginBottom:5 }}, React.createElement(CortexLuxeIcon, { name:btn.icon, size:18, color:'#ffffff', accent:currentTheme.colors.accent1 })),
                 React.createElement('div', { style:{ fontSize:9, fontWeight:700 }}, btn.label),
               );
             })
@@ -11162,86 +11449,7 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
         boxShadow:'0 4px 20px rgba(0,0,0,0.4)',
         minHeight: compact ? 56 : 64,
       }},
-        (function(){
-          var items = [
-            { id:'learn', label:'Belajar', icon:'\U0001f4da', color:'#10b981', pages:[3,9,10,11] },
-            { id:'practice', label:'Latihan', icon:'\u270f\ufe0f', color:'#6366f1', pages:[17,18,15,16] },
-            { id:'reference', label:'Referensi', icon:'\U0001f4cb', color:'#a855f7', pages:[12,13,14,22] },
-            { id:'tools', label:'Alat', icon:'\U0001f527', color:'#f59e0b', pages:[6,7,20,21] },
-            { id:'insight', label:'Progres', icon:'\U0001f4ca', color:'#06b6d4', pages:[2,19,4,3] },
-            { id:'support', label:'Bantuan', icon:'\u2753', color:'#ef4444', pages:[8,23] },
-          ];
-          var [dockHover, setDockHover] = React.useState(null);
-          var [dockOpen, setDockOpen] = React.useState(null);
-          
-          return React.createElement('div', { style:{ display:'flex', gap: compact ? 1 : 2, width:'100%', justifyContent:'center' }},
-            items.map(function(item) {
-              var isHover = dockHover === item.id;
-              var isOpen = dockOpen === item.id;
-              var s = isOpen ? 1.25 : (isHover ? 1.12 : 1);
-              
-              return React.createElement('div', {
-                key:item.id, style:{ position:'relative', display:'flex', flexDirection:'column', alignItems:'center' },
-                onMouseEnter:function(){ setDockHover(item.id); },
-                onMouseLeave:function(){ setDockHover(null); },
-              },
-                // Sub-items popup (shown when open)
-                isOpen && React.createElement('div', { style:{
-                  position:'absolute', bottom:'calc(100% + 6px)', left:'50%', transform:'translateX(-50%)',
-                  display:'flex', gap:3, padding:'5px 7px',
-                  background:'rgba(12,12,28,0.92)', borderRadius:12,
-                  border:'1px solid rgba(255,255,255,0.1)',
-                  backdropFilter:'blur(12px)',
-                  whiteSpace:'nowrap', zIndex:10,
-                }},
-                  item.pages.map(function(pid) {
-                    var surf = CORTEX_MAIN_SURFACES.find(function(x){ return x.id === pid; });
-                    if (!surf) return null;
-                    return React.createElement('button', {
-                      key:pid, type:'button',
-                      onClick:function(){
-                        if (typeof onSurfaceChange === 'function') onSurfaceChange(pid);
-                        if (typeof onNavigate === 'function') onNavigate(pid);
-                        setDockOpen(null);
-                      },
-                      className:'cortex-motion-press',
-                      style:{
-                        padding:'4px 7px', borderRadius:8, cursor:'pointer',
-                        background:'rgba(255,255,255,0.05)', border:'none',
-                        color:DL.text, fontSize:10, fontWeight:600, lineHeight:1.15,
-                      }
-                    }, String(surf.label).replace(/ .*/,''));
-                  })
-                ),
-                // Icon button
-                React.createElement('button', {
-                  type:'button',
-                  onClick:function(){ setDockOpen(isOpen ? null : item.id); },
-                  className:'cortex-dock-item cortex-motion-press',
-                  'data-active':String(isOpen),
-                  style:{
-                    width: compact ? 44 : 48, height: compact ? 44 : 48,
-                    borderRadius:14, cursor:'pointer', border:'none',
-                    background:isOpen ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
-                    color:DL.text, fontSize: compact ? 18 : 20,
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    transform:'scale(' + String(s) + ')',
-                    transition:'transform 0.35s cubic-bezier(0.34,1.56,0.64,1), background 0.2s ease',
-                    boxShadow:isOpen ? '0 0 20px ' + item.color + '44' : 'none',
-                    position:'relative', zIndex:2,
-                  }
-                }, item.icon),
-                React.createElement('div', { style:{
-                  fontSize:8, fontWeight:700,
-                  color:isHover ? DL.text : 'rgba(255,255,255,0.3)',
-                  marginTop:3, textAlign:'center', lineHeight:1.1,
-                  transition:'color 0.2s ease', whiteSpace:'nowrap',
-                  maxWidth:48, overflow:'hidden', textOverflow:'ellipsis',
-                }}, item.label),
-              );
-            })
-          );
-        })(),
+        React.createElement(CortexStudioDock, { compact, onNavigate, onSurfaceChange }),
       ),
     ),
 showGlobalFab && React.createElement('div', { style:{
@@ -11445,7 +11653,7 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
         React.createElement('div', { style:{ color:DL.text, fontSize:11, fontWeight:900, letterSpacing:1.2, textTransform:'uppercase', marginBottom:10 }}, 'Workspace'),
         React.createElement(B1Button, {
           label:'Main Studio',
-          icon:'⌁',
+          icon:'studio',
           onClick:()=>onNavigate(0),
           className:'cortex-motion-press',
           full:true,
@@ -11648,7 +11856,7 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
           ),
           React.createElement(B1Button, {
             label:'Chat WhatsApp',
-            icon:'↗',
+            icon:'whatsapp',
             onClick:()=>window.open(CORTEX_DEVELOPER_WA_URL, '_blank', 'noopener,noreferrer'),
             className:'cortex-motion-press',
             full:true,
@@ -11729,7 +11937,26 @@ function CortexLibraryShell() {
           ? React.createElement('div', { style:{ padding:40, textAlign:'center', color:DL.sub, fontSize:13 }}, '⏳ Memuat konten...')
           : React.createElement(Comp, cProps)
       ),
-      React.createElement('button', { onClick:function(){ setSelectedLectureId(null); setSelectedExamSetId(null); navigate(0); }, style:{ position:'fixed', bottom:80, right:24, width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg, #10b981, #06b6d4)', color:'#fff', fontSize:18, cursor:'pointer', zIndex:60, boxShadow:'0 4px 18px rgba(16,185,129,0.35)', display:'flex', alignItems:'center', justifyContent:'center', border:'none' } }, '\u{1f3e0}')
+      React.createElement('button', {
+        onClick:function(){ setSelectedLectureId(null); setSelectedExamSetId(null); navigate(0); },
+        style:{
+          position:'fixed',
+          bottom:'calc(144px + env(safe-area-inset-bottom))',
+          right:24,
+          width:48,
+          height:48,
+          borderRadius:'50%',
+          background:'linear-gradient(135deg, #10b981, #06b6d4)',
+          color:'#fff',
+          cursor:'pointer',
+          zIndex:60,
+          boxShadow:'0 8px 24px rgba(16,185,129,0.32)',
+          display:'flex',
+          alignItems:'center',
+          justifyContent:'center',
+          border:'none'
+        }
+      }, React.createElement(CortexLuxeIcon, { name:'home', size:20, color:'#ffffff', accent:'#bbf7d0' }))
     );
   };
 
@@ -11849,7 +12076,7 @@ function CortexLibraryShell() {
       ? '#ffd84f'
       : (theme?.colors?.accent1 || DL.accent);
   }, [highlightTone, theme]);
-  const fabViewportLeft = sidebarDocked && !sidebarPinnedHidden ? 320 : 14;
+  const fabViewportLeft = sidebarDocked && !sidebarPinnedHidden ? 246 : 14;
   const sidebarFabVisible = sidebarDocked ? !sidebarPinnedHidden : sidebarOpen;
   const sidebarFabDefaultPos = React.useMemo(() => ({
     x: fabViewportLeft,
@@ -12421,7 +12648,7 @@ function CortexLibraryShell() {
     };
     // [REMOVED] isContentViewing override
     if (page === 0) return React.createElement(CortexErrorBoundary, { key:`eb_${page}` },
-      React.createElement(PageBatch0Kernel, { ...sharedProps, mode, surfaceId, onSurfaceChange:setSurfaceId, showGlobalFab:true })
+      React.createElement(PageBatch0Kernel, { ...sharedProps, mode, surfaceId, onSurfaceChange:setSurfaceId })
     );
     if (page === 1) {
       const Comp = window[current.component];
@@ -12671,7 +12898,7 @@ function CortexLibraryShell() {
                 React.createElement('div', { style:{ width:'100%', display:'flex', gap:6, alignItems:'center', flexWrap:'nowrap' }},
                   React.createElement(B1Button, {
                     label:'',
-                    icon: sidebarDocked ? (sidebarPinnedHidden ? '↗' : '↙') : '☰',
+                    icon: sidebarDocked ? (sidebarPinnedHidden ? 'open' : 'close') : 'sidebar',
                     onClick: toggleSidebar,
                     className:'cortex-motion-press',
                     style:{
@@ -12697,7 +12924,7 @@ function CortexLibraryShell() {
               : React.createElement(React.Fragment, null,
                 React.createElement(B1Button, {
                   label: sidebarDocked ? (sidebarPinnedHidden ? 'Show sidebar' : 'Hide sidebar') : (sidebarOpen ? 'Close sidebar' : 'Sidebar'),
-                  icon: sidebarDocked ? (sidebarPinnedHidden ? '↗' : '↙') : '☰',
+                  icon: sidebarDocked ? (sidebarPinnedHidden ? 'open' : 'close') : 'sidebar',
                   onClick: toggleSidebar,
                   className:'cortex-motion-press',
                   style:{
