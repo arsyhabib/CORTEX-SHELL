@@ -10705,7 +10705,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     el.scrollTop = el.scrollHeight;
   },[chatFeed.length,composerBusy,surface,layoutMode,layoutDensity]);
 
-  function sanitizeText(t){return String(t||'').replace(/<think>[\s\S]*?<\/think>/gi,' ').replace(/\s+/g,' ').trim();}
+  function sanitizeText(t){
+    const source=String(t||'')
+      .replace(/<think>[\s\S]*?<\/think>/gi,'');
+    return cortexMarkdownNormalizeSource(source);
+  }
   function extractText(payload){
     if(!payload)return'';
     if(payload.output_text)return sanitizeText(payload.output_text);
