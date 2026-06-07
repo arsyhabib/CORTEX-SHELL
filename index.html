@@ -2347,6 +2347,33 @@
   text-transform:uppercase;
   color:rgba(220,200,255,0.82);
 }
+.cx-md .cx-md-code-copy{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(192,132,252,0.22);
+  background:rgba(168,85,247,0.12);
+  color:#f6edff;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:0.02em;
+  cursor:pointer;
+  transition:transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.cx-md .cx-md-code-copy:hover{
+  transform:translateY(-1px);
+  border-color:rgba(192,132,252,0.42);
+  background:rgba(168,85,247,0.2);
+  box-shadow:0 6px 16px rgba(168,85,247,0.14);
+}
+.cx-md .cx-md-code-copy[aria-pressed="true"]{
+  background:rgba(6,182,212,0.16);
+  border-color:rgba(6,182,212,0.42);
+  color:#d9fbff;
+}
 .cx-md .cx-md-code-shell pre{
   margin:0;
   background:transparent;
@@ -10356,6 +10383,17 @@ function cortexMarkdownNormalizeSource(raw){
       .replace(/\n{3,}/g,'\n\n');
   }).join('').trimEnd();
 }
+function cortexMarkdownExtractCodeBlocks(raw){
+  const source=String(raw||'');
+  const blocks=[];
+  const pattern=/```[^\n`]*\n([\s\S]*?)```/g;
+  let match;
+  while((match=pattern.exec(source))){
+    const code=String(match[1]||'').replace(/\s+$/,'');
+    if(code)blocks.push(code);
+  }
+  return blocks.join('\n\n');
+}
 function cortexMarkdownSafeUrl(url,kind){
   const value=String(url||'').trim();
   if(!value)return '';
@@ -10368,7 +10406,7 @@ function cortexMarkdownSafeUrl(url,kind){
 }
 function cortexMarkdownSanitizeHtml(html){
   if(typeof document==='undefined')return String(html||'');
-  const allowedTags=new Set(['A','B','BLOCKQUOTE','BR','CODE','DEL','DIV','EM','FIGURE','FIGCAPTION','H1','H2','H3','H4','HR','I','IMG','LI','OL','P','PRE','S','SPAN','STRONG','SUB','SUP','TABLE','TBODY','TD','TH','THEAD','TR','UL']);
+  const allowedTags=new Set(['A','B','BLOCKQUOTE','BR','BUTTON','CODE','DEL','DIV','EM','FIGURE','FIGCAPTION','H1','H2','H3','H4','HR','I','IMG','LI','OL','P','PRE','S','SPAN','STRONG','SUB','SUP','TABLE','TBODY','TD','TH','THEAD','TR','UL']);
   const dropCompletely=new Set(['SCRIPT','STYLE','NOSCRIPT','IFRAME','OBJECT','EMBED','LINK','META','SVG','MATH']);
   const allowedAttrsByTag={
     A:new Set(['href','title','target','rel']),
@@ -10386,6 +10424,7 @@ function cortexMarkdownSanitizeHtml(html){
     PRE:new Set(['data-lang']),
     CODE:new Set(['data-lang']),
     LI:new Set(['data-task']),
+    BUTTON:new Set(['type','data-copy-code','data-copy-label']),
   };
   const allowedGlobalAttrs=new Set(['class','title','aria-hidden','aria-label','aria-describedby','role']);
   const tpl=document.createElement('template');
@@ -10472,7 +10511,10 @@ function cortexMarkdownGetRenderer(){
     const lang=String(infostring||'').trim().split(/[\s{]/)[0].toLowerCase();
     const label=lang||'text';
     const langAttr=lang?` data-lang="${cortexMarkdownEscapeHtml(lang)}"`:'';
-    return `<figure class="cx-md-code-shell"${langAttr}><div class="cx-md-codebar"><span class="cx-md-code-label">${cortexMarkdownEscapeHtml(label)}</span></div><pre class="cx-md-code-pre"><code class="cx-md-code">${cortexMarkdownEscapeHtml(code)}</code></pre></figure>`;
+    const shellLang=/^(bash|sh|shell|zsh|fish|ksh|powershell|pwsh|cmd|bat|ps1)$/i.test(lang);
+    const copyLabel=shellLang?'Salin bash':'Salin kode';
+    const copyData=encodeURIComponent(String(code||''));
+    return `<figure class="cx-md-code-shell"${langAttr}><div class="cx-md-codebar"><span class="cx-md-code-label">${cortexMarkdownEscapeHtml(label)}</span><button type="button" class="cx-md-code-copy" data-copy-code="${cortexMarkdownEscapeHtml(copyData)}" data-copy-label="${cortexMarkdownEscapeHtml(copyLabel)}">${cortexMarkdownEscapeHtml(copyLabel)}</button></div><pre class="cx-md-code-pre"><code class="cx-md-code">${cortexMarkdownEscapeHtml(code)}</code></pre></figure>`;
   };
   renderer.table=function(header,body){
     return `<div class="cx-md-table-shell"><table class="cx-md-table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
@@ -10501,6 +10543,27 @@ function cortexMarkdownGetRenderer(){
   return renderer;
 }
 function MarkdownText({text,isUser,compact}){
+  const handleCopyClick=function(e){
+    const target=e&&e.target&&typeof e.target.closest==='function'?e.target.closest('[data-copy-code]'):null;
+    if(!target)return;
+    e.preventDefault();
+    e.stopPropagation();
+    const encoded=String(target.getAttribute('data-copy-code')||'');
+    const label=String(target.getAttribute('data-copy-label')||'Kode');
+    let copied='';
+    try{copied=decodeURIComponent(encoded);}catch(err){copied=encoded;}
+    if(!copied)return;
+    try{navigator.clipboard&&navigator.clipboard.writeText(copied);}catch(err){}
+    const prevText=target.textContent||label;
+    target.textContent='Tersalin';
+    target.setAttribute('aria-pressed','true');
+    setTimeout(function(){
+      if(target.isConnected){
+        target.textContent=prevText;
+        target.removeAttribute('aria-pressed');
+      }
+    },1200);
+  };
   const html=React.useMemo(function(){
     try{
       const source=cortexMarkdownNormalizeSource(text);
@@ -10515,7 +10578,8 @@ function MarkdownText({text,isUser,compact}){
   },[text]);
   return React.createElement('div',{
     className:'cx-md'+(isUser?' cx-md-user':'')+(compact?' cx-md-compact':''),
-    style:{maxWidth:'100%',overflowX:'hidden'},
+    onClick:handleCopyClick,
+    style:{maxWidth:'100%',overflowX:'hidden',fontSize:'calc(1em * var(--cortex-ai-chat-zoom, 1))'},
     dangerouslySetInnerHTML:{__html:html},
   });
 }
@@ -10550,6 +10614,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   const [dragOver, setDragOver] = React.useState(false);
   const [sessionMenu, setSessionMenu] = React.useState(null);
   const [modelPickerOpen, setModelPickerOpen] = React.useState(false);
+  const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = React.useState(false);
+  const [chatZoom, setChatZoom] = React.useState(function(){
+    const stored=Number(lsGet('cx_ai_chat_zoom',1));
+    return Number.isFinite(stored)&&stored>0?stored:1;
+  });
   const [videoOps, setVideoOps] = React.useState(function(){return lsGet('cx_video_ops',{});});
   const videoPollRef = React.useRef({});
   const activeSession=React.useMemo(function(){return chatSessions.find(function(s){return s.id===activeChatId;})||chatSessions[0];},[chatSessions,activeChatId]);
@@ -10599,6 +10668,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
   React.useEffect(function(){lsSet('cx_surface',surface);},[surface]);
   React.useEffect(function(){lsSet('cx_image_model',imageModel);},[imageModel]);
+  React.useEffect(function(){lsSet('cx_ai_chat_zoom',chatZoom);},[chatZoom]);
   React.useEffect(function(){lsSet('cx_vid_ar',videoAspectRatio);},[videoAspectRatio]);
   React.useEffect(function(){lsSet('cx_vid_dur',videoDuration);},[videoDuration]);
   React.useEffect(function(){lsSet('cx_video_ops',videoOps);},[videoOps]);
@@ -11350,200 +11420,293 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     title:'AI Workspace',
     subtitle:'Multimodal · Chat · Visual · Audio',
     onBack:()=>onNavigate(19),
-    right:React.createElement('div',{style:{display:'flex',gap:5,alignItems:'center'}},
+    right:React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}},
       React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
         React.createElement('div',{style:{width:10,height:10,borderRadius:'50%',background:connColor,position:'absolute'}}),
         runtimeInfo.status==='connected'&&React.createElement('div',{style:{width:10,height:10,borderRadius:'50%',background:connColor,position:'absolute',animation:'cortex-ai-status-ping 2s ease-out infinite'}}),
       ),
       React.createElement(B1Badge,{color:connColor},runtimeInfo.status==='connected'?'Live':runtimeInfo.status==='error'?'Error':'Idle'),
       React.createElement(B1Badge,{color:proxyBase?DL.teal:directMode?DL.accent:DL.gold},proxyBase?'Proxy':directMode?'Direct':'Safe'),
-    ),
-  },
-
-      // ── COMPACT SINGLE-LINE STICKY BAR (Liquid Glass) ───────────────────────
-    React.createElement('div',{
-      style:{
-        position:'sticky',top:0,zIndex:20,
-        display:'flex',alignItems:'center',gap:8,
-        height:compactLayout ? 46 : 52,
-        margin:'0 calc(var(--cortex-page-shell-pad-x, 18px) * -1)',padding:'0 12px',
-        background:'linear-gradient(180deg,rgba(14,10,32,0.96) 0%,rgba(8,6,20,0.94) 100%)',
-        backdropFilter:'blur(32px) saturate(180%)',WebkitBackdropFilter:'blur(32px) saturate(180%)',
-        borderBottom:'1px solid rgba(168,85,247,0.12)',
-        borderRadius:'0 0 22px 22px',
-        boxShadow:'inset 0 1px 0 rgba(255,255,255,0.07),0 8px 32px rgba(0,0,0,0.45),0 1px 0 rgba(168,85,247,0.08)',
-      },
-      onClick:function(e){
-        if(modelPickerOpen&&!e.target.closest('[data-model-picker]'))setModelPickerOpen(false);
-      }
-    },
-
-      // ── MODEL PILL (assistant only) ─────────────────────────────────
-      surface==='assistant'&&React.createElement('div',{'data-model-picker':true,style:{position:'relative',flexShrink:0}},
-        React.createElement('button',{
-          onClick:function(e){e.stopPropagation();setModelPickerOpen(function(o){return !o;});},
-          style:{
-            display:'flex',alignItems:'center',gap:5,padding:'5px 8px 5px 5px',
-            borderRadius:14,border:`1.5px solid ${activeChatModel.color}50`,
-            background:modelPickerOpen?`${activeChatModel.color}28`:`${activeChatModel.color}14`,
-            cursor:'pointer',transition:'all 0.2s',outline:'none',
-            boxShadow:modelPickerOpen?`0 0 18px ${activeChatModel.color}40`:'none',
-          },
-        },
-          React.createElement(OrbSVG,{color:activeChatModel.color,thinking:isThinking,size:22}),
-          React.createElement('span',{style:{fontSize:11,fontWeight:900,color:activeChatModel.color,maxWidth:72,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},activeChatModel.shortLabel),
-          React.createElement('svg',{width:10,height:10,viewBox:'0 0 10 10',style:{transform:modelPickerOpen?'rotate(180deg)':'none',transition:'transform 0.2s',flexShrink:0,opacity:0.7}},
-            React.createElement('path',{d:'M2 3.5L5 6.5L8 3.5',stroke:activeChatModel.color,strokeWidth:1.5,strokeLinecap:'round',fill:'none'}),
-          ),
-        ),
-        // ── Floating model picker popover ───────────────────────────────
-        modelPickerOpen&&React.createElement('div',{
-          'data-model-picker':true,
-          style:{
-            position:'absolute',top:'calc(100% + 8px)',left:0,zIndex:200,
-            background:'rgba(8,6,22,0.98)',backdropFilter:'blur(28px)',WebkitBackdropFilter:'blur(28px)',
-            border:`1px solid ${DL.glassBorder}`,borderRadius:20,padding:10,
-            display:'flex',gap:6,
-            boxShadow:`0 20px 60px rgba(0,0,0,0.7),0 0 0 1px ${activeChatModel.color}20`,
-          },
-        },
-          chatModels.map(function(m){
-            const active=chatModel===m.id;
-            return React.createElement('button',{
-              key:m.id,
-              onClick:function(e){e.stopPropagation();setChatModel(m.id);setModelPickerOpen(false);},
-              style:{
-                display:'flex',flexDirection:'column',alignItems:'center',gap:5,
-                padding:'9px 10px',borderRadius:14,cursor:'pointer',outline:'none',
-                border:active?`1.5px solid ${m.color}`:`1px solid ${DL.glassBorder}`,
-                background:active?`${m.color}22`:'rgba(255,255,255,0.04)',
-                opacity:m.ready?1:0.4,transition:'all 0.22s',
-                boxShadow:active?`0 0 18px ${m.color}44`:'none',
-              },
-            },
-              React.createElement(OrbSVG,{color:m.color,thinking:false,size:28}),
-              React.createElement('div',{style:{fontSize:9,fontWeight:active?900:600,color:active?m.color:DL.mute,whiteSpace:'nowrap'}},m.shortLabel),
-              active&&React.createElement('div',{style:{width:16,height:2,borderRadius:1,background:m.color}}),
-            );
-          }),
-        ),
-      ),
-
-      // ── DIVIDER ────────────────────────────────────────────────────
-      surface==='assistant'&&React.createElement('div',{style:{width:1,height:22,background:'rgba(255,255,255,0.09)',flexShrink:0}}),
-
-      // ── SESSION STRIP (assistant only, takes flex space) ───────────
-      surface==='assistant'&&React.createElement('div',{
-        className:'hide-scrollbar',
-        style:{flex:1,display:'flex',alignItems:'center',gap:5,overflowX:'auto',minWidth:0},
-      },
-        [...chatSessions].sort(function(a,b){return (b.pinned?1:0)-(a.pinned?1:0)||(a.createdAt-b.createdAt);}).map(function(sess){
-          const isActive=sess.id===activeChatId;
-          const mDef=chatModels.find(function(m){return m.id===sess.model;})||chatModels[0];
-          const showMenu=sessionMenu===sess.id;
-          return React.createElement('div',{key:sess.id,style:{position:'relative',flexShrink:0}},
-            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:2}},
-              React.createElement('button',{
-                onClick:function(){switchSession(sess.id);},
-                style:{
-                  display:'flex',alignItems:'center',gap:4,padding:'4px 7px 4px 7px',borderRadius:10,
-                  border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.08)',
-                  background:isActive?mDef.color+'22':'rgba(255,255,255,0.04)',
-                  cursor:'pointer',transition:'all 0.2s',color:isActive?mDef.color:DL.sub,
-                  outline:'none',maxWidth:90,borderRight:'none',
-                  borderRadius:'10px 0 0 10px',
-                },
-              },
-                sess.pinned&&React.createElement('span',{style:{fontSize:8,flexShrink:0}},'📌'),
-                React.createElement('span',{style:{fontSize:9,fontWeight:isActive?800:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:55}},sess.title),
-                React.createElement('span',{style:{fontSize:8,opacity:0.5,flexShrink:0,marginLeft:2}},sess.feed.length),
-              ),
-              React.createElement('button',{
-                onClick:function(e){e.stopPropagation();deleteSession(sess.id);},
-                title:'Hapus sesi',
-                style:{
-                  display:'flex',alignItems:'center',justifyContent:'center',
-                  width:18,height:'100%',minHeight:24,
-                  borderRadius:'0 10px 10px 0',
-                  border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.08)',
-                  borderLeft:`1px solid ${isActive?mDef.color+'40':'rgba(255,255,255,0.05)'}`,
-                  background:isActive?mDef.color+'10':'rgba(255,255,255,0.03)',
-                  color:isActive?mDef.color:DL.mute,
-                  cursor:'pointer',fontSize:9,fontWeight:700,outline:'none',
-                  transition:'all 0.2s',padding:0,
-                },
-              },'✕'),
-            ),
-            showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:300,background:'rgba(10,8,26,0.98)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 12px 36px rgba(0,0,0,0.6)',backdropFilter:'blur(20px)'}},
-              React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left'}},sess.pinned?'📌 Unpin':'📌 Pin'),
-              React.createElement('button',{onClick:function(){deleteSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left'}},'🗑 Hapus'),
-            ),
-          );
-        }),
-        React.createElement('button',{
-          onClick:createSession,disabled:chatSessions.length>=10,
-          style:{flexShrink:0,width:22,height:22,borderRadius:7,border:`1px dashed ${chatSessions.length>=10?DL.mute:DL.accent+'66'}`,background:'transparent',color:chatSessions.length>=10?DL.mute:DL.accent,fontSize:14,fontWeight:400,cursor:chatSessions.length>=10?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,flexShrink:0},
-        },'+'),
-      ),
-
-      // ── NON-ASSISTANT spacer ────────────────────────────────────────
-      surface!=='assistant'&&React.createElement('div',{style:{flex:1}}),
-
-      // ── HISTORY + STATUS DOT (assistant only) ──────────────────────
-      surface==='assistant'&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexShrink:0}},
-        React.createElement('span',{style:{fontSize:9,color:DL.mute,fontVariantNumeric:'tabular-nums',letterSpacing:0.3}},chatFeed.length+' msg'),
-        React.createElement('div',{style:{
-          width:7,height:7,borderRadius:'50%',flexShrink:0,
-          background:activeChatModel.ready?activeChatModel.color:DL.gold,
-          boxShadow:`0 0 8px ${activeChatModel.ready?activeChatModel.color:DL.gold}`,
-          animation:isThinking?'cortex-ai-orb-breathing 0.8s ease-in-out infinite':'none',
-        }}),
-      ),
-
-      // ── DIVIDER ────────────────────────────────────────────────────
-      React.createElement('div',{style:{width:1,height:22,background:'rgba(255,255,255,0.09)',flexShrink:0}}),
-
-      // ── TAB ICON BUTTONS (SVG, liquid glass, right side) ─────────────
-      React.createElement('div',{style:{display:'flex',gap:3,flexShrink:0,
-        padding:'3px',borderRadius:16,
-        background:'rgba(255,255,255,0.04)',
+      React.createElement('div',{style:{
+        display:'flex',
+        gap:4,
+        padding:'3px',
+        borderRadius:16,
         border:'1px solid rgba(255,255,255,0.07)',
+        background:'rgba(255,255,255,0.04)',
         boxShadow:'inset 0 1px 0 rgba(255,255,255,0.06)',
       }},
         ['assistant','visual','audio','connect'].map(function(s){
           const active=surface===s;
           const tabColors={assistant:DL.accent,visual:DL.teal,audio:'#f59e0b',connect:DL.accentB};
           const tc=tabColors[s]||DL.accent;
-          const TabSVGs={assistant:TabIconAssistant,visual:TabIconVisual,audio:TabIconAudio,connect:TabIconConnect};
-          const TabSVG=TabSVGs[s];
+          const TabSVG={assistant:TabIconAssistant,visual:TabIconVisual,audio:TabIconAudio,connect:TabIconConnect}[s];
           return React.createElement('button',{
             key:s,
-            onClick:function(){setSurface(s);if(s!=='assistant')setModelPickerOpen(false);},
+            onClick:function(){setSurface(s);setModelPickerOpen(false);},
             title:s.charAt(0).toUpperCase()+s.slice(1),
             style:{
-              width:36,height:36,borderRadius:13,border:'none',cursor:'pointer',
-              background:active
-                ?`linear-gradient(135deg,${tc}28,${tc}10)`
-                :'transparent',
+              width:30,height:30,borderRadius:11,border:'none',cursor:'pointer',
+              background:active?`linear-gradient(135deg,${tc}28,${tc}10)`:'transparent',
               position:'relative',display:'flex',alignItems:'center',justifyContent:'center',
-              transition:'all 0.25s cubic-bezier(0.16,1,0.3,1)',outline:'none',
-              boxShadow:active?`0 0 18px ${tc}28,inset 0 1px 0 rgba(255,255,255,0.1)`:'none',
+              transition:'all 0.24s cubic-bezier(0.16,1,0.3,1)',outline:'none',
+              boxShadow:active?`0 0 16px ${tc}28,inset 0 1px 0 rgba(255,255,255,0.1)`:'none',
             },
           },
-            React.createElement(TabSVG,{
-              active,color:active?tc:'rgba(255,255,255,0.35)',size:18,
-            }),
+            React.createElement(TabSVG,{active,color:active?tc:'rgba(255,255,255,0.35)',size:16}),
             active&&React.createElement('div',{style:{
-              position:'absolute',bottom:3,left:'50%',transform:'translateX(-50%)',
-              width:12,height:2,borderRadius:1,
-              background:tc,
-              boxShadow:`0 0 8px ${tc}`,
+              position:'absolute',bottom:2.5,left:'50%',transform:'translateX(-50%)',
+              width:10,height:2,borderRadius:1,background:tc,boxShadow:`0 0 8px ${tc}`,
             }}),
           );
         }),
       ),
+      React.createElement('button',{
+        onClick:function(){setWorkspaceSettingsOpen(true);},
+        title:'AI Workspace Settings',
+        style:{
+          width:32,height:32,borderRadius:12,border:`1px solid ${DL.glassBorder}`,
+          background:'rgba(255,255,255,0.04)',color:DL.text,cursor:'pointer',
+          display:'flex',alignItems:'center',justifyContent:'center',
+          boxShadow:'inset 0 1px 0 rgba(255,255,255,0.06)',transition:'all 0.24s ease',
+        },
+      },
+        React.createElement('svg',{width:15,height:15,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},
+          React.createElement('circle',{cx:12,cy:12,r:3}),
+          React.createElement('path',{d:'M12 1v3.5M12 19.5V23M4.5 4.5l2.5 2.5M17 17l2.5 2.5M1 12h3.5M19.5 12H23M4.5 19.5l2.5-2.5M17 7l2.5-2.5'}),
+        ),
+      ),
     ),
-
+  },
+    surface==='assistant'&&React.createElement('div',{style:{
+      display:'grid',
+      gridTemplateColumns:compactLayout?'1fr':'minmax(0,1.15fr) minmax(0,0.85fr)',
+      gap:10,
+      marginBottom:10,
+      width:'100%',
+      alignItems:'stretch',
+    }},
+      React.createElement('div',{style:{
+        padding:12,
+        borderRadius:20,
+        border:`1px solid ${DL.glassBorder}`,
+        background:'linear-gradient(135deg,rgba(168,85,247,0.08),rgba(255,255,255,0.03))',
+        boxShadow:'0 8px 26px rgba(0,0,0,0.18)',
+        backdropFilter:'blur(18px)',
+        WebkitBackdropFilter:'blur(18px)',
+        display:'flex',
+        flexDirection:'column',
+        gap:8,
+      }},
+        React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}},
+          React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:1,minWidth:0}},
+            React.createElement('div',{style:{fontSize:10,fontWeight:900,color:DL.text,letterSpacing:0.4,textTransform:'uppercase'}},'Session Rail'),
+            React.createElement('div',{style:{fontSize:9,color:DL.mute}},`${chatSessions.length} sesi · ${chatFeed.length} pesan aktif`),
+          ),
+          React.createElement('button',{
+            onClick:createSession,
+            style:{
+              padding:'6px 10px',
+              borderRadius:10,
+              border:`1px solid ${DL.accent}33`,
+              background:`${DL.accent}12`,
+              color:DL.accent,
+              fontSize:10,
+              fontWeight:800,
+              cursor:'pointer',
+              flexShrink:0,
+              transition:'all 0.2s ease',
+            },
+          },'＋ Baru'),
+        ),
+        React.createElement('div',{className:'hide-scrollbar',style:{display:'flex',alignItems:'center',gap:6,overflowX:'auto',minWidth:0,paddingBottom:2}},
+          [...chatSessions].sort(function(a,b){return (b.pinned?1:0)-(a.pinned?1:0)||(a.createdAt-b.createdAt);}).map(function(sess){
+            const isActive=sess.id===activeChatId;
+            const mDef=chatModels.find(function(m){return m.id===sess.model;})||chatModels[0];
+            const showMenu=sessionMenu===sess.id;
+            return React.createElement('div',{key:sess.id,style:{position:'relative',flexShrink:0}},
+              React.createElement('div',{style:{display:'flex',alignItems:'center',gap:2}},
+                React.createElement('button',{
+                  onClick:function(){switchSession(sess.id);},
+                  style:{
+                    display:'flex',alignItems:'center',gap:4,padding:'4px 7px 4px 7px',borderRadius:10,
+                    border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.08)',
+                    background:isActive?mDef.color+'22':'rgba(255,255,255,0.04)',
+                    cursor:'pointer',transition:'all 0.2s',color:isActive?mDef.color:DL.sub,
+                    outline:'none',maxWidth:90,borderRight:'none',
+                    borderRadius:'10px 0 0 10px',
+                  },
+                },
+                  sess.pinned&&React.createElement('span',{style:{fontSize:8,flexShrink:0,color:mDef.color}},'•'),
+                  React.createElement('span',{style:{fontSize:9,fontWeight:isActive?800:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:55}},sess.title),
+                  React.createElement('span',{style:{fontSize:8,opacity:0.5,flexShrink:0,marginLeft:2}},sess.feed.length),
+                ),
+                React.createElement('button',{
+                  onClick:function(e){e.stopPropagation();deleteSession(sess.id);},
+                  title:'Hapus sesi',
+                  style:{
+                    display:'flex',alignItems:'center',justifyContent:'center',
+                    width:18,height:'100%',minHeight:24,
+                    borderRadius:'0 10px 10px 0',
+                    border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.08)',
+                    borderLeft:`1px solid ${isActive?mDef.color+'40':'rgba(255,255,255,0.05)'}`,
+                    background:isActive?mDef.color+'10':'rgba(255,255,255,0.03)',
+                    color:isActive?mDef.color:DL.mute,
+                    cursor:'pointer',fontSize:9,fontWeight:700,outline:'none',
+                    transition:'all 0.2s',padding:0,
+                  },
+                },'✕'),
+              ),
+              showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:300,background:'rgba(10,8,26,0.98)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 12px 36px rgba(0,0,0,0.6)',backdropFilter:'blur(20px)'}},
+                React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left'}},sess.pinned?'Unpin':'Pin'),
+                React.createElement('button',{onClick:function(){deleteSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left'}},'Hapus'),
+              ),
+            );
+          }),
+          React.createElement('button',{
+            onClick:createSession,disabled:chatSessions.length>=10,
+            style:{flexShrink:0,width:22,height:22,borderRadius:7,border:`1px dashed ${chatSessions.length>=10?DL.mute:DL.accent+'66'}`,background:'transparent',color:chatSessions.length>=10?DL.mute:DL.accent,fontSize:14,fontWeight:400,cursor:chatSessions.length>=10?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,flexShrink:0},
+          },'+'),
+        ),
+      ),
+      React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10,minWidth:0}},
+        React.createElement('div',{style:{
+          padding:12,
+          borderRadius:20,
+          border:`1px solid ${DL.glassBorder}`,
+          background:'rgba(255,255,255,0.03)',
+          boxShadow:'0 8px 26px rgba(0,0,0,0.18)',
+          backdropFilter:'blur(18px)',
+          WebkitBackdropFilter:'blur(18px)',
+        }},
+          React.createElement('button',{
+            onClick:function(){setModelPickerOpen(function(o){return !o;});},
+            style:{
+              width:'100%',
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'space-between',
+              gap:10,
+              padding:'6px 2px 8px',
+              border:'none',
+              background:'transparent',
+              color:DL.text,
+              cursor:'pointer',
+              textAlign:'left',
+            },
+          },
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,minWidth:0}},
+              React.createElement(OrbSVG,{color:activeChatModel.color,thinking:isThinking,size:22}),
+              React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:1,minWidth:0}},
+                React.createElement('div',{style:{fontSize:10,fontWeight:900,color:DL.text,letterSpacing:0.4,textTransform:'uppercase'}},'Model AI'),
+                React.createElement('div',{style:{fontSize:9,color:DL.mute}},modelPickerOpen?'Ketuk untuk minimalkan':'Ketuk untuk pilih model'),
+              ),
+            ),
+            React.createElement('svg',{width:14,height:14,viewBox:'0 0 10 10',style:{transform:modelPickerOpen?'rotate(180deg)':'none',transition:'transform 0.2s',flexShrink:0,opacity:0.75}},
+              React.createElement('path',{d:'M2 3.5L5 6.5L8 3.5',stroke:activeChatModel.color,strokeWidth:1.5,strokeLinecap:'round',fill:'none'}),
+            ),
+          ),
+          React.createElement('div',{style:{
+            overflow:'hidden',
+            maxHeight:modelPickerOpen?260:0,
+            opacity:modelPickerOpen?1:0,
+            transform:modelPickerOpen?'translateY(0)':'translateY(-4px)',
+            transition:'max-height 0.3s ease, opacity 0.22s ease, transform 0.22s ease',
+          }},
+            React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:6,paddingTop:modelPickerOpen?8:0}},
+              chatModels.map(function(m){
+                const active=chatModel===m.id;
+                return React.createElement('button',{
+                  key:m.id,
+                  onClick:function(){setChatModel(m.id);setModelPickerOpen(false);},
+                  style:{
+                    width:'100%',
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'space-between',
+                    gap:10,
+                    padding:'9px 10px',
+                    borderRadius:14,
+                    cursor:'pointer',
+                    outline:'none',
+                    border:active?`1.5px solid ${m.color}`:`1px solid ${DL.glassBorder}`,
+                    background:active?`${m.color}18`:'rgba(255,255,255,0.04)',
+                    color:active?m.color:DL.sub,
+                    transition:'all 0.22s cubic-bezier(0.16,1,0.3,1)',
+                    boxShadow:active?`0 0 18px ${m.color}28`:'none',
+                  },
+                },
+                  React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,minWidth:0}},
+                    React.createElement(OrbSVG,{color:m.color,thinking:false,size:20}),
+                    React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:1,minWidth:0}},
+                      React.createElement('div',{style:{fontSize:10,fontWeight:900,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.label),
+                      React.createElement('div',{style:{fontSize:8,color:active?m.color:DL.mute}},m.ready?'Ready':'Unavailable'),
+                    ),
+                  ),
+                  active&&React.createElement('div',{style:{width:7,height:7,borderRadius:'50%',background:m.color,flexShrink:0,boxShadow:`0 0 10px ${m.color}`}}),
+                );
+              }),
+            ),
+          ),
+        ),
+        React.createElement('div',{style:{
+          padding:12,
+          borderRadius:20,
+          border:`1px solid ${DL.glassBorder}`,
+          background:'rgba(255,255,255,0.03)',
+          boxShadow:'0 8px 26px rgba(0,0,0,0.18)',
+          backdropFilter:'blur(18px)',
+          WebkitBackdropFilter:'blur(18px)',
+        }},
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:8}},
+            React.createElement('span',{style:{fontSize:10,fontWeight:900,color:DL.text,letterSpacing:0.4,textTransform:'uppercase'}},'Chat Zoom'),
+            React.createElement('span',{style:{marginLeft:'auto',fontSize:10,color:DL.mute,fontVariantNumeric:'tabular-nums'}},`${Math.round(chatZoom*100)}%`),
+          ),
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},
+            React.createElement('button',{
+              onClick:function(){setChatZoom(function(v){return Math.max(0.9,Math.round((v-0.05)*100)/100);});},
+              style:{
+                width:30,height:30,borderRadius:10,border:`1px solid ${DL.glassBorder}`,
+                background:'rgba(255,255,255,0.04)',color:DL.text,cursor:'pointer',
+                fontSize:14,fontWeight:900,flexShrink:0,
+              },
+            },'−'),
+            React.createElement('input',{
+              type:'range',
+              min:'0.9',
+              max:'1.35',
+              step:'0.05',
+              value:chatZoom,
+              onChange:function(e){setChatZoom(Number(e.target.value));},
+              style:{flex:1,accentColor:DL.accent},
+            }),
+            React.createElement('button',{
+              onClick:function(){setChatZoom(function(v){return Math.min(1.35,Math.round((v+0.05)*100)/100);});},
+              style:{
+                width:30,height:30,borderRadius:10,border:`1px solid ${DL.glassBorder}`,
+                background:'rgba(255,255,255,0.04)',color:DL.text,cursor:'pointer',
+                fontSize:14,fontWeight:900,flexShrink:0,
+              },
+            },'+'),
+            React.createElement('button',{
+              onClick:function(){setChatZoom(1);},
+              style:{
+                padding:'0 10px',
+                height:30,
+                borderRadius:10,
+                border:`1px solid ${DL.accent}33`,
+                background:`${DL.accent}10`,
+                color:DL.accent,
+                cursor:'pointer',
+                fontSize:10,
+                fontWeight:800,
+                flexShrink:0,
+              },
+            },'Reset'),
+          ),
+        ),
+      ),
+    ),
     // ════════════════════════════════════════════════════════════════════════
     // AIW HER0
     // ════════════════════════════════════════════════════════════════════════
@@ -11593,7 +11756,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // ════════════════════════════════════════════════════════════════════════
     // CHAT SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:compactLayout?12:16,alignItems:'flex-start',width:'100%'}},
+    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:compactLayout?12:16,alignItems:'stretch',width:'100%','--cortex-ai-chat-zoom':chatZoom}},
       React.createElement('div',{style:{flex:'1 1 380px',minWidth:0,display:'flex',flexDirection:'column',gap:compactLayout?10:12,paddingTop:compactLayout?8:12}},
 
       // ── Chat Feed ────────────────────────────────────────────────────────
@@ -11617,7 +11780,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             // AI label row
             !isUser&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4,paddingLeft:2}},
               !isErr&&mDef&&React.createElement(OrbSVG,{color:isErr?DL.red:bColor,thinking:false,size:18}),
-              isErr&&React.createElement('span',{style:{fontSize:13}},'⚠️'),
+              isErr&&React.createElement('span',{style:{width:16,height:16,borderRadius:'50%',background:`${DL.red}18`,border:`1px solid ${DL.red}44`,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:900,color:DL.red,flexShrink:0'}},'!'),
               React.createElement('span',{style:{fontSize:9,fontWeight:900,color:isErr?DL.red:bColor,letterSpacing:0.7,textTransform:'uppercase'}},
                 isErr?'ERROR':msg.model==='cortex'?'CORTEX AI':(mDef?mDef.label:'AI'),
               ),
@@ -11626,7 +11789,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             React.createElement('div',{
               onClick:function(){setMsgActions(showActions?null:i);if(isEditing)return;},
               style:{
-                maxWidth:'87%',padding:'12px 15px',lineHeight:1.65,fontSize:13,
+                maxWidth:compactLayout?'100%':'87%',padding:compactLayout?'11px 13px':'12px 15px',lineHeight:1.65,fontSize:13,
                 borderRadius:isUser?'20px 20px 6px 20px':'6px 20px 20px 20px',
                 background:isUser?DL.gradA:isErr?'rgba(239,68,68,0.1)':'rgba(255,255,255,0.065)',
                 border:isUser?'none':`1.5px solid ${isErr?DL.red+'55':bColor+'22'}`,
@@ -11651,7 +11814,12 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
               isUser&&msg.fileName&&msg.mediaType==='document'&&React.createElement('div',{
                 style:{display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.12)',borderRadius:10,padding:'7px 11px',marginBottom:8}
               },
-                React.createElement('span',{style:{fontSize:16}},'📄'),
+                React.createElement('div',{style:{width:18,height:18,borderRadius:5,background:'rgba(255,255,255,0.12)',border:`1px solid rgba(255,255,255,0.2)`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+                  React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+                    React.createElement('path',{d:'M7 3h7l5 5v13a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z'}),
+                    React.createElement('path',{d:'M14 3v5h5'}),
+                  ),
+                ),
                 React.createElement('span',{style:{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.9)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}},msg.fileName),
               ),
               // Message text or edit textarea
@@ -11744,7 +11912,12 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         },
           uploadedFile.type==='image'&&React.createElement('img',{src:uploadedFile.dataUrl,style:{width:40,height:40,objectFit:'cover',borderRadius:10,border:`1px solid ${DL.glassBorder}`}}),
           uploadedFile.type==='video'&&React.createElement('div',{style:{width:40,height:40,borderRadius:10,background:`${DL.accent}15`,display:'flex',alignItems:'center',justifyContent:'center'}},React.createElement(VideoIconSVG,{color:DL.accent})),
-          uploadedFile.type==='document'&&React.createElement('div',{style:{width:40,height:40,borderRadius:10,background:`${DL.accentB}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}},'📄'),
+              uploadedFile.type==='document'&&React.createElement('div',{style:{width:40,height:40,borderRadius:10,background:`${DL.accentB}22`,border:`1px solid ${DL.accentB}33`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+                React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:DL.accentB,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'},
+                  React.createElement('path',{d:'M7 3h7l5 5v13a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z'}),
+                  React.createElement('path',{d:'M14 3v5h5'}),
+                ),
+              ),
           React.createElement('div',{style:{flex:1,minWidth:0}},
             React.createElement('div',{style:{fontSize:11,fontWeight:700,color:DL.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},uploadedFile.name),
             React.createElement('div',{style:{fontSize:9,color:DL.mute,marginTop:1}},uploadedFile.mimeType),
@@ -11818,35 +11991,6 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       ),
     ),
 
-    // ── Right column: observability ─────────────────────────────────────
-    React.createElement('div',{style:{flex:'0 1 320px',minWidth:0,display:'flex',flexDirection:'column',gap:compactLayout?6:8}},
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
-        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4}},
-          React.createElement('div',{style:{width:8,height:8,borderRadius:'50%',background:connColor,flexShrink:0,boxShadow:`0 0 8px ${connColor}`}}),
-          React.createElement('span',{style:{fontSize:10,fontWeight:800,color:DL.text,letterSpacing:0.3}},'Runtime'),
-          React.createElement('span',{style:{marginLeft:'auto',fontSize:8,color:DL.mute}},runtimeInfo.status),
-        ),
-        React.createElement('div',{style:{fontSize:9,color:DL.mute,lineHeight:1.4}},runtimeInfo.message),
-        (runtimeInfo.health&&runtimeInfo.health.providers)&&React.createElement('div',{style:{marginTop:6,display:'flex',gap:4,flexWrap:'wrap'}},
-          Object.keys(runtimeInfo.health.providers).map(function(pk){const p=runtimeInfo.health.providers[pk];return React.createElement(B1Badge,{key:pk,color:p.configured?DL.teal:DL.gold,style:{fontSize:7,padding:'2px 6px'}},pk+(p.configured?' ✓':' ○'));}),
-        ),
-      ),
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.02)'}},
-        React.createElement('div',{style:{fontSize:8,fontWeight:800,color:DL.mute,marginBottom:6,letterSpacing:0.4}},'⚡ PROBE'),
-        React.createElement('div',{style:{display:'flex',gap:4,flexWrap:'wrap',marginBottom:probeState.status!=='idle'?6:0}},
-          ['gemini','openai','deepseek','featherless'].map(function(k){
-            return React.createElement(B1Button,{key:k,label:k,variant:'secondary',onClick:function(){runProbe(k);},style:{fontSize:8,padding:'4px 9px',minWidth:0}});
-          }),
-          React.createElement(B1Button,{label:'↻',variant:'secondary',onClick:refreshRuntime,style:{fontSize:8,padding:'4px 9px',minWidth:0}}),
-        ),
-        probeState.status!=='idle'&&React.createElement('div',{style:{padding:'6px 10px',borderRadius:10,border:`1px solid ${probeState.status==='error'?DL.red+'44':probeState.status==='success'?DL.teal+'44':DL.accent+'44'}`,background:probeState.status==='error'?`${DL.red}06`:probeState.status==='success'?`${DL.teal}06`:`${DL.accent}06`}},
-          React.createElement('div',{style:{fontSize:8,fontWeight:800,color:probeState.status==='error'?DL.red:probeState.status==='success'?DL.teal:DL.accent,marginBottom:2}},probeState.provider),
-          React.createElement('div',{style:{fontSize:10,color:DL.sub,lineHeight:1.4}},probeState.message),
-        ),
-      ),
-    ),
   ),
 
     // ════════════════════════════════════════════════════════════════════════
@@ -12062,35 +12206,6 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       ),
     ),
 
-    // ── Right column: observability (same as assistant) ─────────────────
-    React.createElement('div',{style:{flex:'0 1 320px',minWidth:0,display:'flex',flexDirection:'column',gap:8}},
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
-        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4}},
-          React.createElement('div',{style:{width:8,height:8,borderRadius:'50%',background:connColor,flexShrink:0,boxShadow:`0 0 8px ${connColor}`}}),
-          React.createElement('span',{style:{fontSize:10,fontWeight:800,color:DL.text,letterSpacing:0.3}},'Runtime'),
-          React.createElement('span',{style:{marginLeft:'auto',fontSize:8,color:DL.mute}},runtimeInfo.status),
-        ),
-        React.createElement('div',{style:{fontSize:9,color:DL.mute,lineHeight:1.4}},runtimeInfo.message),
-        (runtimeInfo.health&&runtimeInfo.health.providers)&&React.createElement('div',{style:{marginTop:6,display:'flex',gap:4,flexWrap:'wrap'}},
-          Object.keys(runtimeInfo.health.providers).map(function(pk){const p=runtimeInfo.health.providers[pk];return React.createElement(B1Badge,{key:pk,color:p.configured?DL.teal:DL.gold,style:{fontSize:7,padding:'2px 6px'}},pk+(p.configured?' ✓':' ○'));}),
-        ),
-      ),
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.02)'}},
-        React.createElement('div',{style:{fontSize:8,fontWeight:800,color:DL.mute,marginBottom:6,letterSpacing:0.4}},'⚡ PROBE'),
-        React.createElement('div',{style:{display:'flex',gap:4,flexWrap:'wrap',marginBottom:probeState.status!=='idle'?6:0}},
-          ['gemini','openai','deepseek','featherless'].map(function(k){
-            return React.createElement(B1Button,{key:k,label:k,variant:'secondary',onClick:function(){runProbe(k);},style:{fontSize:8,padding:'4px 9px',minWidth:0}});
-          }),
-          React.createElement(B1Button,{label:'↻',variant:'secondary',onClick:refreshRuntime,style:{fontSize:8,padding:'4px 9px',minWidth:0}}),
-        ),
-        probeState.status!=='idle'&&React.createElement('div',{style:{padding:'6px 10px',borderRadius:10,border:`1px solid ${probeState.status==='error'?DL.red+'44':probeState.status==='success'?DL.teal+'44':DL.accent+'44'}`,background:probeState.status==='error'?`${DL.red}06`:probeState.status==='success'?`${DL.teal}06`:`${DL.accent}06`}},
-          React.createElement('div',{style:{fontSize:8,fontWeight:800,color:probeState.status==='error'?DL.red:probeState.status==='success'?DL.teal:DL.accent,marginBottom:2}},probeState.provider),
-          React.createElement('div',{style:{fontSize:10,color:DL.sub,lineHeight:1.4}},probeState.message),
-        ),
-      ),
-    ),
   ),
 
     // ════════════════════════════════════════════════════════════════════════
@@ -12350,35 +12465,6 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       ),
     ),
 
-    // ── Right column: observability ─────────────────────────────────────
-    React.createElement('div',{style:{flex:'0 1 320px',minWidth:0,display:'flex',flexDirection:'column',gap:8}},
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
-        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4}},
-          React.createElement('div',{style:{width:8,height:8,borderRadius:'50%',background:connColor,flexShrink:0,boxShadow:`0 0 8px ${connColor}`}}),
-          React.createElement('span',{style:{fontSize:10,fontWeight:800,color:DL.text,letterSpacing:0.3}},'Runtime'),
-          React.createElement('span',{style:{marginLeft:'auto',fontSize:8,color:DL.mute}},runtimeInfo.status),
-        ),
-        React.createElement('div',{style:{fontSize:9,color:DL.mute,lineHeight:1.4}},runtimeInfo.message),
-        (runtimeInfo.health&&runtimeInfo.health.providers)&&React.createElement('div',{style:{marginTop:6,display:'flex',gap:4,flexWrap:'wrap'}},
-          Object.keys(runtimeInfo.health.providers).map(function(pk){const p=runtimeInfo.health.providers[pk];return React.createElement(B1Badge,{key:pk,color:p.configured?DL.teal:DL.gold,style:{fontSize:7,padding:'2px 6px'}},pk+(p.configured?' ✓':' ○'));}),
-        ),
-      ),
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.02)'}},
-        React.createElement('div',{style:{fontSize:8,fontWeight:800,color:DL.mute,marginBottom:6,letterSpacing:0.4}},'⚡ PROBE'),
-        React.createElement('div',{style:{display:'flex',gap:4,flexWrap:'wrap',marginBottom:probeState.status!=='idle'?6:0}},
-          ['gemini','openai','deepseek','featherless'].map(function(k){
-            return React.createElement(B1Button,{key:k,label:k,variant:'secondary',onClick:function(){runProbe(k);},style:{fontSize:8,padding:'4px 9px',minWidth:0}});
-          }),
-          React.createElement(B1Button,{label:'↻',variant:'secondary',onClick:refreshRuntime,style:{fontSize:8,padding:'4px 9px',minWidth:0}}),
-        ),
-        probeState.status!=='idle'&&React.createElement('div',{style:{padding:'6px 10px',borderRadius:10,border:`1px solid ${probeState.status==='error'?DL.red+'44':probeState.status==='success'?DL.teal+'44':DL.accent+'44'}`,background:probeState.status==='error'?`${DL.red}06`:probeState.status==='success'?`${DL.teal}06`:`${DL.accent}06`}},
-          React.createElement('div',{style:{fontSize:8,fontWeight:800,color:probeState.status==='error'?DL.red:probeState.status==='success'?DL.teal:DL.accent,marginBottom:2}},probeState.provider),
-          React.createElement('div',{style:{fontSize:10,color:DL.sub,lineHeight:1.4}},probeState.message),
-        ),
-      ),
-    ),
   ),
 
     // ════════════════════════════════════════════════════════════════════════
@@ -12417,35 +12503,6 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           );
         }),
       ),
-
-      // Runtime card
-      React.createElement('div',{style:{padding:14,borderRadius:18,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
-        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:6}},
-          React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
-            React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:connColor}}),
-            runtimeInfo.status==='connected'&&React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:connColor,animation:'cortex-ai-status-ping 2s ease-out infinite'}}),
-          ),
-          React.createElement('span',{style:{fontSize:12,fontWeight:800,color:DL.text}},proxyBase?'Proxy mode aktif':directMode?'Direct browser mode':'Secret-safe mode'),
-          React.createElement(B1Badge,{color:connColor},runtimeInfo.status),
-        ),
-        React.createElement('div',{style:{fontSize:10,color:DL.mute,lineHeight:1.5}},runtimeInfo.message),
-      ),
-
-      // Probe
-      React.createElement('div',{style:{padding:12,borderRadius:18,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
-        React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.sub,marginBottom:8,letterSpacing:0.3}},'⚡ LIVE PROBE'),
-        React.createElement('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom: probeState.status!=='idle'?10:0}},
-          ['gemini','openai','deepseek','featherless','tts','image'].map(kind=>
-            React.createElement(B1Button,{key:kind,label:kind,variant:'secondary',onClick:()=>runProbe(kind),style:{fontSize:10,padding:'6px 11px',minWidth:0}})
-          ),
-          React.createElement(B1Button,{label:'Refresh',variant:'secondary',onClick:refreshRuntime,style:{fontSize:10,padding:'6px 11px',minWidth:0}}),
-        ),
-        probeState.status!=='idle'&&React.createElement('div',{style:{padding:'10px 12px',borderRadius:13,border:`1px solid ${probeState.status==='error'?DL.red+'44':probeState.status==='success'?DL.teal+'44':DL.accent+'44'}`,background:probeState.status==='error'?`${DL.red}0a`:probeState.status==='success'?`${DL.teal}0a`:`${DL.accent}0a`}},
-          React.createElement('div',{style:{fontSize:9,fontWeight:800,color:probeState.status==='error'?DL.red:probeState.status==='success'?DL.teal:DL.accent,marginBottom:3}},probeState.provider),
-          React.createElement('div',{style:{fontSize:11,color:DL.sub}},probeState.message),
-        ),
-      ),
-
       // Settings shortcut
       React.createElement('button',{
         onClick:()=>onNavigate(21),
@@ -12471,6 +12528,90 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         React.createElement('span',{style:{opacity:0.5}},`Chat · Image · Video · TTS`),
         React.createElement('span',{style:{opacity:0.3}},'|'),
         React.createElement('span',{style:{opacity:0.5,fontWeight:700,color:DL.accent}},'AI Workspace v2'),
+      ),
+    ),
+    workspaceSettingsOpen&&React.createElement('div',{
+      onClick:function(){setWorkspaceSettingsOpen(false);},
+      style:{
+        position:'fixed',
+        inset:0,
+        zIndex:260,
+        display:'flex',
+        alignItems:'flex-end',
+        justifyContent:'flex-end',
+        padding:compactLayout?12:18,
+        background:'rgba(5,5,14,0.5)',
+        backdropFilter:'blur(14px)',
+        WebkitBackdropFilter:'blur(14px)',
+      },
+    },
+      React.createElement('div',{
+        onClick:function(e){e.stopPropagation();},
+        style:{
+          width:'min(420px, calc(100vw - 24px))',
+          borderRadius:24,
+          border:`1px solid ${DL.glassBorder}`,
+          background:'rgba(10,10,26,0.96)',
+          boxShadow:'0 24px 70px rgba(0,0,0,0.55)',
+          padding:14,
+          display:'flex',
+          flexDirection:'column',
+          gap:12,
+        },
+      },
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
+          React.createElement('div',{style:{width:38,height:38,borderRadius:12,background:`linear-gradient(135deg,${DL.accent},${DL.teal})`,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 8px 18px ${DL.accent}33`}},
+            React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2,strokeLinecap:'round'},
+              React.createElement('circle',{cx:12,cy:12,r:3}),
+              React.createElement('path',{d:'M12 1v3.5M12 19.5V23M4.5 4.5l2.5 2.5M17 17l2.5 2.5M1 12h3.5M19.5 12H23M4.5 19.5l2.5-2.5M17 7l2.5-2.5'}),
+            ),
+          ),
+          React.createElement('div',{style:{flex:1,minWidth:0}},
+            React.createElement('div',{style:{fontSize:14,fontWeight:900,color:DL.text}},'AI Workspace Settings'),
+            React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:2}},'Runtime dan probe disembunyikan di panel ini supaya workspace utama tetap bersih.'),
+          ),
+          React.createElement('button',{
+            onClick:function(){setWorkspaceSettingsOpen(false);},
+            style:{width:32,height:32,borderRadius:11,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)',color:DL.text,cursor:'pointer',fontSize:18,fontWeight:900,flexShrink:0},
+          },'×'),
+        ),
+        React.createElement('div',{style:{padding:12,borderRadius:18,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:6}},
+            React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
+              React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:connColor}}),
+              runtimeInfo.status==='connected'&&React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:connColor,animation:'cortex-ai-status-ping 2s ease-out infinite'}}),
+            ),
+            React.createElement('span',{style:{fontSize:11,fontWeight:800,color:DL.text}},proxyBase?'Proxy mode aktif':directMode?'Direct browser mode':'Secret-safe mode'),
+            React.createElement(B1Badge,{color:connColor,style:{fontSize:8,padding:'3px 7px'}},runtimeInfo.status),
+          ),
+          React.createElement('div',{style:{fontSize:10,color:DL.mute,lineHeight:1.5}},runtimeInfo.message),
+          (runtimeInfo.health&&runtimeInfo.health.providers)&&React.createElement('div',{style:{marginTop:8,display:'flex',gap:4,flexWrap:'wrap'}},
+            Object.keys(runtimeInfo.health.providers).map(function(pk){const p=runtimeInfo.health.providers[pk];return React.createElement(B1Badge,{key:pk,color:p.configured?DL.teal:DL.gold,style:{fontSize:7,padding:'2px 6px'}},pk+(p.configured?' ✓':' ○'));}),
+          ),
+        ),
+        React.createElement('div',{style:{padding:12,borderRadius:18,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.02)'}},
+          React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.sub,marginBottom:8,letterSpacing:0.4,textTransform:'uppercase'}},'Live Probe'),
+          React.createElement('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:probeState.status!=='idle'?10:0}},
+            ['gemini','openai','deepseek','featherless'].map(function(k){
+              return React.createElement(B1Button,{key:k,label:k,variant:'secondary',onClick:function(){runProbe(k);},style:{fontSize:10,padding:'6px 11px',minWidth:0}});
+            }),
+            React.createElement(B1Button,{label:'↻',variant:'secondary',onClick:refreshRuntime,style:{fontSize:10,padding:'6px 11px',minWidth:0}}),
+          ),
+          probeState.status!=='idle'&&React.createElement('div',{style:{padding:'10px 12px',borderRadius:13,border:`1px solid ${probeState.status==='error'?DL.red+'44':probeState.status==='success'?DL.teal+'44':DL.accent+'44'}`,background:probeState.status==='error'?`${DL.red}0a`:probeState.status==='success'?`${DL.teal}0a`:`${DL.accent}0a`}},
+            React.createElement('div',{style:{fontSize:9,fontWeight:800,color:probeState.status==='error'?DL.red:probeState.status==='success'?DL.teal:DL.accent,marginBottom:3}},probeState.provider),
+            React.createElement('div',{style:{fontSize:11,color:DL.sub,lineHeight:1.4}},probeState.message),
+          ),
+        ),
+        React.createElement('button',{
+          onClick:function(){onNavigate(21);},
+          style:{width:'100%',padding:'12px 14px',borderRadius:16,border:`1.5px solid ${DL.accent}44`,background:`${DL.accent}0e`,color:DL.accent,fontSize:12,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8},
+        },
+          React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},
+            React.createElement('circle',{cx:12,cy:12,r:3}),
+            React.createElement('path',{d:'M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83'}),
+          ),
+          'Provider Settings',
+        ),
       ),
     ),
 );
