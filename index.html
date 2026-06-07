@@ -9860,7 +9860,7 @@ function cortexReadAIWorkspaceRuntime() {
     providers:{
       gemini:{
         chatModel:'gemini-2.5-flash',
-        imageModel:'imagen-3.0-fast-generate-001',
+        imageModel:'gemini-2.0-flash-preview-image-generation',
         videoModel:'veo-3.1-fast-generate-preview',
         ttsModel:'gemini-2.5-flash-preview-tts',
       },
@@ -10171,7 +10171,7 @@ function PageAIWorkspace({ onNavigate }) {
   function providerKey(p){return String(((runtime.apiKeys||{})[p])||'').trim();}
   function providerModel(p,slot){
     const e=(runtime.providers||{})[p]||{};
-    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'imagen-3.0-fast-generate-001';if(slot==='video')return e.videoModel||'veo-3.1-fast-generate-preview';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
+    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'gemini-2.0-flash-preview-image-generation';if(slot==='video')return e.videoModel||'veo-3.1-fast-generate-preview';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
     if(p==='deepseek')return e.defaultModel||'deepseek-v4-flash';
     if(p==='featherless'){if(slot==='balanced')return e.balancedVisionModel||'unsloth/gemma-3-12b-it';return e.fastVisionModel||'unsloth/gemma-3-4b-it';}
     if(p==='openai'){if(slot==='image')return e.imageModel||'gpt-image-2';return e.chatModel||'gpt-4.1-nano';}
@@ -10266,7 +10266,7 @@ function PageAIWorkspace({ onNavigate }) {
     {id:'featherless-12b',label:'Gemma 3 12B',shortLabel:'Gemma 12B',provider:'Featherless',color:'#c084fc',ready:featherlessReady},
   ];
   const imageModels=[
-    {id:'gemini',label:'Imagen 3 Fast',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
+    {id:'gemini',label:'Gemini Flash Image',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
     {id:'openai',label:'GPT Image 2',sub:'OpenAI Image',color:'#22c55e',bgGrad:'linear-gradient(135deg,#22c55e,#16a34a)'},
     {id:'video',label:'Veo 3.1 Fast',sub:'Video Gen',color:'#a855f7',bgGrad:'linear-gradient(135deg,#a855f7,#6366f1)'},
     {id:'featherless-vision',label:'Gemma Vision',sub:'Visual Q&A',color:'#c084fc',bgGrad:'linear-gradient(135deg,#c084fc,#a855f7)'},
@@ -10291,7 +10291,16 @@ function PageAIWorkspace({ onNavigate }) {
     try{
       let text='';
       const history=historyArr;
-      function toAlternating(hist,userMsg,aiRole){const raw=[...hist.map(m=>({role:m.role==='assistant'?aiRole:'user',content:String(m.text||'')})),{role:'user',content:userMsg}];const out=[];for(const m of raw){if(out.length&&out[out.length-1].role===m.role)continue;out.push(m);}while(out.length&&out[0].role!=='user')out.shift();return out;}
+      function toAlternating(hist,userMsg,aiRole){
+        const raw=[...hist.map(m=>({role:m.role==='assistant'?aiRole:'user',content:String(m.text||'')})),{role:'user',content:userMsg}];
+        const out=[];
+        for(const m of raw){
+          if(out.length&&out[out.length-1].role===m.role){out[out.length-1].content+='\n\n'+m.content;}
+          else{out.push({role:m.role,content:m.content});}
+        }
+        while(out.length&&out[0].role!=='user')out.shift();
+        return out;
+      }
       // Build Gemini contents[], injecting image inline_data into last user message
       function toGeminiContents(hist,userMsg,file){
         const msgs=toAlternating(hist,userMsg,'model');
@@ -10319,12 +10328,13 @@ function PageAIWorkspace({ onNavigate }) {
         });
       }
       const pText=String(promptText||'').trim()||'(lampiran media)';
+      const FMT='Selalu jawab dengan format Markdown yang kaya dan terstruktur: gunakan **bold** untuk kata kunci penting, *italic* untuk penekanan, ## heading untuk judul bagian (bila jawaban panjang), - bullet list untuk daftar, 1. 2. 3. untuk langkah berurutan, `kode` untuk kode/perintah teknis, ```blok kode``` untuk potongan kode, > untuk catatan penting. Selalu bagi jawaban menjadi paragraf atau poin terstruktur, jangan hanya satu kalimat panjang. Gunakan spacing dan baris kosong antar bagian. Jawab dalam bahasa yang sama dengan pesan pengguna (Indonesia atau Inggris).';
       const sysPrompts={
-        gemini:'Kamu adalah Gemini, AI buatan Google, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
-        openai:'Kamu adalah GPT-4.1 Nano, AI buatan OpenAI, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
-        deepseek:'Kamu adalah DeepSeek AI, berjalan di CORTEX AI Workspace. Jawab dalam bahasa yang sama dengan pesan pengguna.',
-        featherless:'Kamu adalah Gemma 3 4B, model open-source buatan Google yang berjalan via Featherless AI di CORTEX AI Workspace. Kamu BUKAN Gemini. Jawab dalam bahasa yang sama dengan pesan pengguna.',
-        'featherless-12b':'Kamu adalah Gemma 3 12B, model open-source buatan Google yang berjalan via Featherless AI di CORTEX AI Workspace. Kamu BUKAN Gemini. Jawab dalam bahasa yang sama dengan pesan pengguna.',
+        gemini:`Kamu adalah Gemini, AI buatan Google, di CORTEX AI Workspace. ${FMT}`,
+        openai:`Kamu adalah GPT-4.1 Nano, AI buatan OpenAI, di CORTEX AI Workspace. ${FMT}`,
+        deepseek:`Kamu adalah DeepSeek AI, di CORTEX AI Workspace. ${FMT}`,
+        featherless:`Kamu adalah Gemma 3 4B (bukan Gemini), model open-source Google via Featherless AI, di CORTEX AI Workspace. ${FMT}`,
+        'featherless-12b':`Kamu adalah Gemma 3 12B (bukan Gemini), model open-source Google via Featherless AI, di CORTEX AI Workspace. ${FMT}`,
       };
       const sysTxt=sysPrompts[chatModel]||'';
       function withSysMsg(msgs,aiRole){return sysTxt?[{role:'user',content:sysTxt},{role:aiRole,content:'Siap, saya mengerti.'}, ...msgs]:msgs;}
@@ -10352,14 +10362,14 @@ function PageAIWorkspace({ onNavigate }) {
       }
       else if(chatModel==='deepseek'){
         const dMsgs=toAlternating(history,finalPrompt,'assistant');
-        const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...dMsgs]:dMsgs,temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});
+        const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...dMsgs]:dMsgs,temperature:0.7,max_tokens:2048},directRoute:deepseekChatUrl()});
         text=extractText(p)||'DeepSeek tidak mengembalikan respons.';
       }
       else{
         const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');
         const fMsgs=toMsgsWithImage(history,finalPrompt,'assistant',attached&&!hasBinaryDoc?attached:null);
         const fSys=sysPrompts[chatModel]||'';
-        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fSys?[{role:'system',content:fSys},...fMsgs]:fMsgs,temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});
+        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fSys?[{role:'system',content:fSys},...fMsgs]:fMsgs,temperature:0.7,max_tokens:2048},directRoute:featherlessChatUrl()});
         text=extractText(p)||'Featherless tidak mengembalikan respons.';
       }
       setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}].slice(-MAX_HISTORY));
@@ -10399,7 +10409,18 @@ function PageAIWorkspace({ onNavigate }) {
       if(imageModel==='video'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/video/generate',body:{model:providerModel('gemini','video'),instances:[{prompt}],parameters:{aspectRatio:'16:9'}},directRoute:geminiVideoGenerateUrl(providerModel('gemini','video'))});const opName=p&&p.name?p.name:'queued';setImageResults(prev=>[{kind:'video-op',text:`Video generation started. Operation: ${opName}`,ts:Date.now()},...prev].slice(0,10));}
       else if(imageModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',body:{model:providerModel('openai','image'),prompt,quality:providerImageQuality('openai'),size:'1024x1024'},directRoute:openaiImageUrl()});const data=extractGeneratedImageData(p);if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,10));}
       else if(imageModel==='featherless-vision'){const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:providerModel('featherless','balanced'),messages:[{role:'user',content:`Deskripsikan gambar dari prompt: ${prompt}`}],temperature:0.7,max_tokens:256},directRoute:featherlessChatUrl()});setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now()},...prev].slice(0,10));}
-      else{const gImgModel=providerModel('gemini','image');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/image',body:{model:gImgModel,prompt},directRoute:geminiImagePredictUrl(gImgModel),directBody:{instances:[{prompt}],parameters:{sampleCount:1}}});const id=extractGeneratedImageData(p);if(id)setImageResults(prev=>[{kind:'image',src:id.src,prompt,ts:Date.now()},...prev].slice(0,10));}
+      else{
+        const gImgModel=providerModel('gemini','image');
+        const p=await cortexRequest({
+          provider:'gemini',route:'/providers/gemini/image',
+          body:{model:gImgModel,prompt},
+          directRoute:geminiGenerateUrl(gImgModel),
+          directBody:{model:gImgModel,contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:['IMAGE']}},
+        });
+        const id=extractInlineData(p,'image');
+        if(id){setImageResults(prev=>[{kind:'image',src:'data:'+id.mimeType+';base64,'+id.data,prompt,ts:Date.now()},...prev].slice(0,10));}
+        else{setImageResults(prev=>[{kind:'error',text:'Gambar tidak berhasil digenerate. Coba prompt lain.',ts:Date.now()},...prev].slice(0,10));}
+      }
     }catch(err){setImageResults(prev=>[{kind:'error',text:err&&err.message?err.message:'Generation gagal.',ts:Date.now()},...prev].slice(0,10));}
     finally{setImageBusy(false);}
   }
