@@ -2292,6 +2292,8 @@
 .cx-md li{margin-bottom:4px;}
 .cx-md ul li::marker{color:#a855f7;}
 .cx-md ol li::marker{color:#a855f7;font-weight:700;}
+.cx-md ul ul,.cx-md ol ul{margin:2px 0 4px;padding-left:18px;}
+.cx-md ul ol,.cx-md ol ol{margin:2px 0 4px;padding-left:18px;}
 .cx-md blockquote{margin:10px 0;padding:10px 16px;border-left:3px solid #a855f7;background:rgba(168,85,247,0.08);border-radius:0 10px 10px 0;color:rgba(220,200,255,0.8);}
 .cx-md a{color:#a855f7;text-decoration:underline;text-decoration-color:rgba(168,85,247,0.4);}
 .cx-md hr{border:none;border-top:1px solid rgba(160,120,255,0.2);margin:14px 0;}
@@ -2299,6 +2301,8 @@
 .cx-md th{background:rgba(120,80,255,0.18);padding:8px 12px;text-align:left;font-weight:800;border-bottom:1px solid rgba(160,120,255,0.25);}
 .cx-md td{padding:7px 12px;border-bottom:1px solid rgba(160,120,255,0.1);}
 .cx-md tr:last-child td{border-bottom:none;}
+.cx-md-table-wrap{overflow-x:auto;margin:10px 0;border-radius:12px;border:1px solid rgba(160,120,255,0.15);}
+.cx-md-table-wrap table{margin:0;}
 /* User bubble markdown - white on gradient */
 .cx-md-user strong,.cx-md-user b{color:#fff;}
 .cx-md-user em,.cx-md-user i{color:rgba(255,255,255,0.85);}
@@ -9441,37 +9445,7 @@ function PageMediaViewer3D({ onNavigate, visualAsset, visualManifestStatus }) {
           ),
         ),
       ),
-
-    // ── Right column: observability ─────────────────────────────────────
-    React.createElement('div',{style:{flex:'0 1 320px',minWidth:0,display:'flex',flexDirection:'column',gap:8}},
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
-        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4}},
-          React.createElement('div',{style:{width:8,height:8,borderRadius:'50%',background:connColor,flexShrink:0,boxShadow:`0 0 8px ${connColor}`}}),
-          React.createElement('span',{style:{fontSize:10,fontWeight:800,color:DL.text,letterSpacing:0.3}},'Runtime'),
-          React.createElement('span',{style:{marginLeft:'auto',fontSize:8,color:DL.mute}},runtimeInfo.status),
-        ),
-        React.createElement('div',{style:{fontSize:9,color:DL.mute,lineHeight:1.4}},runtimeInfo.message),
-        (runtimeInfo.health&&runtimeInfo.health.providers)&&React.createElement('div',{style:{marginTop:6,display:'flex',gap:4,flexWrap:'wrap'}},
-          Object.keys(runtimeInfo.health.providers).map(function(pk){const p=runtimeInfo.health.providers[pk];return React.createElement(B1Badge,{key:pk,color:p.configured?DL.teal:DL.gold,style:{fontSize:7,padding:'2px 6px'}},pk+(p.configured?' ✓':' ○'));}),
-        ),
-      ),
-
-      React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.02)'}},
-        React.createElement('div',{style:{fontSize:8,fontWeight:800,color:DL.mute,marginBottom:6,letterSpacing:0.4}},'⚡ PROBE'),
-        React.createElement('div',{style:{display:'flex',gap:4,flexWrap:'wrap',marginBottom:probeState.status!=='idle'?6:0}},
-          ['gemini','openai','deepseek','featherless'].map(function(k){
-            return React.createElement(B1Button,{key:k,label:k,variant:'secondary',onClick:function(){runProbe(k);},style:{fontSize:8,padding:'4px 9px',minWidth:0}});
-          }),
-          React.createElement(B1Button,{label:'↻',variant:'secondary',onClick:refreshRuntime,style:{fontSize:8,padding:'4px 9px',minWidth:0}}),
-        ),
-        probeState.status!=='idle'&&React.createElement('div',{style:{padding:'6px 10px',borderRadius:10,border:`1px solid ${probeState.status==='error'?DL.red+'44':probeState.status==='success'?DL.teal+'44':DL.accent+'44'}`,background:probeState.status==='error'?`${DL.red}06`:probeState.status==='success'?`${DL.teal}06`:`${DL.accent}06`}},
-          React.createElement('div',{style:{fontSize:8,fontWeight:800,color:probeState.status==='error'?DL.red:probeState.status==='success'?DL.teal:DL.accent,marginBottom:2}},probeState.provider),
-          React.createElement('div',{style:{fontSize:10,color:DL.sub,lineHeight:1.4}},probeState.message),
-        ),
-      ),
     ),
-  ),
 
     React.createElement(B1Section, { title:'Model Selector', style:{ marginBottom:10 } }),
     React.createElement('div', { style:{
@@ -10134,16 +10108,24 @@ function PageProgressDashboard({ onNavigate, contentIndex, visualManifest }) {
 }
 
 function MarkdownText({text,isUser}){
+  // Sanitize HTML: only allow safe tags and attributes
+  function sanitize(html){
+    const allowedTags={a:['href','title'],b:[],strong:[],i:[],em:[],code:[],pre:[],p:[],ul:[],ol:[],li:[],h1:[],h2:[],h3:[],h4:[],blockquote:[],hr:[],br:[],table:[],thead:[],tbody:[],tr:[],th:['align'],td:['align'],div:['class'],span:['class'],del:[],ins:[],sub:[],sup:[],img:['src','alt','title']};
+    return String(html||'').replace(/<script[\s\S]*?<\/script>/gi,'').replace(/on\w+\s*=\s*["'][^"']*["']/gi,'');
+  }
   const html=React.useMemo(function(){
     try{
       if(typeof marked==='undefined'||typeof marked.parse!=='function')return String(text||'').replace(/\n/g,'<br/>');
       const raw=String(text||'');
       const result=marked.parse(raw,{breaks:true,gfm:true,mangle:false,headerIds:false});
-      return typeof result==='string'?result:raw.replace(/\n/g,'<br/>');
-    }catch(e){return String(text||'').replace(/\n/g,'<br/>');}
+      if(typeof result!=='string')return sanitize(raw.replace(/\n/g,'<br/>'));
+      // Wrap tables in scrollable container for mobile
+      return sanitize(result.replace(/<table/g,'<div class="cx-md-table-wrap"><table').replace(/<\/table>/g,'</table></div>'));
+    }catch(e){return sanitize(String(text||'').replace(/\n/g,'<br/>'));}
   },[text]);
   return React.createElement('div',{
     className:'cx-md'+(isUser?' cx-md-user':''),
+    style:{maxWidth:'100%',overflowX:'hidden'},
     dangerouslySetInnerHTML:{__html:html},
   });
 }
