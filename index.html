@@ -9741,6 +9741,52 @@ Object.assign(window, {
    Page 19: Progress Dashboard Page
    Page 20: AI Workspace Page */
 
+function cortexReadAIWorkspaceRuntime() {
+  const fallback = {
+    transportMode:'auto',
+    provider:'CORTEX Secure Router',
+    providerLabel:'Gemini + DeepSeek + Featherless via local secure proxy',
+    proxyUrl:'',
+    mode:'production',
+    apiKeys:{
+      gemini:'',
+      deepseek:'',
+      featherless:'',
+    },
+    providers:{
+      gemini:{
+        chatModel:'gemini-2.5-flash',
+        imageModel:'nano-banana-pro-preview',
+        videoModel:'veo-3.1-fast-generate-preview',
+        ttsModel:'gemini-2.5-flash-preview-tts',
+      },
+      deepseek:{
+        defaultModel:'deepseek-v4-flash',
+      },
+      featherless:{
+        fastVisionModel:'unsloth/gemma-3-4b-it',
+        balancedVisionModel:'unsloth/gemma-3-12b-it',
+        videoReasoningModel:'Kaushika04/Qwen2-VL-2B-Instruct-LoRA-FT_video_finetuned',
+      },
+    },
+  };
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem('cortex-ai-runtime') || '{}') || {}; } catch (error) {}
+  let session = {};
+  try { session = JSON.parse(sessionStorage.getItem('cortex-ai-runtime') || '{}') || {}; } catch (error) {}
+  const injected = typeof window !== 'undefined' && window.__CORTEX_AI_LOCAL_CONFIG__ ? window.__CORTEX_AI_LOCAL_CONFIG__ : {};
+  return Object.assign({}, fallback, session, stored, injected, {
+    apiKeys: Object.assign({}, fallback.apiKeys, session.apiKeys || {}, stored.apiKeys || {}, injected.apiKeys || {}),
+    providers: Object.assign({}, fallback.providers, session.providers || {}, stored.providers || {}, injected.providers || {}),
+  });
+}
+
+function cortexPersistAIWorkspaceRuntime(nextRuntime) {
+  try { localStorage.setItem('cortex-ai-runtime', JSON.stringify(nextRuntime)); } catch (error) {}
+  try { sessionStorage.setItem('cortex-ai-runtime', JSON.stringify(nextRuntime)); } catch (error) {}
+  if (typeof window !== 'undefined') window.__CORTEX_AI_LOCAL_CONFIG__ = nextRuntime;
+}
+
 function PageQuiz({ onNavigate, examSet }) {
   const questions = React.useMemo(() => cortexGetExamQuestions(examSet), [examSet]);
   const [questionIndex, setQuestionIndex] = React.useState(0);
@@ -9945,40 +9991,89 @@ function PageAIWorkspace({ onNavigate }) {
   const [surface, setSurface] = React.useState('assistant');
   const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'No proxy checked yet.', health:null });
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
-  const runtime = React.useMemo(function(){
-    let sessionConfig = {};
-    try {
-      sessionConfig = JSON.parse(sessionStorage.getItem('cortex-ai-runtime') || '{}') || {};
-    } catch (error) {
-      sessionConfig = {};
-    }
-    const injected = typeof window !== 'undefined' && window.__CORTEX_AI_LOCAL_CONFIG__ ? window.__CORTEX_AI_LOCAL_CONFIG__ : {};
-    return Object.assign({
-      provider:'CORTEX Secure Router',
-      providerLabel:'Gemini + DeepSeek + Featherless via local secure proxy',
-      proxyUrl:'',
-      mode:'production',
-      providers:{
-        gemini:{
-          chatModel:'gemini-2.5-flash',
-          imageModel:'nano-banana-pro-preview',
-          videoModel:'veo-3.1-fast-generate-preview',
-          ttsModel:'gemini-2.5-flash-preview-tts',
-        },
-        deepseek:{
-          defaultModel:'deepseek-v4-flash',
-        },
-        featherless:{
-          fastVisionModel:'unsloth/gemma-3-4b-it',
-          balancedVisionModel:'unsloth/gemma-3-12b-it',
-          videoReasoningModel:'Kaushika04/Qwen2-VL-2B-Instruct-LoRA-FT_video_finetuned',
-        },
-      },
-    }, sessionConfig, injected);
-  }, []);
+  const [chatPrompt, setChatPrompt] = React.useState('Tolong jelaskan konsep ini dalam bahasa yang sangat sederhana.');
+  const [chatFeed, setChatFeed] = React.useState([
+    { role:'assistant', title:'Cortex AI', text:'Ketik prompt di bawah lalu pilih aksi: chat, image, video, TTS, atau DeepSeek reasoning.' },
+  ]);
+  const [composerBusy, setComposerBusy] = React.useState('');
+  const [composerPreview, setComposerPreview] = React.useState(null);
+  const [composerStatus, setComposerStatus] = React.useState('Belum ada aksi dijalankan.');
+  const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
   const proxyBase = React.useMemo(function(){
     return String(runtime.proxyUrl || '').replace(/\/+$/, '');
   }, [runtime.proxyUrl]);
+  const directMode = React.useMemo(function(){
+    const mode = String(runtime.transportMode || 'auto');
+    if (mode === 'proxy') return false;
+    if (mode === 'direct') return true;
+    return !proxyBase;
+  }, [proxyBase, runtime.transportMode]);
+  const directKeysReady = !!(runtime.apiKeys && runtime.apiKeys.gemini && runtime.apiKeys.deepseek && runtime.apiKeys.featherless);
+
+  function providerKey(provider) {
+    return String(((runtime.apiKeys || {})[provider]) || '').trim();
+  }
+  function providerModel(provider, slot) {
+    const config = runtime.providers || {};
+    const entry = config[provider] || {};
+    if (provider === 'gemini') {
+      if (slot === 'chat') return entry.chatModel || 'gemini-2.5-flash';
+      if (slot === 'image') return entry.imageModel || 'nano-banana-pro-preview';
+      if (slot === 'video') return entry.videoModel || 'veo-3.1-fast-generate-preview';
+      if (slot === 'tts') return entry.ttsModel || 'gemini-2.5-flash-preview-tts';
+    }
+    if (provider === 'deepseek') return entry.defaultModel || 'deepseek-v4-flash';
+    if (provider === 'featherless') {
+      if (slot === 'balanced') return entry.balancedVisionModel || 'unsloth/gemma-3-12b-it';
+      if (slot === 'video') return entry.videoReasoningModel || 'Kaushika04/Qwen2-VL-2B-Instruct-LoRA-FT_video_finetuned';
+      return entry.fastVisionModel || 'unsloth/gemma-3-4b-it';
+    }
+    return '';
+  }
+
+  function geminiGenerateUrl(model) {
+    return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(providerKey('gemini'))}`;
+  }
+
+  function geminiVideoGenerateUrl(model) {
+    return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:predictLongRunning?key=${encodeURIComponent(providerKey('gemini'))}`;
+  }
+
+  function deepseekChatUrl() {
+    return 'https://api.deepseek.com/chat/completions';
+  }
+
+  function featherlessChatUrl() {
+    return 'https://api.featherless.ai/v1/chat/completions';
+  }
+
+  async function cortexRequest({ provider, route, body, directRoute }) {
+    if (proxyBase) {
+      const response = await fetch(`${proxyBase}${route}`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body:JSON.stringify(body),
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error((payload && payload.error && payload.error.message) || payload.error || `HTTP ${response.status}`);
+      return payload;
+    }
+    if (!directMode) {
+      throw new Error('Proxy belum aktif. Pilih Direct mode di Provider Settings atau isi proxy URL.');
+    }
+    const key = providerKey(provider);
+    if (!key) throw new Error(`API key ${provider} belum diisi di Provider Settings.`);
+    const headers = { 'Content-Type':'application/json' };
+    if (provider !== 'gemini') headers.Authorization = `Bearer ${key}`;
+    const response = await fetch(directRoute, {
+      method:'POST',
+      headers,
+      body:JSON.stringify(body),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error((payload && payload.error && payload.error.message) || payload.error || `HTTP ${response.status}`);
+    return payload;
+  }
 
   const defaultCatalog = React.useMemo(function(){
     return {
@@ -10097,10 +10192,10 @@ function PageAIWorkspace({ onNavigate }) {
   React.useEffect(function(){
     if (!proxyBase) {
       setRuntimeInfo({
-        status:'idle',
+        status: directKeysReady ? 'connected' : 'idle',
         catalog:null,
         health:null,
-        message:'Secure proxy belum terdeteksi.',
+        message: directMode ? 'Direct browser mode aktif. Isi key provider di Settings lalu coba prompt.' : 'Secure proxy belum terdeteksi.',
       });
       return;
     }
@@ -10143,7 +10238,7 @@ function PageAIWorkspace({ onNavigate }) {
     { title:'Gemini multimodal', sub:geminiReady ? 'Chat, image, video, dan TTS siap' : 'Proxy belum menemukan key Gemini', badge:geminiReady ? 'Ready' : 'Pending', color:geminiReady ? DL.teal : DL.gold },
     { title:'DeepSeek reasoning', sub:deepseekReady ? 'DeepSeek V4 Flash siap dipakai' : 'Proxy belum menemukan key DeepSeek', badge:deepseekReady ? 'Ready' : 'Pending', color:deepseekReady ? DL.accent : DL.gold },
     { title:'Featherless compact', sub:featherlessReady ? '3 lane multimodal Basic siap' : 'Proxy belum menemukan key Featherless', badge:featherlessReady ? 'Ready' : 'Pending', color:featherlessReady ? DL.green : DL.gold },
-    { title:'Public shell safety', sub:proxyBase ? `Proxy terhubung di ${proxyBase}` : 'Bundle publik tetap tanpa secret', badge:proxyBase ? 'Proxy' : 'Safe', color:proxyBase ? DL.teal : DL.green },
+    { title:'Runtime mode', sub:proxyBase ? `Proxy terhubung di ${proxyBase}` : directMode ? 'Direct browser mode aktif di localStorage' : 'Bundle publik tetap tanpa secret', badge:proxyBase ? 'Proxy' : directMode ? 'Direct' : 'Safe', color:proxyBase ? DL.teal : directMode ? DL.accent : DL.green },
   ];
 
   function sanitizeProbeText(text) {
@@ -10170,10 +10265,10 @@ function PageAIWorkspace({ onNavigate }) {
   function refreshRuntime() {
     if (!proxyBase) {
       setRuntimeInfo({
-        status:'idle',
+        status: directKeysReady ? 'connected' : 'idle',
         catalog:null,
         health:null,
-        message:'Secure proxy belum terdeteksi.',
+        message: directMode ? 'Direct browser mode aktif. Isi key provider di Settings lalu coba prompt.' : 'Secure proxy belum terdeteksi.',
       });
       return Promise.resolve();
     }
@@ -10198,20 +10293,17 @@ function PageAIWorkspace({ onNavigate }) {
   }
 
   async function runProbe(kind) {
-    if (!proxyBase) {
-      setProbeState({ status:'error', provider:'Secure proxy', message:'Proxy URL belum aktif.' });
-      return;
-    }
     const recipes = {
       gemini:{
         provider:'Google Gemini',
         route:'/providers/gemini/chat',
         message:'Mengirim live probe ke Gemini...',
         payload:{
-          model:(((runtime.providers || {}).gemini || {}).chatModel) || 'gemini-2.5-flash',
+          model:providerModel('gemini', 'chat'),
           messages:[{ role:'user', content:'Balas persis: GEMINI SIAP' }],
           generationConfig:{ temperature:0 },
         },
+        directRoute:geminiGenerateUrl(providerModel('gemini', 'chat')),
       },
       deepseek:{
         provider:'DeepSeek',
@@ -10223,6 +10315,7 @@ function PageAIWorkspace({ onNavigate }) {
           max_tokens:24,
           messages:[{ role:'user', content:'Balas persis: DEEPSEEK SIAP' }],
         },
+        directRoute:deepseekChatUrl(),
       },
       featherless:{
         provider:'Featherless',
@@ -10234,38 +10327,51 @@ function PageAIWorkspace({ onNavigate }) {
           max_tokens:24,
           messages:[{ role:'user', content:'Balas persis: FEATHERLESS SIAP' }],
         },
+        directRoute:featherlessChatUrl(),
       },
       image:{
         provider:'Gemini image',
         route:'/providers/gemini/image',
         message:'Meminta sample image generation ke Nano Banana...',
         payload:{
-          model:(((runtime.providers || {}).gemini || {}).imageModel) || 'nano-banana-pro-preview',
+          model:providerModel('gemini', 'image'),
           prompt:'Create a premium playful shell icon with cyan glass, soft glow, and no text.',
         },
+        directRoute:geminiGenerateUrl(providerModel('gemini', 'image')),
       },
       tts:{
         provider:'Gemini TTS',
         route:'/providers/gemini/tts',
         message:'Mengirim probe singkat ke Gemini TTS...',
         payload:{
-          model:(((runtime.providers || {}).gemini || {}).ttsModel) || 'gemini-2.5-flash-preview-tts',
+          model:providerModel('gemini', 'tts'),
           text:'Halo, workspace CORTEX siap digunakan.',
           voiceName:'Kore',
         },
+        directRoute:geminiGenerateUrl(providerModel('gemini', 'tts')),
+      },
+      video:{
+        provider:'Gemini video',
+        route:'/providers/gemini/video/generate',
+        message:'Memulai video generation ke Veo fast...',
+        payload:{
+          model:providerModel('gemini', 'video'),
+          instances:[{ prompt:'A luxurious playful medical app shell, floating softly, cyan and violet glow, cinematic motion.' }],
+          parameters:{ aspectRatio:'16:9' },
+        },
+        directRoute:geminiVideoGenerateUrl(providerModel('gemini', 'video')),
       },
     };
     const recipe = recipes[kind];
     if (!recipe) return;
     setProbeState({ status:'running', provider:recipe.provider, message:recipe.message });
     try {
-      const response = await fetch(`${proxyBase}${recipe.route}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify(recipe.payload),
+      const payload = await cortexRequest({
+        provider:kind === 'deepseek' ? 'deepseek' : kind === 'featherless' ? 'featherless' : 'gemini',
+        route:recipe.route,
+        body:recipe.payload,
+        directRoute:recipe.directRoute,
       });
-      const payload = await response.json();
-      if (!response.ok) throw new Error((payload && payload.error && payload.error.message) || payload.error || `HTTP ${response.status}`);
       const text = extractProbeText(payload);
       if (kind === 'image') {
         setProbeState({ status:'success', provider:recipe.provider, message:text ? `Image lane hidup. Model reply: ${text}` : 'Image lane hidup. Gemini mengembalikan payload image generation.' });
@@ -10275,9 +10381,123 @@ function PageAIWorkspace({ onNavigate }) {
         setProbeState({ status:'success', provider:recipe.provider, message:'TTS lane hidup. Gemini mengembalikan audio payload.' });
         return;
       }
+      if (kind === 'video') {
+        setProbeState({ status:'success', provider:recipe.provider, message:`Video generation started. Operation: ${payload && payload.name ? payload.name : 'queued'}` });
+        return;
+      }
       setProbeState({ status:'success', provider:recipe.provider, message:text ? `Live reply: ${text}` : 'Probe sukses, tetapi provider tidak mengembalikan teks ringkas.' });
     } catch (error) {
       setProbeState({ status:'error', provider:recipe.provider, message:error && error.message ? error.message : 'Live probe gagal.' });
+    }
+  }
+
+  function extractInlineData(payload, mediaKind) {
+    const part = payload && payload.candidates && payload.candidates[0] && payload.candidates[0].content && payload.candidates[0].content.parts
+      ? payload.candidates[0].content.parts.find(item => item.inlineData?.data || item.inline_data?.data)
+      : null;
+    if (!part) return null;
+    const inlineData = part.inlineData || part.inline_data || {};
+    const mimeType = inlineData.mimeType || inlineData.mime_type || (mediaKind === 'audio' ? 'audio/wav' : 'image/png');
+    if (!inlineData.data) return null;
+    return { mimeType, data:inlineData.data };
+  }
+
+  async function runComposerAction(action) {
+    const prompt = String(chatPrompt || '').trim();
+    if (!prompt) {
+      setComposerStatus('Ketik prompt dulu sebelum menjalankan aksi.');
+      return;
+    }
+    setComposerBusy(action);
+    setComposerPreview(null);
+    setComposerStatus('Memproses...');
+    setChatFeed(prev => prev.concat([{ role:'user', title:'You', text:prompt }]));
+    try {
+      if (action === 'chat') {
+        const payload = await cortexRequest({
+          provider:'gemini',
+          route:'/providers/gemini/chat',
+          body:{
+            model:providerModel('gemini', 'chat'),
+            messages:chatFeed.concat([{ role:'user', text:prompt }]).map(item => ({
+              role:item.role === 'assistant' ? 'model' : 'user',
+              content:item.text || item.content || '',
+            })),
+            generationConfig:{ temperature:0.2 },
+          },
+          directRoute:geminiGenerateUrl(providerModel('gemini', 'chat')),
+        });
+        const text = extractProbeText(payload) || 'Gemini tidak mengembalikan teks yang bisa diringkas.';
+        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini', text }]));
+        setComposerStatus('Chat selesai.');
+      } else if (action === 'deepseek') {
+        const payload = await cortexRequest({
+          provider:'deepseek',
+          route:'/providers/deepseek/chat/completions',
+          body:{
+            model:providerModel('deepseek', 'chat'),
+            messages:[{ role:'user', content:prompt }],
+            temperature:0.2,
+            max_tokens:512,
+          },
+          directRoute:deepseekChatUrl(),
+        });
+        const text = extractProbeText(payload) || 'DeepSeek tidak mengembalikan teks yang bisa diringkas.';
+        setChatFeed(prev => prev.concat([{ role:'assistant', title:'DeepSeek', text }]));
+        setComposerStatus('DeepSeek selesai.');
+      } else if (action === 'image') {
+        const payload = await cortexRequest({
+          provider:'gemini',
+          route:'/providers/gemini/image',
+          body:{
+            model:providerModel('gemini', 'image'),
+            prompt,
+          },
+          directRoute:geminiGenerateUrl(providerModel('gemini', 'image')),
+        });
+        const inlineData = extractInlineData(payload, 'image');
+        if (inlineData) {
+          setComposerPreview({ kind:'image', src:`data:${inlineData.mimeType};base64,${inlineData.data}` });
+        }
+        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini image', text:'Image generation selesai. Preview ditampilkan di bawah.' }]));
+        setComposerStatus('Image generation selesai.');
+      } else if (action === 'tts') {
+        const payload = await cortexRequest({
+          provider:'gemini',
+          route:'/providers/gemini/tts',
+          body:{
+            model:providerModel('gemini', 'tts'),
+            text:prompt,
+            voiceName:'Kore',
+          },
+          directRoute:geminiGenerateUrl(providerModel('gemini', 'tts')),
+        });
+        const inlineData = extractInlineData(payload, 'audio');
+        if (inlineData) {
+          setComposerPreview({ kind:'audio', src:`data:${inlineData.mimeType};base64,${inlineData.data}` });
+        }
+        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini TTS', text:'Audio berhasil dibuat. Putar preview di bawah.' }]));
+        setComposerStatus('TTS selesai.');
+      } else if (action === 'video') {
+        const payload = await cortexRequest({
+          provider:'gemini',
+          route:'/providers/gemini/video/generate',
+          body:{
+            model:providerModel('gemini', 'video'),
+            instances:[{ prompt }],
+            parameters:{ aspectRatio:'16:9' },
+          },
+          directRoute:geminiVideoGenerateUrl(providerModel('gemini', 'video')),
+        });
+        setComposerPreview({ kind:'video', text:payload && payload.name ? `Operation: ${payload.name}` : 'Video generation started.' });
+        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini video', text:payload && payload.name ? `Video generation started. Operation ${payload.name}` : 'Video generation started.' }]));
+        setComposerStatus('Video generation dimulai.');
+      }
+    } catch (error) {
+      setComposerStatus(error && error.message ? error.message : 'Aksi gagal.');
+      setChatFeed(prev => prev.concat([{ role:'assistant', title:'Error', text:error && error.message ? error.message : 'Aksi gagal.' }]));
+    } finally {
+      setComposerBusy('');
     }
   }
 
@@ -10332,7 +10552,7 @@ function PageAIWorkspace({ onNavigate }) {
     title:'AI Workspace',
     subtitle:'Gemini + DeepSeek + Featherless',
     onBack:()=>onNavigate(19),
-    right:React.createElement(B1Badge, { color:proxyBase ? DL.teal : DL.gold }, proxyBase ? 'Proxy path' : 'Secret-safe'),
+    right:React.createElement(B1Badge, { color:proxyBase ? DL.teal : directMode ? DL.accent : DL.gold }, proxyBase ? 'Proxy path' : directMode ? 'Direct mode' : 'Secret-safe'),
   },
     React.createElement(B3Hero, {
       kicker:'Production AI orchestration',
@@ -10353,7 +10573,7 @@ function PageAIWorkspace({ onNavigate }) {
     }),
 
     React.createElement(B2Callout, { tone:'caution', title:'Critical provider guardrail' },
-      'Secret provider tidak pernah dimasukkan ke GitHub Pages. Semua live call berjalan lewat secure proxy lokal. Nano Banana saya pakai untuk image generation karena memang lane gambar Gemini. Untuk video generation saya sengaja memetakan ke Veo fast, karena itu lane resmi video Gemini yang paling masuk akal untuk workflow Anda.'),
+      'Mode private sekarang mendukung dua jalur: proxy lokal atau direct browser mode dengan credential yang disimpan di browser Anda sendiri. Untuk penggunaan pribadi, direct mode bisa dipakai supaya prompt, image, video, dan TTS langsung jalan di GitHub Pages setelah key diisi. Nano Banana tetap dipakai untuk image, dan Veo fast untuk video.'),
 
     React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(146px,1fr))', gap:12, marginTop:14, marginBottom:14 }},
       statusCards.map(SurfaceCard)
@@ -10448,6 +10668,88 @@ function PageAIWorkspace({ onNavigate }) {
       ),
     ),
 
+    surface === 'assistant' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
+      React.createElement(B1Section, { title:'Try it now', action:composerBusy ? composerBusy : 'Live prompt' }),
+      React.createElement('textarea', {
+        value:chatPrompt,
+        onChange:e => setChatPrompt(e.target.value),
+        placeholder:'Tulis prompt chat, image, video, TTS, atau reasoning di sini...',
+        rows:4,
+        style:{
+          width:'100%',
+          resize:'vertical',
+          padding:'12px 14px',
+          borderRadius:16,
+          border:`1px solid ${DL.glassBorder}`,
+          background:'rgba(255,255,255,0.05)',
+          color:DL.text,
+          outline:'none',
+          fontSize:13,
+          lineHeight:1.55,
+          marginBottom:12,
+        }
+      }),
+      React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:12 }},
+        React.createElement(B1Button, {
+          label:composerBusy === 'chat' ? 'Sending...' : 'Chat Gemini',
+          onClick:function(){ runComposerAction('chat'); },
+          style:{ minWidth:140 },
+        }),
+        React.createElement(B1Button, {
+          label:composerBusy === 'deepseek' ? 'Thinking...' : 'DeepSeek',
+          variant:'secondary',
+          onClick:function(){ runComposerAction('deepseek'); },
+          style:{ minWidth:128 },
+        }),
+        React.createElement(B1Button, {
+          label:composerBusy === 'image' ? 'Creating...' : 'Generate image',
+          variant:'secondary',
+          onClick:function(){ runComposerAction('image'); },
+          style:{ minWidth:146 },
+        }),
+        React.createElement(B1Button, {
+          label:composerBusy === 'video' ? 'Creating...' : 'Generate video',
+          variant:'secondary',
+          onClick:function(){ runComposerAction('video'); },
+          style:{ minWidth:146 },
+        }),
+        React.createElement(B1Button, {
+          label:composerBusy === 'tts' ? 'Creating...' : 'Generate TTS',
+          variant:'secondary',
+          onClick:function(){ runComposerAction('tts'); },
+          style:{ minWidth:132 },
+        }),
+      ),
+      React.createElement(B2Callout, { tone:composerStatus.includes('gagal') || composerStatus.includes('belum') ? 'caution' : 'info', title:'Composer status' }, composerStatus),
+      composerPreview && composerPreview.kind === 'image' && React.createElement('img', {
+        src:composerPreview.src,
+        alt:'Generated image preview',
+        style:{ width:'100%', borderRadius:18, border:`1px solid ${DL.glassBorder}`, marginTop:12, display:'block' },
+      }),
+      composerPreview && composerPreview.kind === 'audio' && React.createElement('audio', {
+        controls:true,
+        src:composerPreview.src,
+        style:{ width:'100%', marginTop:12 },
+      }),
+      composerPreview && composerPreview.kind === 'video' && React.createElement(B2Callout, { tone:'evidence', title:'Video generation' }, composerPreview.text),
+      React.createElement('div', { style:{ marginTop:12, display:'grid', gap:10 }},
+        chatFeed.slice(-6).map((msg, i) => React.createElement('div', {
+          key:`msg-${i}`,
+          style:{
+            padding:'11px 13px',
+            borderRadius:16,
+            background:msg.role === 'assistant' ? 'rgba(255,255,255,0.06)' : DL.gradA,
+            border:msg.role === 'assistant' ? `1px solid ${DL.glassBorder}` : 'none',
+            color:msg.role === 'assistant' ? DL.sub : '#fff',
+            lineHeight:1.55,
+          }
+        },
+          React.createElement('div', { style:{ fontSize:9, fontWeight:900, opacity:0.7, marginBottom:3 }}, msg.title || (msg.role === 'assistant' ? 'Assistant' : 'You')),
+          msg.text,
+        ))
+      )
+    ),
+
     surface === 'visual' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
       React.createElement(B1Section, { title:'Visual generation lanes', style:{ marginBottom:10 } }),
       modelFamilies.visual.map(ModelRow),
@@ -10473,15 +10775,15 @@ function PageAIWorkspace({ onNavigate }) {
     surface === 'connect' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
       React.createElement(B1Section, { title:'Connection architecture', style:{ marginBottom:10 } }),
       [
-        { title:'Public shell', sub:'GitHub Pages tetap secret-free. Tidak ada API key di bundle client.', badge:'Protected', color:DL.green },
-        { title:'Proxy route', sub:proxyBase ? `Detected at ${proxyBase}` : 'Load ai_workspace.local.js lalu jalankan npm run proxy.', badge:proxyBase ? 'Detected' : 'Needed', color:proxyBase ? DL.teal : DL.gold },
-        { title:'Gemini status', sub:geminiReady ? 'Chat, image, video, dan TTS lane terdeteksi.' : 'Key Gemini belum terbaca oleh proxy.', badge:geminiReady ? 'Connected' : 'Missing', color:geminiReady ? DL.teal : DL.red },
-        { title:'DeepSeek status', sub:deepseekReady ? 'DeepSeek V4 Flash terdeteksi.' : 'Key DeepSeek belum terbaca oleh proxy.', badge:deepseekReady ? 'Connected' : 'Missing', color:deepseekReady ? DL.accent : DL.red },
-        { title:'Featherless status', sub:featherlessReady ? 'Tiga lane multimodal Basic terdeteksi.' : 'Key Featherless belum terbaca oleh proxy.', badge:featherlessReady ? 'Connected' : 'Missing', color:featherlessReady ? DL.green : DL.red },
+        { title:'Private shell', sub:'Browser-only keys tetap berada di localStorage Anda. Bundle publik tidak menyimpan secret.', badge:'Private', color:DL.green },
+        { title:'Proxy route', sub:proxyBase ? `Detected at ${proxyBase}` : 'Proxy optional. Direct mode bisa dipakai tanpa backend.', badge:proxyBase ? 'Detected' : 'Optional', color:proxyBase ? DL.teal : DL.gold },
+        { title:'Gemini status', sub:geminiReady || directKeysReady ? 'Chat, image, video, dan TTS lane siap.' : 'Key Gemini belum diisi.', badge:geminiReady || directKeysReady ? 'Ready' : 'Missing', color:geminiReady || directKeysReady ? DL.teal : DL.red },
+        { title:'DeepSeek status', sub:deepseekReady || directKeysReady ? 'DeepSeek V4 Flash siap.' : 'Key DeepSeek belum diisi.', badge:deepseekReady || directKeysReady ? 'Ready' : 'Missing', color:deepseekReady || directKeysReady ? DL.accent : DL.red },
+        { title:'Featherless status', sub:featherlessReady || directKeysReady ? 'Tiga lane multimodal Basic siap.' : 'Key Featherless belum diisi.', badge:featherlessReady || directKeysReady ? 'Ready' : 'Missing', color:featherlessReady || directKeysReady ? DL.green : DL.red },
         { title:'Runtime status', sub:runtimeInfo.message, badge:runtimeInfo.status, color:runtimeInfo.status === 'connected' ? DL.teal : runtimeInfo.status === 'error' ? DL.red : DL.accent },
       ].map(MiniProviderRow),
       React.createElement(B2Callout, { tone:'info', title:'Local template' },
-        'Gunakan ai_workspace.local.example.js sebagai template, lalu simpan ai_workspace.local.js secara lokal saja. Proxy multi-provider ini memuat health route, katalog model, upload file Gemini, lane image, lane TTS, dan lane video generation tanpa mengekspos secret ke browser.')
+        'Gunakan ai_workspace.local.example.js sebagai template, atau isi key langsung di Provider Settings. Proxy multi-provider tetap tersedia, tetapi mode direct browser sudah bisa dipakai untuk testing pribadi di GitHub Pages.')
     ),
 
     React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
@@ -10514,13 +10816,19 @@ Object.assign(window, {
    Page 24: Empty / Loading / Error / Offline States Page */
 
 function PageProviderAdvancedSettings({ onNavigate }) {
-  const injected = typeof window !== 'undefined' && window.__CORTEX_AI_LOCAL_CONFIG__ ? window.__CORTEX_AI_LOCAL_CONFIG__ : {};
-  const [providerEnabled, setProviderEnabled] = React.useState(!!injected.proxyUrl);
+  const initialRuntime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
+  const [providerEnabled, setProviderEnabled] = React.useState(Boolean(initialRuntime.proxyUrl || initialRuntime.apiKeys && (initialRuntime.apiKeys.gemini || initialRuntime.apiKeys.deepseek || initialRuntime.apiKeys.featherless)));
+  const [transportMode, setTransportMode] = React.useState(initialRuntime.transportMode || (initialRuntime.proxyUrl ? 'proxy' : 'direct'));
+  const [proxyUrl, setProxyUrl] = React.useState(initialRuntime.proxyUrl || '');
+  const [geminiKey, setGeminiKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.gemini) || '');
+  const [deepseekKey, setDeepseekKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.deepseek) || '');
+  const [featherlessKey, setFeatherlessKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.featherless) || '');
   const [hapticEnabled, setHapticEnabled] = React.useState(true);
   const [intensity, setIntensity] = React.useState('balanced');
   const [duration, setDuration] = React.useState(620);
   const [visualFallback, setVisualFallback] = React.useState(true);
   const [uploadMode, setUploadMode] = React.useState('inline');
+  const [runtimeSaveState, setRuntimeSaveState] = React.useState('Belum disimpan.');
   const [apply, setApply] = React.useState({ buttons:true, cards:true, quiz:true, nav:true });
 
   const ApplyRow = ({ keyName, title, sub }) => React.createElement(B3Row, {
@@ -10532,23 +10840,109 @@ function PageProviderAdvancedSettings({ onNavigate }) {
     }),
   });
 
+  function saveRuntime() {
+    const nextRuntime = {
+      enabled: providerEnabled,
+      transportMode,
+      provider:'CORTEX Secure Router',
+      providerLabel: transportMode === 'direct'
+        ? 'Direct browser calls to Gemini + DeepSeek + Featherless'
+        : 'Gemini + DeepSeek + Featherless via local secure proxy',
+      proxyUrl,
+      mode:'production',
+      apiKeys:{
+        gemini:geminiKey.trim(),
+        deepseek:deepseekKey.trim(),
+        featherless:featherlessKey.trim(),
+      },
+      providers: initialRuntime.providers,
+    };
+    cortexPersistAIWorkspaceRuntime(nextRuntime);
+    setRuntimeSaveState('Tersimpan. Refresh halaman untuk memastikan config aktif di seluruh surface.');
+  }
+
   return React.createElement(B2PageShell, {
     label:'P21-ProviderAdvancedSettings',
     title:'Advanced',
     subtitle:'Provider & motion',
     onBack:()=>onNavigate(20),
-    right:React.createElement(B1Badge, { color:providerEnabled ? DL.teal : DL.gold }, providerEnabled ? 'Proxy path' : 'No secret'),
+    right:React.createElement(B1Badge, { color:providerEnabled ? (transportMode === 'direct' ? DL.accent : DL.teal) : DL.gold }, providerEnabled ? (transportMode === 'direct' ? 'Direct' : 'Proxy') : 'Off'),
   },
     React.createElement(B3Hero, {
       kicker:'Provider architecture',
       title:'Provider Router and Motion Controls',
-      subtitle:'Gemini diutamakan untuk multimodal utama, DeepSeek untuk reasoning lane cepat, dan Featherless untuk model multimodal kecil pada Basic plan. Secret tetap tinggal di proxy.',
+      subtitle:'Gemini diutamakan untuk multimodal utama, DeepSeek untuk reasoning lane cepat, dan Featherless untuk model multimodal kecil pada Basic plan. Untuk mode pribadi, credential bisa disimpan lokal di browser dan dipakai langsung dari GitHub Pages.',
       color:DL.gold,
     }),
 
     React.createElement(B1Section, { title:'Provider', style:{ marginBottom:9 } }),
     React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      React.createElement(B1Toggle, { value:providerEnabled, onChange:setProviderEnabled, label:'Enable secure proxy route' }),
+      React.createElement(B1Toggle, { value:providerEnabled, onChange:setProviderEnabled, label:'Enable AI workspace' }),
+      React.createElement('div', { style:{ marginTop:13, marginBottom:13 }},
+        React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', marginBottom:7 }},
+          React.createElement('span', { style:{ fontSize:11, color:DL.sub, fontWeight:800 }}, 'Transport mode'),
+          React.createElement('span', { style:{ fontSize:11, color:DL.accent, fontWeight:900 }}, transportMode),
+        ),
+        React.createElement(B2Segmented, {
+          value:transportMode,
+          options:[
+            { value:'auto', label:'Auto' },
+            { value:'proxy', label:'Proxy' },
+            { value:'direct', label:'Direct' },
+          ],
+          onChange:setTransportMode,
+        }),
+      ),
+      React.createElement('div', { style:{ display:'grid', gap:10, marginTop:10 }},
+        React.createElement('input', {
+          value:proxyUrl,
+          onChange:e => setProxyUrl(e.target.value),
+          placeholder:'Proxy URL, mis. https://ai-proxy.yourdomain.com',
+          style:{ width:'100%', padding:'11px 13px', borderRadius:14, border:`1px solid ${DL.glassBorder}`, background:'rgba(255,255,255,0.05)', color:DL.text, fontSize:13 },
+        }),
+        React.createElement('input', {
+          value:geminiKey,
+          onChange:e => setGeminiKey(e.target.value),
+          placeholder:'Gemini API key',
+          type:'password',
+          style:{ width:'100%', padding:'11px 13px', borderRadius:14, border:`1px solid ${DL.glassBorder}`, background:'rgba(255,255,255,0.05)', color:DL.text, fontSize:13 },
+        }),
+        React.createElement('input', {
+          value:deepseekKey,
+          onChange:e => setDeepseekKey(e.target.value),
+          placeholder:'DeepSeek API key',
+          type:'password',
+          style:{ width:'100%', padding:'11px 13px', borderRadius:14, border:`1px solid ${DL.glassBorder}`, background:'rgba(255,255,255,0.05)', color:DL.text, fontSize:13 },
+        }),
+        React.createElement('input', {
+          value:featherlessKey,
+          onChange:e => setFeatherlessKey(e.target.value),
+          placeholder:'Featherless API key',
+          type:'password',
+          style:{ width:'100%', padding:'11px 13px', borderRadius:14, border:`1px solid ${DL.glassBorder}`, background:'rgba(255,255,255,0.05)', color:DL.text, fontSize:13 },
+        }),
+      ),
+      React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginTop:12 }},
+        React.createElement(B1Button, { label:'Save runtime', onClick:saveRuntime, style:{ minWidth:138 } }),
+        React.createElement(B1Button, {
+          label:'Load example',
+          variant:'secondary',
+          onClick:function(){
+            try {
+              const example = cortexReadAIWorkspaceRuntime();
+              setTransportMode(example.transportMode || 'auto');
+              setProxyUrl(example.proxyUrl || '');
+              setGeminiKey((example.apiKeys && example.apiKeys.gemini) || '');
+              setDeepseekKey((example.apiKeys && example.apiKeys.deepseek) || '');
+              setFeatherlessKey((example.apiKeys && example.apiKeys.featherless) || '');
+              setRuntimeSaveState('Contoh runtime dimuat. Isi key Anda sendiri lalu simpan.');
+            } catch (error) {}
+          },
+          style:{ minWidth:132 },
+        }),
+      ),
+      React.createElement(B2Callout, { tone:'info', title:'Private mode note' },
+        'Untuk penggunaan pribadi, Direct mode akan memanggil API provider langsung dari browser. Credential tersimpan di localStorage browser Anda sendiri, bukan di GitHub Pages repository.'),
       React.createElement(B3Row, {
         title:'Gemini multimodal core',
         sub:'Gemini 2.5 Flash, Nano Banana image lane, Veo fast video lane, dan Gemini TTS dipakai sebagai inti multimodal utama.',
@@ -10556,10 +10950,10 @@ function PageProviderAdvancedSettings({ onNavigate }) {
       }),
       React.createElement(B3Row, {
         title:'Capability status',
-        sub:'Public shell: safe. Proxy wiring: ready. Direct client-side API keys: forbidden.',
+        sub:providerEnabled ? 'Workspace aktif. Direct mode bekerja jika key sudah diisi, proxy mode bekerja jika URL proxy diisi.' : 'Workspace nonaktif sampai Anda menyalakan toggle di atas.',
         active:true,
         color:DL.teal,
-        right:React.createElement(B1Badge, { color:DL.teal }, 'Proxy-ready'),
+        right:React.createElement(B1Badge, { color:DL.teal }, transportMode === 'direct' ? 'Direct-ready' : transportMode === 'proxy' ? 'Proxy-ready' : 'Auto'),
       }),
       React.createElement(B3Row, {
         title:'DeepSeek + Featherless support lanes',
@@ -10581,7 +10975,8 @@ function PageProviderAdvancedSettings({ onNavigate }) {
         }),
       ),
       React.createElement(B2Callout, { tone:'info', title:'Routing rule' },
-        'Gemini chat, image, TTS, file upload, dan video generation berjalan lewat route /providers/gemini/*. DeepSeek memakai /providers/deepseek/chat/completions. Featherless compact multimodal memakai /providers/featherless/chat/completions supaya routing tetap rapi dan aman.')
+        'Gemini chat, image, TTS, file upload, dan video generation berjalan lewat route /providers/gemini/* atau langsung ke endpoint Gemini jika Direct mode aktif. DeepSeek memakai /providers/deepseek/chat/completions. Featherless compact multimodal memakai /providers/featherless/chat/completions supaya routing tetap rapi dan aman.'),
+      React.createElement(B2Callout, { tone:runtimeSaveState.includes('Tersimpan') ? 'info' : 'caution', title:'Runtime save' }, runtimeSaveState)
     ),
 
     React.createElement(B1Section, { title:'Motion Feedback', style:{ marginBottom:9 } }),
