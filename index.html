@@ -17,9 +17,9 @@
   <meta name='application-name' content='CORTEX Studio'>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #060818; }
     body {
-      background: #0a0a0a;
+      background: #060818;
       font-family: "SF Pro Display", "Inter", -apple-system, sans-serif;
     }
 /* CORTEX EDUCATION — Master Stylesheet */
@@ -2031,10 +2031,14 @@
     width: 100%;
     max-width: 100%;
     overflow-x: clip;
+    background: #060818;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
   .cortex-library-root {
     height: 100svh !important;
-    min-height: 100svh !important;
+    height: 100dvh !important;
+    min-height: -webkit-fill-available !important;
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: clip !important;
@@ -7538,15 +7542,34 @@ function PageSettings({ onNavigate, themeId: themeIdProp, theme: themeProp, onTh
     } catch (err) {}
   }, [currentHighlightTone]);
 
+  function cortexSettingsIconSVG(name,s,c){
+    const p={width:s,height:s,viewBox:'0 0 24 24',fill:'none',stroke:c,strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round'};
+    if(name==='bell')return React.createElement('svg',p,React.createElement('path',{d:'M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9'}),React.createElement('path',{d:'M13.73 21a2 2 0 01-3.46 0'}));
+    if(name==='play')return React.createElement('svg',p,React.createElement('polygon',{points:'5 3 19 12 5 21 5 3'}));
+    if(name==='globe')return React.createElement('svg',p,React.createElement('circle',{cx:12,cy:12,r:10}),React.createElement('line',{x1:2,y1:12,x2:22,y2:12}),React.createElement('path',{d:'M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z'}));
+    if(name==='user')return React.createElement('svg',p,React.createElement('path',{d:'M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2'}),React.createElement('circle',{cx:12,cy:7,r:4}));
+    if(name==='key')return React.createElement('svg',p,React.createElement('circle',{cx:7.5,cy:14.5,r:4.5}),React.createElement('path',{d:'M10.5 11.5L21 1m-3 0l2 2-5 5 2 2'}));
+    if(name==='export')return React.createElement('svg',p,React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'17 8 12 3 7 8'}),React.createElement('line',{x1:12,y1:3,x2:12,y2:15}));
+    if(name==='help')return React.createElement('svg',p,React.createElement('circle',{cx:12,cy:12,r:10}),React.createElement('path',{d:'M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3'}),React.createElement('line',{x1:12,y1:17,x2:12.01,y2:17}));
+    if(name==='exit')return React.createElement('svg',p,React.createElement('path',{d:'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4'}),React.createElement('polyline',{points:'16 17 21 12 16 7'}),React.createElement('line',{x1:21,y1:12,x2:9,y2:12}));
+    if(name==='logout')return React.createElement('svg',Object.assign({},p,{stroke:'rgba(239,68,68,0.85)'}),React.createElement('path',{d:'M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4'}),React.createElement('polyline',{points:'16 17 21 12 16 7'}),React.createElement('line',{x1:21,y1:12,x2:9,y2:12}));
+    if(name==='sparkle')return React.createElement('svg',p,React.createElement('path',{d:'M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17 5.8 21.3l2.4-7.4L2 9.4h7.6z'}));
+    return React.createElement('svg',p,React.createElement('circle',{cx:12,cy:12,r:3}),React.createElement('path',{d:'M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z'}));
+  }
+
   const SettingsRow = ({ icon, label, right, onClick, sub }) =>
     React.createElement('div', {
       onClick, style:{
         display:'flex', alignItems:'center', gap:12, padding:'12px 0',
-        borderBottom:`1px solid rgba(255,255,255,0.04)`,
+        borderBottom:'1px solid rgba(255,255,255,0.04)',
         cursor: onClick ? 'pointer' : 'default',
       }
     },
-      React.createElement('span', { style:{ fontSize:18 }}, icon),
+      React.createElement('div', { style:{
+        width:34, height:34, borderRadius:11, flexShrink:0,
+        display:'flex', alignItems:'center', justifyContent:'center',
+        background:'rgba(255,255,255,0.055)', border:'1px solid rgba(255,255,255,0.07)',
+      }}, cortexSettingsIconSVG(icon, 17, DL.sub)),
       React.createElement('div', { style:{ flex:1 }},
         React.createElement('div', { style:{ fontSize:13, color:DL.text }}, label),
         sub && React.createElement('div', { style:{ fontSize:10, color:DL.mute, marginTop:1 }}, sub),
@@ -7700,7 +7723,7 @@ function PageSettings({ onNavigate, themeId: themeIdProp, theme: themeProp, onTh
         ),
       ),
       React.createElement(SettingsRow, {
-        icon:'✨', label:'Reduced Motion',
+        icon:'sparkle', label:'Reduced Motion',
         sub:'Kurangi animasi untuk aksesibilitas',
         right: React.createElement(B1Toggle, { value:reducedMotion, onChange:setReducedMotion }),
       }),
@@ -7738,15 +7761,15 @@ function PageSettings({ onNavigate, themeId: themeIdProp, theme: themeProp, onTh
       /* Learning */
       React.createElement(B1Section, { title:'Pembelajaran', style:{ marginTop:14, marginBottom:4 } }),
       React.createElement(SettingsRow, {
-        icon:'🔔', label:'Notifikasi',
+        icon:'bell', label:'Notifikasi',
         right: React.createElement(B1Toggle, { value:notifications, onChange:setNotifications }),
       }),
       React.createElement(SettingsRow, {
-        icon:'▶️', label:'Auto-play Slide',
+        icon:'play', label:'Auto-play Slide',
         right: React.createElement(B1Toggle, { value:autoPlay, onChange:setAutoPlay }),
       }),
       React.createElement(SettingsRow, {
-        icon:'🌐', label:'Bahasa', sub:'Indonesia',
+        icon:'globe', label:'Bahasa', sub:'Indonesia',
       }),
 
       React.createElement(B1Section, { title:'Identitas Akun', style:{ marginTop:14, marginBottom:4 } }),
@@ -7781,17 +7804,17 @@ function PageSettings({ onNavigate, themeId: themeIdProp, theme: themeProp, onTh
 
       /* Account */
       React.createElement(B1Section, { title:'Akun', style:{ marginTop:14, marginBottom:4 } }),
-      React.createElement(SettingsRow, { icon:'👤', label:'Profil', sub:accountLoggedIn ? accountName : 'Tamu / Demo session' }),
-      React.createElement(SettingsRow, { icon:'🔑', label:'Keamanan' }),
-      React.createElement(SettingsRow, { icon:'📤', label:'Ekspor Data' }),
-      React.createElement(SettingsRow, { icon:'❓', label:'Bantuan & FAQ' }),
+      React.createElement(SettingsRow, { icon:'user', label:'Profil', sub:accountLoggedIn ? accountName : 'Tamu / Demo session' }),
+      React.createElement(SettingsRow, { icon:'key', label:'Keamanan' }),
+      React.createElement(SettingsRow, { icon:'export', label:'Ekspor Data' }),
+      React.createElement(SettingsRow, { icon:'help', label:'Bantuan & FAQ' }),
       React.createElement(SettingsRow, {
-        icon:'↩', label:'Keluar Aplikasi',
+        icon:'exit', label:'Keluar Aplikasi',
         sub:'Kembali ke welcome shell',
         onClick:()=>setConfirmAction('exit'),
       }),
       React.createElement(SettingsRow, {
-        icon:'🚪', label:'Logout Akun',
+        icon:'logout', label:'Logout Akun',
         sub:accountLoggedIn ? 'Akhiri sesi demo akun ini' : 'Sesi sedang logout',
         onClick:()=>setConfirmAction('logout'),
       }),
@@ -11048,6 +11071,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   const fileInputRef = React.useRef(null);
   const sttInputRef = React.useRef(null);
   const abortRef = React.useRef(null);
+  const imageAbortRef = React.useRef(null);
+  const ttsAbortRef = React.useRef(null);
   const [sttFile, setSttFile] = React.useState(null);
   const [sttBusy, setSttBusy] = React.useState(false);
   const [sttMode, setSttMode] = React.useState('transcribe');
@@ -11461,6 +11486,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     const reference=visualReference&&visualReference.base64?visualReference:null;
     const promptText=prompt||(reference?'Gunakan gambar referensi terlampir sebagai konteks visual.':'');
     if(!promptText&&!reference)return;
+    const ctrl=new AbortController();imageAbortRef.current=ctrl;
     setImageBusy(true);
     try{
       if(imageModel==='video'){
@@ -11572,11 +11598,12 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         setImageResults(prev=>[{kind:'error',text:message,ts:Date.now()},...prev].slice(0,10));
       }
     }
-    finally{setImageBusy(false);}
+    finally{setImageBusy(false);imageAbortRef.current=null;}
   }
 
   async function runTTS(){
     const text=String(ttsText||'').trim();if(!text)return;
+    const ctrl=new AbortController();ttsAbortRef.current=ctrl;
     setTtsBusy(true);
     try{
       if(ttsProvider==='openai'){
@@ -11614,8 +11641,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           else setTtsHistory(prev=>[{error:'Konversi audio gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
         }else setTtsHistory(prev=>[{error:'TTS tidak mengembalikan data audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
       }
-    }catch(err){setTtsHistory(prev=>[{error:err&&err.message?err.message:'TTS gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
-    finally{setTtsBusy(false);}
+    }catch(err){if(err&&err.name==='AbortError')return;setTtsHistory(prev=>[{error:err&&err.message?err.message:'TTS gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
+    finally{setTtsBusy(false);ttsAbortRef.current=null;}
   }
 
   // Poll Veo long-running operation for progress/completion
@@ -12610,7 +12637,19 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         ),
           React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:0}},
             React.createElement('span',{style:{fontSize:9,color:DL.mute,flex:1}},`${imagePrompt.length} karakter`),
-            React.createElement('button',{
+            imageBusy&&React.createElement('button',{
+            onClick:function(){if(imageAbortRef.current){imageAbortRef.current.abort();imageAbortRef.current=null;}setImageBusy(false);},
+            className:'cortex-motion-press',
+            style:{
+              flex:'0 0 auto',padding:'12px 18px',borderRadius:14,border:`1px solid ${DL.red}44`,
+              background:`${DL.red}14`,color:DL.red,fontSize:13,fontWeight:800,
+              cursor:'pointer',display:'flex',alignItems:'center',gap:6,
+            },
+          },
+            React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:DL.red,strokeWidth:2.5,strokeLinecap:'round'},React.createElement('rect',{x:4,y:4,width:16,height:16,rx:3,fill:DL.red})),
+            'Cancel',
+          ),
+          React.createElement('button',{
             onClick:runImageGen,disabled:imageBusy||(!imagePrompt.trim()&&!visualReference),
             className:'cortex-motion-press',
             style:{
@@ -12626,7 +12665,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             },
           },
             !imageBusy&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)',animation:'cortex-ai-shimmer-btn 3s ease-in-out infinite',pointerEvents:'none'}}),
-            imageBusy?'⏳ Generating...':(imageModel==='video'?React.createElement('span',null,'Generate Video'):imageModel==='featherless-vision'?React.createElement('span',null,'Analisis Gambar'):React.createElement('span',null,'Generate Image')),
+            imageBusy?'Generating...':(imageModel==='video'?React.createElement('span',null,'Generate Video'):imageModel==='featherless-vision'?React.createElement('span',null,'Analisis Gambar'):React.createElement('span',null,'Generate Image')),
           ),
         ),
       ),
@@ -12798,6 +12837,18 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           React.createElement('div',{style:{flex:1,minWidth:0}},
             React.createElement('div',{style:{fontSize:9,color:DL.mute}},`${ttsText.length} karakter · ~${Math.max(1,Math.round(ttsText.split(/\s+/).filter(Boolean).length/140))} menit`),
           ),
+          ttsBusy&&React.createElement('button',{
+            onClick:function(){if(ttsAbortRef.current){ttsAbortRef.current.abort();ttsAbortRef.current=null;}setTtsBusy(false);},
+            className:'cortex-motion-press',
+            style:{
+              padding:'12px 18px',borderRadius:14,border:`1px solid ${DL.red}44`,
+              background:`${DL.red}14`,color:DL.red,fontSize:13,fontWeight:800,
+              cursor:'pointer',display:'flex',alignItems:'center',gap:6,flexShrink:0,
+            },
+          },
+            React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:DL.red,strokeWidth:2.5,strokeLinecap:'round'},React.createElement('rect',{x:4,y:4,width:16,height:16,rx:3,fill:DL.red})),
+            'Cancel',
+          ),
           React.createElement('button',{
             onClick:runTTS,disabled:ttsBusy||!ttsText.trim(),
             className:'cortex-motion-press',
@@ -12815,7 +12866,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           },
             !ttsBusy&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)',animation:'cortex-ai-shimmer-btn 3s ease-in-out infinite',pointerEvents:'none'}}),
             React.createElement(MicSVG,{active:false,color:'rgba(255,255,255,0.9)',size:14}),
-            ttsBusy?React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},React.createElement('span',null,'🎙 Generating...'),'...'):React.createElement('span',null,'🎙 Generate Speech'),
+            ttsBusy?React.createElement('span',null,'Generating...'):React.createElement('span',null,'Generate Speech'),
           ),
         ),
       ),
@@ -14482,7 +14533,7 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
             ? String((lectureDomainsList.find(domain => domain.id === fabGroup) || lectureDomainsList[0] || {}).title || 'Modules').replace(/\.$/, '')
             : 'No modules loaded'
         ),
-        React.createElement('div', { className:'cortex-content-browser-list' },
+        React.createElement('div', { style:{ display:'flex', flexDirection:'column', gap:6 } },
           (!cortexProgressStats.loaded ? [] : (function(){
             const target = lectureDomainsList.find(function(d) { return d.id === fabGroup; });
             const mods = target && Array.isArray(target.modules) ? target.modules : (lectureDomainsList.length > 0 && Array.isArray(lectureDomainsList[0].modules) ? lectureDomainsList[0].modules : []);
@@ -14494,53 +14545,30 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
                 if (typeof onSelectLecture === 'function') onSelectLecture(mod.id);
                 if (typeof onNavigate === 'function') onNavigate(9);
               },
-              className:'cortex-motion-press cortex-content-browser-item',
-              style:{ animationDelay:`${idx * 80}ms` }
+              className:'cortex-motion-press',
+              style:{
+                display:'flex', alignItems:'center', gap:10, padding:'10px 12px',
+                borderRadius:14, background:'rgba(45,212,191,0.05)', border:'1px solid rgba(45,212,191,0.14)',
+                cursor:'pointer', textAlign:'left', width:'100%', color:DL.text, transition:'all 0.2s ease',
+              }
             },
-              React.createElement('div', { className:'cortex-content-browser-item-frame' },
-                React.createElement('div', { style:{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }},
-                  React.createElement('div', { style:{ minWidth:0, flex:1 }},
-                    React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:10, marginBottom:6 }},
-                      React.createElement('div', { style:{
-                        width:38, height:38, borderRadius:14,
-                        display:'flex', alignItems:'center', justifyContent:'center',
-                        background:'linear-gradient(135deg, rgba(45,212,191,0.24), rgba(168,85,247,0.26))',
-                        border:'1px solid rgba(255,255,255,0.10)',
-                        boxShadow:'inset 0 1px 0 rgba(255,255,255,0.08)'
-                      }}, React.createElement(CortexLuxeIcon, { name:'library', size:16, color:'#ffffff', accent:currentTheme.colors.accent1 })),
-                      React.createElement('div', { style:{ minWidth:0 }},
-                        React.createElement('div', { style:{ fontSize:13, fontWeight:950, lineHeight:1.25, color:DL.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, String(mod.title || '')),
-                        React.createElement('div', { style:{ fontSize:9, color:'rgba(221,243,244,0.72)', lineHeight:1.4, marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, String(mod.sourceDocument || mod.id || ''))
-                      )
-                    ),
-                    React.createElement('div', { style:{ display:'flex', gap:6, marginTop:10, flexWrap:'wrap' }},
-                      (Array.isArray(mod.topicTags) ? mod.topicTags : []).slice(0, 4).map(function(tag) {
-                        return React.createElement('span', { key:String(tag), style:{
-                          fontSize:8, padding:'4px 8px', borderRadius:999,
-                          background:'rgba(16,185,129,0.14)', color:'#7bf2cf',
-                          border:'1px solid rgba(123,242,207,0.10)', fontWeight:800
-                        }}, String(tag));
-                      })
-                    )
-                  ),
-                  React.createElement('div', { style:{ flex:'0 0 auto', textAlign:'right' }},
-                    React.createElement('div', { style:{ fontSize:10, color:currentTheme.colors.accent1, fontWeight:950, letterSpacing:0.3 }}, `M${idx + 1}`),
-                    React.createElement('div', { style:{ fontSize:8, color:'rgba(221,243,244,0.55)', marginTop:3, fontWeight:800, textTransform:'uppercase', letterSpacing:0.8 }}, 'Open')
-                  )
+              React.createElement('div', { style:{
+                width:32, height:32, borderRadius:10, flexShrink:0,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                background:'linear-gradient(135deg, rgba(45,212,191,0.20), rgba(168,85,247,0.18))',
+                border:'1px solid rgba(255,255,255,0.08)',
+              }}, React.createElement(CortexLuxeIcon, { name:'library', size:14, color:'#ffffff', accent:currentTheme.colors.accent1 })),
+              React.createElement('div', { style:{ flex:1, minWidth:0 }},
+                React.createElement('div', { style:{ fontSize:12, fontWeight:850, color:DL.text, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', lineHeight:1.3 }}, String(mod.title || '')),
+                React.createElement('div', { style:{ fontSize:9, color:DL.mute, marginTop:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}, String(mod.sourceDocument || mod.id || '')),
+              ),
+              React.createElement('div', { style:{ flexShrink:0, display:'flex', alignItems:'center', gap:6 }},
+                (Array.isArray(mod.topicTags)&&mod.topicTags.length>0)&&React.createElement('div',{style:{fontSize:8,padding:'3px 6px',borderRadius:6,background:'rgba(45,212,191,0.12)',color:'#7bf2cf',fontWeight:800}},mod.topicTags[0]),
+                React.createElement('div', { style:{ fontSize:9, color:currentTheme.colors.accent1, fontWeight:900, letterSpacing:0.3, minWidth:20, textAlign:'right' }}, 'M'+(idx+1)),
+                React.createElement('svg', { width:12, height:12, viewBox:'0 0 24 24', fill:'none', stroke:DL.mute, strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' },
+                  React.createElement('polyline', { points:'9 18 15 12 9 6' }),
                 ),
-                React.createElement('div', { style:{ display:'flex', gap:8, marginTop:12, flexWrap:'nowrap' }},
-                  React.createElement('div', { style:{
-                    flex:1, minWidth:0, padding:'10px 12px', borderRadius:16,
-                    background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.08)',
-                    color:'rgba(230,245,245,0.92)', fontSize:10, fontWeight:800
-                  }}, 'Open learning surface'),
-                  React.createElement('div', { style:{
-                    flex:'0 0 auto', padding:'10px 12px', borderRadius:16,
-                    background:'rgba(45,212,191,0.12)', border:'1px solid rgba(45,212,191,0.18)',
-                    color:'#7bf2cf', fontSize:10, fontWeight:900
-                  }}, 'Tap')
-                )
-              )
+              ),
             );
           })
         ),
@@ -14550,35 +14578,34 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
           borderColor:DL.glassBorder,
         }},
           React.createElement('div', { style:{ color:DL.text, fontSize:13, fontWeight:900, marginBottom:8 }}, 'Quick Actions'),
-          React.createElement('div', { style:{ display:'grid', gridTemplateColumns:mode === 'mobile' ? 'repeat(2, minmax(0, 1fr))' : 'repeat(3, minmax(0, 1fr))', gap:10 }},
+          React.createElement('div', { style:{ display:'flex', flexDirection:'column', gap:6 }},
             CORTEX_STUDIO_QUICK_ACTIONS.map(function(btn) {
               return React.createElement('button', {
                 key:btn.id, type:'button',
                 onClick:function(){ onNavigate && onNavigate(btn.page); },
-                className:'cortex-motion-card cortex-motion-press',
+                className:'cortex-motion-press',
                 style:{
-                  minHeight:mode === 'mobile' ? 88 : 96,
-                  padding:'12px 12px', borderRadius:18, cursor:'pointer', textAlign:'left',
-                  background:'linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04))', border:'1px solid ' + DL.glassBorder,
-                  color:DL.text, transition:'all 0.24s cubic-bezier(0.16,1,0.3,1)',
-                  boxShadow:`inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 24px ${currentTheme.colors.shadowColor}`,
-                  display:'flex', alignItems:'center', gap:12,
+                  display:'flex', alignItems:'center', gap:12, padding:'10px 14px',
+                  borderRadius:14, cursor:'pointer', textAlign:'left',
+                  background:'rgba(255,255,255,0.05)', border:'1px solid ' + DL.glassBorder,
+                  color:DL.text, transition:'all 0.2s ease', width:'100%',
                 }
               },
                 React.createElement('div', { style:{
-                  width:38, height:38, flex:'0 0 auto', borderRadius:14,
+                  width:34, height:34, flex:'0 0 auto', borderRadius:11,
                   display:'flex', alignItems:'center', justifyContent:'center',
-                  background:`linear-gradient(135deg, ${currentTheme.colors.accent1}24, ${currentTheme.colors.accent2}16)`,
+                  background:`linear-gradient(135deg, ${currentTheme.colors.accent1}22, ${currentTheme.colors.accent2}14)`,
                   border:`1px solid ${DL.glassBorder}`,
-                  boxShadow:'inset 0 1px 0 rgba(255,255,255,0.1)',
                 }},
-                  React.createElement(CortexLuxeIcon, { name:btn.icon, size:18, color:'#ffffff', accent:currentTheme.colors.accent1 })
+                  React.createElement(CortexLuxeIcon, { name:btn.icon, size:16, color:'#ffffff', accent:currentTheme.colors.accent1 })
                 ),
                 React.createElement('div', { style:{ minWidth:0, flex:1 } },
-                  React.createElement('div', { style:{ fontSize:mode === 'mobile' ? 12 : 13, fontWeight:900, lineHeight:1.2, marginBottom:3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, btn.label),
-                  React.createElement('div', { style:{ fontSize:9, fontWeight:600, lineHeight:1.35, color:DL.mute, textWrap:'balance' }}, btn.sub),
+                  React.createElement('div', { style:{ fontSize:13, fontWeight:800, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}, btn.label),
+                  React.createElement('div', { style:{ fontSize:9, color:DL.mute, marginTop:2 }}, btn.sub),
                 ),
-                React.createElement('div', { style:{ flex:'0 0 auto', fontSize:14, fontWeight:900, color:currentTheme.colors.accent1, opacity:0.85 }}, '↗'),
+                React.createElement('svg', { width:13, height:13, viewBox:'0 0 24 24', fill:'none', stroke:currentTheme.colors.accent1, strokeWidth:2.2, strokeLinecap:'round', strokeLinejoin:'round', opacity:0.7 },
+                  React.createElement('polyline', { points:'9 18 15 12 9 6' }),
+                ),
               );
             })
           ),
@@ -15827,7 +15854,7 @@ function CortexLibraryShell() {
     style:{
       width:'100vw',
       height:'100dvh',
-      minHeight:'100vh',
+      minHeight:'-webkit-fill-available',
       background:theme.colors.bg,
       color:theme.colors.text,
       overflow:'hidden',
