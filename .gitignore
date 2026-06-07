@@ -3,5 +3,6 @@
 .env.*.local
 ai_workspace.local.js
 ai-proxy/.env
+ai-proxy/artifacts/
 *.backup.*
 node_modules/

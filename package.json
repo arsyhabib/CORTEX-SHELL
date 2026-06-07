@@ -4,7 +4,9 @@
   "description": "Clean, reproducible shell template for CORTEX medical education platform.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "proxy": "node ai-proxy/server.mjs",
+    "test:providers": "node ai-proxy/test-providers.mjs",
+    "test": "npm run test:providers"
   },
   "keywords": [],
   "author": "",
