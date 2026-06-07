@@ -14878,11 +14878,11 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
         )
       ),
       React.createElement('div', { style:{
-        padding:14,
+        padding:12,
         borderRadius:20,
-        background:'rgba(255,255,255,0.04)',
+        background:`linear-gradient(145deg,${DL.glass},${DL.surface})`,
         border:`1px solid ${DL.glassBorder}`,
-        boxShadow:`0 12px 30px ${DL.shadowColor}`,
+        boxShadow:`0 8px 28px ${DL.shadowColor}`,
       }},
         React.createElement('button', {
           type:'button',
@@ -14890,9 +14890,9 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
           className:'cortex-motion-press',
           style:{
             width:'100%',
-            border:'1px solid rgba(255,255,255,0.08)',
-            background:'rgba(255,255,255,0.03)',
-            borderRadius:16,
+            border:`1px solid ${DL.glassBorder}`,
+            background:`linear-gradient(135deg,${DL.teal}18,${DL.accent}0e)`,
+            borderRadius:14,
             padding:'10px 12px',
             cursor:'pointer',
             color:DL.text,
@@ -14923,8 +14923,9 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
             marginBottom:10,
             borderRadius:18,
             border:`1px solid ${DL.glassBorder}`,
-            background:'rgba(255,255,255,0.03)',
+            background:`linear-gradient(145deg,${DL.glass},${DL.surface})`,
             overflow:'hidden',
+            boxShadow:`0 4px 16px ${DL.shadowColor}44`,
           }
         },
           React.createElement('button', {
@@ -14939,7 +14940,8 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
             style:{
               width:'100%',
               border:0,
-              background:'transparent',
+              borderBottom:`1px solid ${DL.glassBorder}`,
+              background:`linear-gradient(135deg,${DL.accent}18,${DL.accentB}0c)`,
               cursor:'pointer',
               padding:'11px 12px',
               color:DL.text,
@@ -14956,37 +14958,44 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
             ),
             React.createElement(B1Badge, { color:DL.teal }, `${Number(domain.moduleCount || (Array.isArray(domain.modules) ? domain.modules.length : 0))}`)
           ),
-          React.createElement('div', { style:{ display:'grid', gap:6, padding:'0 10px 10px' }},
-            (domain.modules || []).map((module, idx) => React.createElement('button', {
-              key:module.id,
-              type:'button',
-              onClick:()=> {
-                onSelectLecture && onSelectLecture(module.id);
+          React.createElement('div', { style:{ display:'grid', gap:5, padding:'8px 8px 8px' }},
+            (domain.modules || []).map((module, idx) => {
+              const isSel = selectedLectureId === module.id;
+              return React.createElement('button', {
+                key:module.id,
+                type:'button',
+                onClick:()=> { onSelectLecture && onSelectLecture(module.id); },
+                className:'cortex-motion-press',
+                style:{
+                  width:'100%',
+                  textAlign:'left',
+                  padding:'9px 11px',
+                  borderRadius:13,
+                  background:isSel
+                    ? `linear-gradient(135deg,${DL.accent}2e,${DL.accentB}18)`
+                    : `linear-gradient(135deg,${DL.glass},${DL.surface}99)`,
+                  border:isSel
+                    ? `1px solid ${DL.accent}55`
+                    : `1px solid ${DL.glassBorder}`,
+                  cursor:'pointer',
+                  color:DL.text,
+                  boxShadow:isSel ? `0 2px 12px ${DL.accent}22` : 'none',
+                  transition:'background 0.2s,border-color 0.2s,box-shadow 0.2s',
+                }
               },
-              className:'cortex-motion-press',
-              style:{
-                width:'100%',
-                textAlign:'left',
-                padding:'10px 12px',
-                borderRadius:16,
-                background:selectedLectureId === module.id ? 'rgba(16,185,129,0.12)' : 'rgba(255,255,255,0.04)',
-                border:selectedLectureId === module.id ? '1px solid rgba(16,185,129,0.28)' : `1px solid ${DL.glassBorder}`,
-                cursor:'pointer',
-                color:DL.text,
-              }
-            },
-              React.createElement('div', { style:{ fontSize:11, fontWeight:850, color:DL.text, lineHeight:1.35 }}, `${idx + 1}. ${module.title}`),
-              React.createElement('div', { style:{ color:DL.sub, fontSize:9, lineHeight:1.4, marginTop:4 }}, module.sourceDocument || 'Lecturer source')
-            ))
+                React.createElement('div', { style:{ fontSize:11, fontWeight:850, color:isSel?DL.accent:DL.text, lineHeight:1.35, transition:'color 0.2s' }}, `${idx + 1}. ${module.title}`),
+                React.createElement('div', { style:{ color:DL.sub, fontSize:9, lineHeight:1.4, marginTop:3 }}, module.sourceDocument || 'Lecturer source')
+              );
+            })
           )
         ))
       ),
       React.createElement('div', { style:{
-        padding:14,
+        padding:12,
         borderRadius:20,
-        background:'rgba(255,255,255,0.04)',
+        background:`linear-gradient(145deg,${DL.glass},${DL.surface})`,
         border:`1px solid ${DL.glassBorder}`,
-        boxShadow:`0 12px 30px ${DL.shadowColor}`,
+        boxShadow:`0 8px 28px ${DL.shadowColor}`,
       }},
         React.createElement('button', {
           type:'button',
@@ -14994,9 +15003,9 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
           className:'cortex-motion-press',
           style:{
             width:'100%',
-            border:'1px solid rgba(255,255,255,0.08)',
-            background:'rgba(255,255,255,0.03)',
-            borderRadius:16,
+            border:`1px solid ${DL.glassBorder}`,
+            background:`linear-gradient(135deg,${DL.gold}18,${DL.accent}0e)`,
+            borderRadius:14,
             padding:'10px 12px',
             cursor:'pointer',
             color:DL.text,
@@ -15013,32 +15022,39 @@ function CortexLibraryNav({ page, onNavigate, mode, sidebarMode = 'dock', onClos
           ),
           React.createElement(B1Badge, { color:DL.gold }, examPanelOpen ? `${examSets.length}` : 'Open')
         ),
-        examPanelOpen && React.createElement('div', { style:{ color:DL.sub, fontSize:10, lineHeight:1.45, marginBottom:10 }},
+        examPanelOpen && React.createElement('div', { style:{ color:DL.sub, fontSize:10, lineHeight:1.45, marginBottom:8 }},
           contentIndexStatus === 'error' ? '⚠️ Data tidak bisa dimuat via file://' : 'Klik set soal untuk membuka.'),
-        examPanelOpen && React.createElement('div', { style:{ display:'grid', gap:8 }},
-          examSets.map((set) => React.createElement('button', {
-            key:set.id,
-            type:'button',
-            onClick:()=> {
-              onSelectExamSet && onSelectExamSet(set.id);
+        examPanelOpen && React.createElement('div', { style:{ display:'grid', gap:6 }},
+          examSets.map((set) => {
+            const isSel = selectedExamSetId === set.id;
+            return React.createElement('button', {
+              key:set.id,
+              type:'button',
+              onClick:()=> { onSelectExamSet && onSelectExamSet(set.id); },
+              className:'cortex-motion-press',
+              style:{
+                width:'100%',
+                textAlign:'left',
+                padding:'10px 12px',
+                borderRadius:14,
+                background:isSel
+                  ? `linear-gradient(135deg,${DL.gold}2e,${DL.accent}18)`
+                  : `linear-gradient(135deg,${DL.glass},${DL.surface}99)`,
+                border:isSel
+                  ? `1px solid ${DL.gold}55`
+                  : `1px solid ${DL.glassBorder}`,
+                cursor:'pointer',
+                color:DL.text,
+                boxShadow:isSel ? `0 2px 12px ${DL.gold}22` : 'none',
+                transition:'background 0.2s,border-color 0.2s,box-shadow 0.2s',
+              }
             },
-            className:'cortex-motion-press',
-            style:{
-              width:'100%',
-              textAlign:'left',
-              padding:'11px 12px',
-              borderRadius:18,
-              background:selectedExamSetId === set.id ? 'rgba(168,85,247,0.14)' : 'rgba(255,255,255,0.04)',
-              border:selectedExamSetId === set.id ? '1px solid rgba(168,85,247,0.32)' : `1px solid ${DL.glassBorder}`,
-              cursor:'pointer',
-              color:DL.text,
-            }
-          },
-            React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }},
-              React.createElement('div', { style:{ fontSize:11, fontWeight:900, color:DL.text, lineHeight:1.35, flex:1 }}, set.title),
-              React.createElement(B1Badge, { color:DL.gold }, `${set.questionCount}`)
-            )
-          ))
+              React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10 }},
+                React.createElement('div', { style:{ fontSize:11, fontWeight:900, color:isSel?DL.gold:DL.text, lineHeight:1.35, flex:1, transition:'color 0.2s' }}, set.title),
+                React.createElement(B1Badge, { color:DL.gold }, `${set.questionCount}`)
+              )
+            );
+          })
         )
       ),
       React.createElement('div', { style:{
