@@ -10472,7 +10472,7 @@ function cortexMarkdownGetRenderer(){
     const lang=String(infostring||'').trim().split(/[\s{]/)[0].toLowerCase();
     const label=lang||'text';
     const langAttr=lang?` data-lang="${cortexMarkdownEscapeHtml(lang)}"`:'';
-    return `<figure class="cx-md-code-shell"${langAttr}><div class="cx-md-codebar"><span class="cx-md-code-label">${cortexMarkdownEscapeHtml(label)}</span></div><pre class="cx-md-code-pre"><code class="cx-md-code">${code}</code></pre></figure>`;
+    return `<figure class="cx-md-code-shell"${langAttr}><div class="cx-md-codebar"><span class="cx-md-code-label">${cortexMarkdownEscapeHtml(label)}</span></div><pre class="cx-md-code-pre"><code class="cx-md-code">${cortexMarkdownEscapeHtml(code)}</code></pre></figure>`;
   };
   renderer.table=function(header,body){
     return `<div class="cx-md-table-shell"><table class="cx-md-table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
