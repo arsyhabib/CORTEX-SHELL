@@ -10112,7 +10112,7 @@ function MarkdownText({text,isUser}){
 }
 
 function PageAIWorkspace({ onNavigate }) {
-  const MAX_HISTORY = 100;
+  const MAX_HISTORY = 100000;
   function lsGet(key,def){try{const v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
   function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
   const [surface, setSurface] = React.useState(function(){return lsGet('cx_surface','assistant');});
@@ -10347,7 +10347,7 @@ function PageAIWorkspace({ onNavigate }) {
       mediaType:attached?attached.type:null,
       fileName:attached?attached.name:null,
     };
-    setChatFeed(prev=>[...prev,userMsg].slice(-MAX_HISTORY));
+    setChatFeed(prev=>[...prev,userMsg]);
     setChatPrompt('');setUploadedFile(null);
     runChatCore(prompt,chatFeed.slice(-MAX_HISTORY).concat([userMsg]),attached);
   }
@@ -10446,7 +10446,7 @@ function PageAIWorkspace({ onNavigate }) {
       const sysTxt=sysPrompts[chatModel]||'';
       function withSysMsg(msgs,aiRole){return sysTxt?[{role:'user',content:sysTxt},{role:aiRole,content:'Siap, saya mengerti.'}, ...msgs]:msgs;}
       // For text-extracted docs: prefix into message
-      const docPrefix=attached&&attached.type==='document'&&attached.text?`[File: ${attached.name}]\n\`\`\`\n${attached.text.slice(0,12000)}\n\`\`\`\n\n`:'';
+      const docPrefix=attached&&attached.type==='document'&&attached.text?`[File: ${attached.name}]\n\`\`\`\n${attached.text}\n\`\`\`\n\n`:'';
       const finalPrompt=docPrefix+pText;
       // For binary docs (PDF/DOCX) with non-Gemini: warn
       const hasBinaryDoc=attached&&attached.type==='document'&&!attached.text;
@@ -10469,18 +10469,18 @@ function PageAIWorkspace({ onNavigate }) {
       }
       else if(chatModel==='deepseek'){
         const dMsgs=toAlternating(history,finalPrompt,'assistant');
-        const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...dMsgs]:dMsgs,temperature:0.7,max_tokens:2048},directRoute:deepseekChatUrl()});
+        const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:sysTxt?[{role:'system',content:sysTxt},...dMsgs]:dMsgs,temperature:0.7,max_tokens:8192},directRoute:deepseekChatUrl()});
         text=extractText(p)||'DeepSeek tidak mengembalikan respons.';
       }
       else{
         const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');
         const fMsgs=toMsgsWithImage(history,finalPrompt,'assistant',attached&&!hasBinaryDoc?attached:null);
         const fSys=sysPrompts[chatModel]||'';
-        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fSys?[{role:'system',content:fSys},...fMsgs]:fMsgs,temperature:0.7,max_tokens:2048},directRoute:featherlessChatUrl()});
+        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fSys?[{role:'system',content:fSys},...fMsgs]:fMsgs,temperature:0.7,max_tokens:8192},directRoute:featherlessChatUrl()});
         text=extractText(p)||'Featherless tidak mengembalikan respons.';
       }
-      setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}].slice(-MAX_HISTORY));
-    }catch(err){setChatFeed(prev=>[...prev,{role:'assistant',model:'error',text:err&&err.message?err.message:'Terjadi kesalahan.'}].slice(-MAX_HISTORY));}
+      setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}]);
+    }catch(err){setChatFeed(prev=>[...prev,{role:'assistant',model:'error',text:err&&err.message?err.message:'Terjadi kesalahan.'}]);}
     finally{setComposerBusy('');}
   }
 
@@ -10496,7 +10496,7 @@ function PageAIWorkspace({ onNavigate }) {
     setChatFeed(newFeedFinal);
     const promptText=uMsg.text==='(lampiran media)'?'':uMsg.text;
     const fakeUserMsg={...uMsg};
-    setChatFeed(prev=>[...prev,fakeUserMsg].slice(-MAX_HISTORY));
+    setChatFeed(prev=>[...prev,fakeUserMsg]);
     runChatCore(promptText,[...histBefore,fakeUserMsg],null);
     setMsgActions(null);
   }
@@ -10939,7 +10939,7 @@ function PageAIWorkspace({ onNavigate }) {
 
       // ── HISTORY + STATUS DOT (assistant only) ──────────────────────
       surface==='assistant'&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexShrink:0}},
-        React.createElement('span',{style:{fontSize:9,color:DL.mute,fontVariantNumeric:'tabular-nums',letterSpacing:0.3}},chatFeed.length+'/'+MAX_HISTORY),
+        React.createElement('span',{style:{fontSize:9,color:DL.mute,fontVariantNumeric:'tabular-nums',letterSpacing:0.3}},chatFeed.length+' msg'),
         React.createElement('div',{style:{
           width:7,height:7,borderRadius:'50%',flexShrink:0,
           background:activeChatModel.ready?activeChatModel.color:DL.gold,
@@ -11184,7 +11184,7 @@ function PageAIWorkspace({ onNavigate }) {
             'Clear',
           ),
           React.createElement('div',{style:{flex:1}}),
-          React.createElement('span',{style:{fontSize:9,color:DL.mute,flexShrink:0}},`${chatFeed.length}/${MAX_HISTORY}`),
+          React.createElement('span',{style:{fontSize:9,color:DL.mute,flexShrink:0}},`${chatFeed.length} pesan`),
           // Send btn
           React.createElement('button',{
             onClick:runChat,disabled:!!composerBusy,
