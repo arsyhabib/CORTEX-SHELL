@@ -10081,7 +10081,7 @@ function PageAIWorkspace({ onNavigate }) {
   const [imageResults, setImageResults] = React.useState(function(){return lsGet('cx_image_results',[]);});
   const [imageBusy, setImageBusy] = React.useState(false);
   const [ttsText, setTtsText] = React.useState(function(){return lsGet('cx_tts_text','');});
-  const [ttsResult, setTtsResult] = React.useState(function(){return lsGet('cx_tts_result',null);});
+  const [ttsHistory, setTtsHistory] = React.useState(function(){return lsGet('cx_tts_history',[]);});
   const [ttsBusy, setTtsBusy] = React.useState(false);
   const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'Belum ada proxy yang dicek.', health:null });
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
@@ -10095,7 +10095,7 @@ function PageAIWorkspace({ onNavigate }) {
   React.useEffect(function(){lsSet('cx_chat_feed',chatFeed);},[chatFeed]);
   React.useEffect(function(){lsSet('cx_image_results',imageResults);},[imageResults]);
   React.useEffect(function(){lsSet('cx_tts_text',ttsText);},[ttsText]);
-  React.useEffect(function(){if(ttsResult&&!ttsResult.error)lsSet('cx_tts_result',ttsResult);else if(ttsResult===null)lsSet('cx_tts_result',null);},[ttsResult]);
+  React.useEffect(function(){lsSet('cx_tts_history',ttsHistory);},[ttsHistory]);
   const proxyBase = React.useMemo(function(){ return String(runtime.proxyUrl||'').replace(/\/+$/,''); },[runtime.proxyUrl]);
   const directMode = React.useMemo(function(){
     const m=String(runtime.transportMode||'auto');
@@ -10236,9 +10236,9 @@ function PageAIWorkspace({ onNavigate }) {
 
   async function runTTS(){
     const text=String(ttsText||'').trim();if(!text)return;
-    setTtsBusy(true);setTtsResult(null);
-    try{const ttsModel=providerModel('gemini','tts');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/tts',body:{model:ttsModel,text,voiceName:'Kore'},directRoute:geminiGenerateUrl(ttsModel),directBody:{model:ttsModel,contents:[{parts:[{text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Kore'}}}}}});const id=extractInlineData(p,'audio');if(id)setTtsResult({src:`data:${id.mimeType};base64,${id.data}`,mimeType:id.mimeType});else setTtsResult({error:'TTS tidak mengembalikan data audio.'});}
-    catch(err){setTtsResult({error:err&&err.message?err.message:'TTS gagal.'});}
+    setTtsBusy(true);
+    try{const ttsModel=providerModel('gemini','tts');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/tts',body:{model:ttsModel,text,voiceName:'Kore'},directRoute:geminiGenerateUrl(ttsModel),directBody:{model:ttsModel,contents:[{parts:[{text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Kore'}}}}}});const id=extractInlineData(p,'audio');if(id)setTtsHistory(prev=>[{src:`data:${id.mimeType};base64,${id.data}`,mimeType:id.mimeType,label:text.slice(0,60)+(text.length>60?'...':''),ts:Date.now()},...prev].slice(0,20));else setTtsHistory(prev=>[{error:'TTS tidak mengembalikan data audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
+    catch(err){setTtsHistory(prev=>[{error:err&&err.message?err.message:'TTS gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
     finally{setTtsBusy(false);}
   }
 
@@ -10733,12 +10733,12 @@ function PageAIWorkspace({ onNavigate }) {
           React.createElement('div',{style:{textAlign:'left'}},
             React.createElement('div',{style:{fontSize:18,fontWeight:900,color:DL.text,lineHeight:1.1}},'Text to Speech'),
             React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:3}},'Gemini 2.5 Flash TTS · Kore Voice'),
-            React.createElement('div',{style:{fontSize:10,color:DL.teal,marginTop:1,fontWeight:700}},ttsResult&&!ttsResult.error?'✓ Audio siap':ttsBusy?'🎙 Generating...':'WAV · 24kHz'),
+            React.createElement('div',{style:{fontSize:10,color:DL.teal,marginTop:1,fontWeight:700}},ttsHistory.length>0?`✓ ${ttsHistory.length} audio tersimpan`:ttsBusy?'🎙 Generating...':'WAV · 24kHz'),
           ),
         ),
         // Equalizer bars
         React.createElement('div',{style:{display:'flex',justifyContent:'center'}},
-          React.createElement(EqSVG,{active:ttsBusy||(ttsResult&&!ttsResult.error),color:DL.teal,bars:20}),
+          React.createElement(EqSVG,{active:ttsBusy||ttsHistory.length>0,color:DL.teal,bars:20}),
         ),
       ),
 
@@ -10777,37 +10777,35 @@ function PageAIWorkspace({ onNavigate }) {
         ),
       ),
 
-      // Audio result
-      ttsResult&&!ttsResult.error&&React.createElement('div',{
-        style:{borderRadius:22,overflow:'hidden',border:`1px solid ${DL.teal}44`,animation:'cortex-ai-result-iris 0.6s ease both'}
-      },
-        // Waveform decoration
-        React.createElement('div',{style:{padding:'16px 16px 12px',background:`linear-gradient(180deg,${DL.teal}12,transparent)`,display:'flex',justifyContent:'center'}},
-          React.createElement(EqSVG,{active:true,color:DL.teal,bars:28}),
+      // Audio history list
+      ttsHistory.length>0&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+        React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 2px 2px'}},
+          React.createElement('span',{style:{fontSize:11,fontWeight:800,color:DL.teal}},`🎙 ${ttsHistory.length} / 20 Audio`),
+          React.createElement('button',{onClick:function(){setTtsHistory([]);},style:{fontSize:10,color:DL.mute,background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}},'Hapus semua'),
         ),
-        React.createElement('div',{style:{padding:'0 12px 12px'}},
-          React.createElement('audio',{controls:true,src:ttsResult.src,style:{width:'100%',borderRadius:12,display:'block',marginBottom:10}}),
-          React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
-            React.createElement('button',{
-              onClick:()=>downloadMedia(ttsResult.src,`cortex-tts-${Date.now()}.wav`),
-              style:{padding:'10px',borderRadius:13,border:`1px solid ${DL.teal}44`,background:`${DL.teal}12`,color:DL.teal,fontSize:11,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,animation:'cortex-ai-download-bounce 2.5s ease-in-out infinite'},
-            },
-              React.createElement('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3})),
-              'Download WAV',
+        ttsHistory.map(function(item,idx){
+          if(item.error)return React.createElement('div',{key:idx,style:{padding:12,borderRadius:16,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
+            React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'⚠ TTS Error'),
+            React.createElement('div',{style:{fontSize:10,color:DL.sub,marginTop:3}},item.error),
+          );
+          return React.createElement('div',{key:idx,style:{borderRadius:18,overflow:'hidden',border:`1px solid ${DL.teal}33`,animation:'cortex-ai-result-iris 0.5s ease both'}},
+            React.createElement('div',{style:{padding:'10px 14px 6px',background:`linear-gradient(180deg,${DL.teal}10,transparent)`}},
+              React.createElement('div',{style:{fontSize:10,color:DL.teal,fontWeight:700,marginBottom:6,opacity:0.85}},item.label||'Audio TTS'),
+              React.createElement(EqSVG,{active:false,color:DL.teal,bars:20}),
             ),
-            React.createElement('button',{
-              onClick:()=>downloadMedia(ttsResult.src,`cortex-tts-${Date.now()}.mp3`),
-              style:{padding:'10px',borderRadius:13,border:`1px solid ${DL.accent}44`,background:`${DL.accent}12`,color:DL.accent,fontSize:11,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,animation:'cortex-ai-download-bounce 2.5s ease-in-out 0.3s infinite'},
-            },
-              React.createElement('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3})),
-              'Save MP3',
+            React.createElement('div',{style:{padding:'6px 12px 12px'}},
+              React.createElement('audio',{controls:true,src:item.src,style:{width:'100%',borderRadius:10,display:'block',marginBottom:8}}),
+              React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}},
+                React.createElement('button',{onClick:()=>downloadMedia(item.src,`cortex-tts-${item.ts||idx}.wav`),style:{padding:'8px 4px',borderRadius:11,border:`1px solid ${DL.teal}44`,background:`${DL.teal}12`,color:DL.teal,fontSize:10,fontWeight:800,cursor:'pointer'}},
+                  '⬇ WAV'),
+                React.createElement('button',{onClick:()=>downloadMedia(item.src,`cortex-tts-${item.ts||idx}.mp3`),style:{padding:'8px 4px',borderRadius:11,border:`1px solid ${DL.accent}44`,background:`${DL.accent}12`,color:DL.accent,fontSize:10,fontWeight:800,cursor:'pointer'}},
+                  '⬇ MP3'),
+                React.createElement('button',{onClick:function(){setTtsHistory(prev=>prev.filter((_,i)=>i!==idx));},style:{padding:'8px 4px',borderRadius:11,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer'}},
+                  '✕ Hapus'),
+              ),
             ),
-          ),
-        ),
-      ),
-      ttsResult&&ttsResult.error&&React.createElement('div',{style:{padding:14,borderRadius:18,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
-        React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'⚠ TTS Error'),
-        React.createElement('div',{style:{fontSize:11,color:DL.sub,marginTop:4}},ttsResult.error),
+          );
+        }),
       ),
     ),
 
