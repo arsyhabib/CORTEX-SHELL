@@ -10551,7 +10551,7 @@ function cortexReadAIWorkspaceRuntime() {
       gemini:{
         chatModel:'gemini-2.5-flash',
         imageModel:'gemini-2.0-flash-preview-image-generation',
-        videoModel:'veo-2.0-generate-001',
+        videoModel:'veo-3-lite-generate-001',
         ttsModel:'gemini-2.5-flash-preview-tts',
       },
       deepseek:{
@@ -11166,7 +11166,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   function providerKey(p){return String(((runtime.apiKeys||{})[p])||'').trim();}
   function providerModel(p,slot){
     const e=(runtime.providers||{})[p]||{};
-    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'gemini-2.0-flash-preview-image-generation';if(slot==='video')return e.videoModel||'veo-2.0-generate-001';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
+    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'gemini-2.0-flash-preview-image-generation';if(slot==='video')return e.videoModel||'veo-3-lite-generate-001';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
     if(p==='deepseek')return e.defaultModel||'deepseek-v4-flash';
     if(p==='featherless'){if(slot==='balanced')return e.balancedVisionModel||'unsloth/gemma-3-12b-it';return e.fastVisionModel||'unsloth/gemma-3-4b-it';}
     if(p==='openai'){if(slot==='image')return e.imageModel||'gpt-image-2';return e.chatModel||'gpt-4.1-nano';}
