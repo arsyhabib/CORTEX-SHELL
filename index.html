@@ -2196,6 +2196,58 @@
   }
 }
 
+/* ═══ AI WORKSPACE FUTURISTIC STYLES ═══ */
+@keyframes cortex-ai-typing-dot {
+  0%,60%,100%{transform:translateY(0) scale(1);opacity:0.35}
+  30%{transform:translateY(-6px) scale(1.25);opacity:1}
+}
+@keyframes cortex-ai-msg-in {
+  0%{opacity:0;transform:translateY(14px) scale(0.96);filter:blur(4px)}
+  55%{opacity:1;transform:translateY(-2px) scale(1.006);filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+@keyframes cortex-ai-upload-pulse {
+  0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0.5)}
+  50%{box-shadow:0 0 0 9px rgba(168,85,247,0)}
+}
+@keyframes cortex-ai-download-bounce {
+  0%,100%{transform:translateY(0)}
+  45%{transform:translateY(3px)}
+  75%{transform:translateY(-2px)}
+}
+@keyframes cortex-ai-waveform {
+  0%,100%{height:5px;opacity:0.35}
+  50%{height:22px;opacity:1}
+}
+@keyframes cortex-ai-record-pulse {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.65;transform:scale(1.04)}
+}
+@keyframes cortex-ai-model-pill-active {
+  0%,100%{box-shadow:0 0 14px rgba(168,85,247,0.2),0 0 0 0 rgba(168,85,247,0)}
+  50%{box-shadow:0 0 22px rgba(168,85,247,0.35),0 0 0 4px rgba(168,85,247,0.06)}
+}
+@keyframes cortex-ai-hero-orb {
+  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.18}
+  40%{transform:translate(-50%,-50%) scale(1.18);opacity:0.28}
+  70%{transform:translate(-50%,-50%) scale(0.9);opacity:0.12}
+}
+@keyframes cortex-ai-result-in {
+  0%{opacity:0;transform:scale(0.9) translateY(12px);filter:blur(6px)}
+  60%{opacity:1;transform:scale(1.02) translateY(-2px);filter:blur(0)}
+  100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}
+}
+@keyframes cortex-ai-send-press {
+  0%{transform:scale(1)}
+  35%{transform:scale(0.93,1.06)}
+  65%{transform:scale(1.04,0.97)}
+  100%{transform:scale(1)}
+}
+@keyframes cortex-ai-card-glow-pulse {
+  0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0)}
+  50%{box-shadow:0 0 32px rgba(168,85,247,0.18),0 0 0 1px rgba(168,85,247,0.12)}
+}
+
   </style>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -9994,8 +10046,24 @@ function PageProgressDashboard({ onNavigate, contentIndex, visualManifest }) {
 }
 
 function PageAIWorkspace({ onNavigate }) {
+  // ─── State ──────────────────────────────────────────────────────────────
+  const MAX_HISTORY = 20;
   const [surface, setSurface] = React.useState('assistant');
-  const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'No proxy checked yet.', health:null });
+  const [chatModel, setChatModel] = React.useState('gemini');
+  const [imageModel, setImageModel] = React.useState('gemini');
+  const [chatPrompt, setChatPrompt] = React.useState('');
+  const [chatFeed, setChatFeed] = React.useState([
+    { role:'assistant', model:'cortex', text:'Halo! Saya CORTEX AI Workspace. Pilih model di atas, lalu kirim pesan, upload gambar/video, atau generate visual & audio. Kreasi tak terbatas! ✨' },
+  ]);
+  const [composerBusy, setComposerBusy] = React.useState('');
+  const [uploadedFile, setUploadedFile] = React.useState(null);
+  const [imagePrompt, setImagePrompt] = React.useState('');
+  const [imageResults, setImageResults] = React.useState([]);
+  const [imageBusy, setImageBusy] = React.useState(false);
+  const [ttsText, setTtsText] = React.useState('');
+  const [ttsResult, setTtsResult] = React.useState(null);
+  const [ttsBusy, setTtsBusy] = React.useState(false);
+  const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'Belum ada proxy yang dicek.', health:null });
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
   const [chatPrompt, setChatPrompt] = React.useState('Tolong jelaskan konsep ini dalam bahasa yang sangat sederhana.');
   const [chatFeed, setChatFeed] = React.useState([
