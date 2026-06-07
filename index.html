@@ -5675,7 +5675,7 @@ function CortexStudioDock({ compact, onNavigate, onSurfaceChange }) {
           'data-active':String(isOpen),
           style:{
             width: compact ? 44 : 48, height: compact ? 44 : 48,
-            borderRadius:compactLayout?18:20, cursor:'pointer', border:'none',
+            borderRadius:14, cursor:'pointer', border:'none',
             background:isOpen ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)',
             color:DL.text,
             display:'flex', alignItems:'center', justifyContent:'center',
@@ -5774,7 +5774,7 @@ function CortexFabHubPanel({ title, accent, onBack, children }) {
           border:'1px solid rgba(255,255,255,0.14)',
           background:'rgba(255,255,255,0.04)',
           color:'var(--cortex-theme-text, #fff)',
-          borderRadius:compactLayout?18:20,
+          borderRadius:14,
           minHeight:34,
           minWidth:58,
           padding:'0 10px',
@@ -7370,7 +7370,7 @@ function PageSidebar({ onNavigate }) {
             onClick:()=>{ setOpen(false); setTimeout(()=>onNavigate(item.page),300); },
             style:{
               display:'flex', alignItems:'center', gap:12, padding:'11px 12px',
-              borderRadius:compactLayout?18:20, cursor:'pointer',
+              borderRadius:14, cursor:'pointer',
               background: item.active ? 'rgba(168,85,247,0.12)' : 'transparent',
               border: item.active ? `1px solid rgba(168,85,247,0.25)` : '1px solid transparent',
               transition:'all 0.2s ease',
@@ -7720,7 +7720,7 @@ function PageSettings({ onNavigate, themeId: themeIdProp, theme: themeProp, onTh
             key:item.label,
             style:{
               padding:'10px 11px',
-              borderRadius:compactLayout?18:20,
+              borderRadius:14,
               background:'rgba(255,255,255,0.04)',
               border:`1px solid ${DL.glassBorder}`,
             }
@@ -9228,7 +9228,7 @@ function PageTypographyReading({ onNavigate, lectureModule, lectureDomain }) {
               width:'100%',
               textAlign:'left',
               padding:'10px 12px',
-              borderRadius:compactLayout?18:20,
+              borderRadius:14,
               border:`1px solid ${recallAnswers[idx] === optIdx ? 'rgba(6,214,160,0.40)' : DL.glassBorder}`,
               background:recallAnswers[idx] === optIdx ? 'rgba(6,214,160,0.10)' : 'rgba(255,255,255,0.04)',
               color:recallAnswers[idx] === optIdx ? DL.text : DL.sub,
@@ -10094,7 +10094,7 @@ function PageMediaViewer3D({ onNavigate, visualAsset, visualManifestStatus }) {
                 className:'cortex-motion-press',
                 style:{
                   padding:'10px 12px',
-                  borderRadius:compactLayout?18:20,
+                  borderRadius:14,
                   border:`1px solid ${DL.glassBorder}`,
                   background:'rgba(255,255,255,0.06)',
                   color:DL.text,
@@ -10110,7 +10110,7 @@ function PageMediaViewer3D({ onNavigate, visualAsset, visualManifestStatus }) {
                 className:'cortex-motion-press',
                 style:{
                   padding:'10px 12px',
-                  borderRadius:compactLayout?18:20,
+                  borderRadius:14,
                   border:'none',
                   background:DL.grad,
                   color:'#fff',
@@ -12379,7 +12379,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         ),
       ),
 
-      // ── Input Bar (sticky bottom, drag-and-drop) ──────────────────────────
+      // ── Input Bar (with drag-and-drop) ────────────────────────────────────
       React.createElement('div',{
         onDragOver:function(e){e.preventDefault();e.stopPropagation();setDragOver(true);},
         onDragLeave:function(e){e.preventDefault();setDragOver(false);},
@@ -12389,15 +12389,12 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           if(file)processDroppedFile(file);
         },
         style:{
-          position:'sticky',bottom:0,zIndex:10,
-          marginTop:'auto',
-          borderRadius:compactLayout?24:28,padding:compactLayout?10:12,
-          paddingBottom:`calc(${compactLayout?10:12}px + env(safe-area-inset-bottom))`,
-          background:dragOver?'rgba(168,85,247,0.12)':`linear-gradient(180deg,rgba(10,10,26,0.85),rgba(10,10,26,0.95))`,
+          borderRadius:22,padding:compactLayout?10:12,
+          background:dragOver?'rgba(168,85,247,0.12)':'rgba(10,10,26,0.7)',
           border:dragOver?`2px dashed ${DL.accent}`:`1.5px solid ${isThinking?activeChatModel.color+'55':DL.glassBorder}`,
-          backdropFilter:'blur(28px) saturate(180%)',
-          WebkitBackdropFilter:'blur(28px) saturate(180%)',
-          boxShadow:`0 -8px 32px rgba(0,0,0,0.35)${isThinking?`,0 0 0 3px ${activeChatModel.color}18`:''}`,
+          backdropFilter:'blur(24px) saturate(180%)',
+          WebkitBackdropFilter:'blur(24px) saturate(180%)',
+          boxShadow:`0 8px 32px rgba(0,0,0,0.25)${isThinking?`,0 0 0 3px ${activeChatModel.color}18`:''}`,
           transition:'border-color 0.25s ease,box-shadow 0.3s ease,background 0.25s ease',
           animation:isThinking?'cortex-ai-card-glow-pulse 1.5s ease-in-out infinite':'cortex-ai-card-glow-pulse 4s ease-in-out infinite',
         }
@@ -12439,7 +12436,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         React.createElement('div',{style:{
           display:'flex',alignItems:'center',gap:6,
           padding:compactLayout?'6px':'8px 4px',
-          borderRadius:compactLayout?16:18,
+          borderRadius:16,
           background:'rgba(255,255,255,0.03)',
           border:`1px solid ${DL.glassBorder}`,
           backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',
@@ -12452,7 +12449,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             },
             title:recording?'Stop recording':'Speech to text',
             style:{
-              width:36,height:36,borderRadius:14,border:'none',
+              width:36,height:36,borderRadius:12,border:'none',
               background:recording?`linear-gradient(135deg,${DL.red},#f97316)`:'rgba(255,255,255,0.05)',
               cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',
               flexShrink:0,transition:'all 0.25s ease',
@@ -12501,7 +12498,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           React.createElement('button',{
             onClick:runChat,disabled:!!composerBusy,
             style:{
-              height:36,minWidth:90,padding:'0 14px',borderRadius:14,border:'none',flexShrink:0,
+              height:36,minWidth:90,padding:'0 14px',borderRadius:12,border:'none',flexShrink:0,
               background:composerBusy?'rgba(255,255,255,0.07)':`linear-gradient(135deg,${activeChatModel.color},${DL.accent})`,
               color:composerBusy?DL.mute:'#fff',fontSize:12,fontWeight:800,
               cursor:composerBusy?'not-allowed':'pointer',
@@ -14635,7 +14632,7 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
               className:'cortex-motion-press',
               style:{
                 display:'flex', alignItems:'center', gap:10, padding:'10px 12px',
-                borderRadius:compactLayout?18:20, background:'rgba(45,212,191,0.05)', border:'1px solid rgba(45,212,191,0.14)',
+                borderRadius:14, background:'rgba(45,212,191,0.05)', border:'1px solid rgba(45,212,191,0.14)',
                 cursor:'pointer', textAlign:'left', width:'100%', color:DL.text, transition:'all 0.2s ease',
               }
             },
@@ -14673,7 +14670,7 @@ function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, sur
                 className:'cortex-motion-press',
                 style:{
                   display:'flex', alignItems:'center', gap:12, padding:'10px 14px',
-                  borderRadius:compactLayout?18:20, cursor:'pointer', textAlign:'left',
+                  borderRadius:14, cursor:'pointer', textAlign:'left',
                   background:'rgba(255,255,255,0.05)', border:'1px solid ' + DL.glassBorder,
                   color:DL.text, transition:'all 0.2s ease', width:'100%',
                 }
