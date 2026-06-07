@@ -2006,7 +2006,7 @@
 /* Mobile compatibility guardrails for iPhone/Android aspect ratios. */
 @media (max-width: 760px) {
   :root {
-    --cortex-mobile-fab-clearance: calc(176px + env(safe-area-inset-bottom));
+    --cortex-mobile-fab-clearance: calc(92px + env(safe-area-inset-bottom));
   }
   html, body {
     width: 100%;
@@ -2137,7 +2137,6 @@
   .cortex-motion-page,
   [data-screen-label] > .hide-scrollbar {
     padding-top: 16px !important;
-    padding-bottom: calc(188px + env(safe-area-inset-bottom)) !important;
   }
   .cortex-motion-card {
     border-radius: 18px !important;
@@ -2276,39 +2275,257 @@
 @keyframes cortex-ai-connect-glow{0%,100%{box-shadow:0 0 0 0 rgba(6,214,160,0)}50%{box-shadow:0 0 0 6px rgba(6,214,160,0.12),0 0 24px rgba(6,214,160,0.18)}}
   
 /* ── Markdown rendered text ─────────────────────────────────────── */
-.cx-md{color:inherit;line-height:1.75;word-break:break-word;}
-.cx-md p{margin:0 0 10px;}
-.cx-md p:last-child{margin-bottom:0;}
-.cx-md h1,.cx-md h2,.cx-md h3,.cx-md h4{font-weight:900;line-height:1.3;margin:14px 0 6px;color:#f0eaff;}
-.cx-md h1{font-size:1.25em;}
-.cx-md h2{font-size:1.1em;}
-.cx-md h3{font-size:1em;}
+.cx-md{
+  color:inherit;
+  line-height:1.72;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  hyphens:auto;
+  font-variant-ligatures:normal;
+}
+.cx-md > :first-child{margin-top:0!important;}
+.cx-md > :last-child{margin-bottom:0!important;}
+.cx-md p{margin:0 0 0.85em;}
+.cx-md h1,.cx-md h2,.cx-md h3,.cx-md h4{
+  position:relative;
+  font-weight:900;
+  line-height:1.22;
+  margin:1.15em 0 0.55em;
+  padding-left:12px;
+  color:#f3ecff;
+  letter-spacing:-0.01em;
+}
+.cx-md h1::before,.cx-md h2::before,.cx-md h3::before,.cx-md h4::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:0.18em;
+  bottom:0.18em;
+  width:3px;
+  border-radius:999px;
+  background:linear-gradient(180deg,#c084fc,#6d28d9);
+  box-shadow:0 0 10px rgba(168,85,247,0.28);
+}
+.cx-md h1{font-size:1.22em;}
+.cx-md h2{font-size:1.08em;}
+.cx-md h3{font-size:0.98em;}
+.cx-md h4{font-size:0.92em;color:#e9ddff;}
 .cx-md strong,.cx-md b{font-weight:800;color:#fff;}
-.cx-md em,.cx-md i{font-style:italic;color:rgba(220,200,255,0.9);}
-.cx-md code{font-family:'JetBrains Mono','Fira Code',monospace;font-size:0.82em;padding:2px 6px;border-radius:6px;background:rgba(120,80,255,0.18);color:#c4b5fd;border:1px solid rgba(160,120,255,0.22);}
-.cx-md pre{margin:10px 0;border-radius:14px;overflow:hidden;border:1px solid rgba(160,120,255,0.2);}
-.cx-md pre code{display:block;padding:14px 16px;background:rgba(10,10,26,0.8);color:#e2d9ff;font-size:0.8em;line-height:1.65;overflow-x:auto;border:none;border-radius:0;}
-.cx-md ul,.cx-md ol{margin:6px 0 10px;padding-left:22px;}
-.cx-md li{margin-bottom:4px;}
-.cx-md ul li::marker{color:#a855f7;}
-.cx-md ol li::marker{color:#a855f7;font-weight:700;}
-.cx-md ul ul,.cx-md ol ul{margin:2px 0 4px;padding-left:18px;}
-.cx-md ul ol,.cx-md ol ol{margin:2px 0 4px;padding-left:18px;}
-.cx-md blockquote{margin:10px 0;padding:10px 16px;border-left:3px solid #a855f7;background:rgba(168,85,247,0.08);border-radius:0 10px 10px 0;color:rgba(220,200,255,0.8);}
-.cx-md a{color:#a855f7;text-decoration:underline;text-decoration-color:rgba(168,85,247,0.4);}
-.cx-md hr{border:none;border-top:1px solid rgba(160,120,255,0.2);margin:14px 0;}
-.cx-md table{width:100%;border-collapse:collapse;margin:10px 0;font-size:0.85em;}
-.cx-md th{background:rgba(120,80,255,0.18);padding:8px 12px;text-align:left;font-weight:800;border-bottom:1px solid rgba(160,120,255,0.25);}
-.cx-md td{padding:7px 12px;border-bottom:1px solid rgba(160,120,255,0.1);}
-.cx-md tr:last-child td{border-bottom:none;}
-.cx-md-table-wrap{overflow-x:auto;margin:10px 0;border-radius:12px;border:1px solid rgba(160,120,255,0.15);}
-.cx-md-table-wrap table{margin:0;}
-/* User bubble markdown - white on gradient */
+.cx-md em,.cx-md i{font-style:italic;color:rgba(220,200,255,0.92);}
+.cx-md code{
+  font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:0.9em;
+  padding:0.16em 0.42em;
+  border-radius:6px;
+  background:rgba(120,80,255,0.18);
+  color:#d9ccff;
+  border:1px solid rgba(160,120,255,0.22);
+  white-space:break-spaces;
+}
+.cx-md .cx-md-inline-code{white-space:break-spaces;}
+.cx-md .cx-md-code-shell{
+  margin:0.95em 0;
+  border-radius:16px;
+  overflow:hidden;
+  border:1px solid rgba(160,120,255,0.22);
+  background:linear-gradient(180deg,rgba(8,8,22,0.82),rgba(12,12,28,0.96));
+  box-shadow:0 8px 24px rgba(0,0,0,0.16);
+}
+.cx-md .cx-md-codebar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 12px;
+  background:rgba(255,255,255,0.04);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.cx-md .cx-md-code-label{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:rgba(220,200,255,0.82);
+}
+.cx-md .cx-md-code-shell pre{
+  margin:0;
+  background:transparent;
+  overflow:auto;
+}
+.cx-md .cx-md-code-shell code{
+  display:block;
+  margin:0;
+  padding:14px 15px;
+  background:transparent;
+  color:#e8e0ff;
+  font-size:0.84em;
+  line-height:1.7;
+  border:none;
+  border-radius:0;
+  white-space:pre;
+}
+.cx-md ul,.cx-md ol{
+  margin:0.2em 0 0.95em;
+  padding-left:1.35em;
+}
+.cx-md ul{list-style:disc;}
+.cx-md ol{list-style:decimal;}
+.cx-md li{margin:0.25em 0;}
+.cx-md li > p{margin:0.35em 0;}
+.cx-md li > p:first-child{margin-top:0;}
+.cx-md li > p:last-child{margin-bottom:0;}
+.cx-md ul ul,.cx-md ol ul,.cx-md ul ol,.cx-md ol ol{
+  margin:0.25em 0;
+  padding-left:1.15em;
+}
+.cx-md ul li::marker{color:#b77aff;}
+.cx-md ol li::marker{color:#b77aff;font-weight:700;}
+.cx-md .cx-md-task{
+  list-style:none;
+  position:relative;
+  padding-left:1.55em;
+}
+.cx-md .cx-md-task::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:0.22em;
+  width:1em;
+  height:1em;
+  border-radius:0.3em;
+  border:1.5px solid rgba(160,120,255,0.5);
+  background:rgba(255,255,255,0.02);
+}
+.cx-md .cx-md-task.is-checked::before{
+  border-color:rgba(168,85,247,0.9);
+  background:linear-gradient(135deg,rgba(168,85,247,0.35),rgba(99,102,241,0.55));
+  box-shadow:0 0 0 3px rgba(168,85,247,0.08);
+}
+.cx-md .cx-md-task.is-checked::after{
+  content:'';
+  position:absolute;
+  left:0.28em;
+  top:0.44em;
+  width:0.28em;
+  height:0.55em;
+  border:solid #fff;
+  border-width:0 2px 2px 0;
+  transform:rotate(45deg);
+}
+.cx-md blockquote{
+  margin:0.95em 0;
+  padding:0.85em 1em 0.85em 1.05em;
+  border-left:3px solid #a855f7;
+  background:linear-gradient(90deg,rgba(168,85,247,0.10),rgba(168,85,247,0.03));
+  border-radius:0 14px 14px 0;
+  color:rgba(233,224,255,0.88);
+}
+.cx-md blockquote p:last-child{margin-bottom:0;}
+.cx-md a{
+  color:#c084fc;
+  text-decoration:underline;
+  text-decoration-color:rgba(192,132,252,0.45);
+  text-underline-offset:0.14em;
+}
+.cx-md a:hover{color:#e9d5ff;}
+.cx-md .cx-md-link-unsafe{
+  color:rgba(220,200,255,0.75);
+  text-decoration:line-through;
+}
+.cx-md hr{
+  border:none;
+  border-top:1px solid rgba(160,120,255,0.22);
+  margin:1em 0;
+}
+.cx-md .cx-md-table-shell{
+  display:block;
+  max-width:100%;
+  overflow:auto;
+  margin:0.95em 0;
+  border-radius:14px;
+  border:1px solid rgba(160,120,255,0.18);
+  background:rgba(255,255,255,0.02);
+  -webkit-overflow-scrolling:touch;
+}
+.cx-md .cx-md-table{
+  width:100%;
+  min-width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:0.86em;
+}
+.cx-md .cx-md-table thead th{
+  position:sticky;
+  top:0;
+  z-index:1;
+  background:linear-gradient(180deg,rgba(124,58,237,0.22),rgba(90,24,154,0.18));
+  backdrop-filter:blur(10px);
+  color:#f4ecff;
+  text-transform:none;
+  font-weight:800;
+}
+.cx-md .cx-md-table th,
+.cx-md .cx-md-table td{
+  padding:0.68em 0.85em;
+  border-bottom:1px solid rgba(160,120,255,0.12);
+  text-align:left;
+  vertical-align:top;
+}
+.cx-md .cx-md-table tr:last-child td{border-bottom:none;}
+.cx-md .cx-md-table tbody tr:nth-child(even) td{
+  background:rgba(255,255,255,0.02);
+}
+.cx-md .cx-md-table th.is-center,
+.cx-md .cx-md-table td.is-center{text-align:center;}
+.cx-md .cx-md-table th.is-right,
+.cx-md .cx-md-table td.is-right{text-align:right;}
+.cx-md .cx-md-image-shell{margin:0.95em 0;}
+.cx-md .cx-md-image{
+  display:block;
+  max-width:100%;
+  height:auto;
+  border-radius:14px;
+  border:1px solid rgba(160,120,255,0.16);
+}
+.cx-md .cx-md-image-caption{
+  margin-top:0.4em;
+  font-size:0.82em;
+  color:rgba(220,200,255,0.75);
+}
 .cx-md-user strong,.cx-md-user b{color:#fff;}
-.cx-md-user em,.cx-md-user i{color:rgba(255,255,255,0.85);}
-.cx-md-user code{background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.25);}
-.cx-md-user a{color:rgba(255,255,255,0.9);}
-.cx-md-user ul li::marker,.cx-md-user ol li::marker{color:rgba(255,255,255,0.7);}
+.cx-md-user em,.cx-md-user i{color:rgba(255,255,255,0.86);}
+.cx-md-user code{
+  background:rgba(255,255,255,0.18);
+  color:#fff;
+  border-color:rgba(255,255,255,0.26);
+}
+.cx-md-user a{color:rgba(255,255,255,0.95);}
+.cx-md-user ul li::marker,.cx-md-user ol li::marker{color:rgba(255,255,255,0.72);}
+.cx-md-user .cx-md-code-shell,
+.cx-md-user .cx-md-table-shell,
+.cx-md-user blockquote{
+  border-color:rgba(255,255,255,0.16);
+}
+.cx-md-compact{line-height:1.62;}
+.cx-md-compact p{margin-bottom:0.72em;}
+.cx-md-compact h1,.cx-md-compact h2,.cx-md-compact h3,.cx-md-compact h4{
+  margin:0.95em 0 0.42em;
+  padding-left:10px;
+}
+.cx-md-compact h1{font-size:1.12em;}
+.cx-md-compact h2{font-size:1.02em;}
+.cx-md-compact h3{font-size:0.96em;}
+.cx-md-compact h4{font-size:0.9em;}
+.cx-md-compact .cx-md-code-shell{margin:0.8em 0;border-radius:14px;}
+.cx-md-compact .cx-md-code-shell code{padding:12px 13px;font-size:0.82em;}
+.cx-md-compact .cx-md-table{font-size:0.82em;}
+.cx-md-compact .cx-md-table th,
+.cx-md-compact .cx-md-table td{padding:0.55em 0.7em;}
+.cx-md-compact ul,.cx-md-compact ol{
+  padding-left:1.2em;
+  margin-bottom:0.8em;
+}
+.cx-md-compact blockquote{padding:0.75em 0.9em 0.75em 0.95em;}
 </style>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -5886,7 +6103,8 @@ function CortexPagesHubFab({ onNavigate, onSurfaceChange, mode, surfaceId, theme
   );
 }
 
-function CortexTextZoomControl({ value, onChange, mode }) {
+function CortexTextZoomControl({ value, onChange, mode, compact = false }) {
+  const compactish = compact || mode === 'mobile';
   const zoomValue = mode === 'mobile'
     ? 1.16
     : mode === 'tablet'
@@ -5901,14 +6119,14 @@ function CortexTextZoomControl({ value, onChange, mode }) {
       display:'flex',
       alignItems:'center',
       gap:6,
-      padding: mode === 'mobile' ? '6px 8px' : '8px 10px',
+      padding: compactish ? '6px 8px' : (mode === 'mobile' ? '6px 8px' : '8px 10px'),
       borderRadius:18,
       border:`1px solid ${DL.glassBorder}`,
       background:'rgba(255,255,255,0.04)',
       boxShadow:`0 8px 18px ${DL.shadowColor}`,
-      minWidth: mode === 'mobile' ? 92 : mode === 'tablet' ? 116 : 124,
+      minWidth: compactish ? 86 : mode === 'tablet' ? 116 : 124,
       flex:'0 0 auto',
-      maxWidth: mode === 'mobile' ? 112 : 144,
+      maxWidth: compactish ? 108 : 144,
     }
   },
     React.createElement('button', {
@@ -5917,13 +6135,13 @@ function CortexTextZoomControl({ value, onChange, mode }) {
       className:'cortex-motion-press',
       'aria-label':'Normal zoom',
       style:{
-        width: mode === 'mobile' ? 24 : 28,
-        height: mode === 'mobile' ? 24 : 28,
+        width: compactish ? 22 : (mode === 'mobile' ? 24 : 28),
+        height: compactish ? 22 : (mode === 'mobile' ? 24 : 28),
         borderRadius:10,
         border:`1px solid ${DL.glassBorder}`,
         background: isZoom ? 'rgba(255,255,255,0.02)' : DL.gradA,
         color: isZoom ? DL.text : '#fff',
-        fontSize: mode === 'mobile' ? 14 : 15,
+        fontSize: compactish ? 13 : (mode === 'mobile' ? 14 : 15),
         fontWeight:900,
         cursor:'pointer',
         flex:'0 0 auto',
@@ -5931,12 +6149,12 @@ function CortexTextZoomControl({ value, onChange, mode }) {
     }, '−'),
     React.createElement('div', {
       style:{
-        minWidth: mode === 'mobile' ? 38 : 44,
+        minWidth: compactish ? 34 : (mode === 'mobile' ? 38 : 44),
         display:'flex',
         alignItems:'center',
         justifyContent:'center',
         color:DL.mute,
-        fontSize: mode === 'mobile' ? 9 : 10,
+        fontSize: compactish ? 8 : (mode === 'mobile' ? 9 : 10),
         fontWeight:900,
         letterSpacing:0.8,
         textTransform:'uppercase',
@@ -5948,13 +6166,13 @@ function CortexTextZoomControl({ value, onChange, mode }) {
       className:'cortex-motion-press',
       'aria-label':'Zoom in',
       style:{
-        width: mode === 'mobile' ? 24 : 28,
-        height: mode === 'mobile' ? 24 : 28,
+        width: compactish ? 22 : (mode === 'mobile' ? 24 : 28),
+        height: compactish ? 22 : (mode === 'mobile' ? 24 : 28),
         borderRadius:10,
         border:`1px solid ${DL.glassBorder}`,
         background: isZoom ? DL.gradA : 'rgba(255,255,255,0.02)',
         color: isZoom ? '#fff' : DL.text,
-        fontSize: mode === 'mobile' ? 14 : 15,
+        fontSize: compactish ? 13 : (mode === 'mobile' ? 14 : 15),
         fontWeight:900,
         cursor:'pointer',
         flex:'0 0 auto',
@@ -5963,7 +6181,8 @@ function CortexTextZoomControl({ value, onChange, mode }) {
   );
 }
 
-function CortexTopbarSearch({ value, onChange, onSubmit, mode, style }) {
+function CortexTopbarSearch({ value, onChange, onSubmit, mode, compact = false, style }) {
+  const compactish = compact || mode === 'mobile';
   const inputRef = React.useRef(null);
   const focusSearch = React.useCallback(() => {
     if (inputRef.current) {
@@ -5980,21 +6199,21 @@ function CortexTopbarSearch({ value, onChange, onSubmit, mode, style }) {
     onTouchStart:focusSearch,
     style:{
       flex:'1 1 220px',
-      minWidth: mode === 'mobile' ? 132 : 180,
+      minWidth: compactish ? 120 : (mode === 'mobile' ? 132 : 180),
       display:'flex',
       alignItems:'center',
       gap:8,
-      padding: mode === 'mobile' ? '8px 10px' : '9px 12px',
+      padding: compactish ? '7px 9px' : (mode === 'mobile' ? '8px 10px' : '9px 12px'),
       borderRadius:18,
       border:`1px solid ${DL.glassBorder}`,
       background:'rgba(255,255,255,0.05)',
       boxShadow:`0 8px 18px ${DL.shadowColor}`,
       cursor:'text',
-      minHeight: mode === 'mobile' ? 36 : 40,
+      minHeight: compactish ? 34 : (mode === 'mobile' ? 36 : 40),
       ...style,
     }
   },
-    React.createElement('span', { style:{ color:DL.mute, fontSize:12, flex:'0 0 auto' } }, '⌕'),
+    React.createElement('span', { style:{ color:DL.mute, fontSize: compactish ? 11 : 12, flex:'0 0 auto' } }, '⌕'),
     React.createElement('input', {
       ref:inputRef,
       type:'search',
@@ -6019,7 +6238,7 @@ function CortexTopbarSearch({ value, onChange, onSubmit, mode, style }) {
         outline:'none',
         background:'transparent',
         color:DL.text,
-        fontSize: mode === 'mobile' ? 12 : 13,
+        fontSize: compactish ? 11 : (mode === 'mobile' ? 12 : 13),
         fontWeight:700,
       }
     })
@@ -7472,7 +7691,12 @@ function B2PageShell({ label, title, subtitle, onBack, right, children, footer }
     }),
     React.createElement('div', {
       className:'hide-scrollbar cortex-motion-page cortex-page-scroll',
-      style:{ flex:1, minHeight:0, overflowY:'auto', padding:'22px 18px calc(96px + env(safe-area-inset-bottom))' }
+      style:{
+        flex:1,
+        minHeight:0,
+        overflowY:'auto',
+        padding:'var(--cortex-page-shell-pad-top, 22px) var(--cortex-page-shell-pad-x, 18px) var(--cortex-page-shell-pad-bottom, calc(96px + env(safe-area-inset-bottom)))',
+      }
     }, children),
     footer
   );
@@ -10107,31 +10331,198 @@ function PageProgressDashboard({ onNavigate, contentIndex, visualManifest }) {
   );
 }
 
-function MarkdownText({text,isUser}){
-  // Sanitize HTML: only allow safe tags and attributes
-  function sanitize(html){
-    const allowedTags={a:['href','title'],b:[],strong:[],i:[],em:[],code:[],pre:[],p:[],ul:[],ol:[],li:[],h1:[],h2:[],h3:[],h4:[],blockquote:[],hr:[],br:[],table:[],thead:[],tbody:[],tr:[],th:['align'],td:['align'],div:['class'],span:['class'],del:[],ins:[],sub:[],sup:[],img:['src','alt','title']};
-    return String(html||'').replace(/<script[\s\S]*?<\/script>/gi,'').replace(/on\w+\s*=\s*["'][^"']*["']/gi,'');
+var cortexMarkdownRendererCache=null;
+function cortexMarkdownEscapeHtml(value){
+  return String(value||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+function cortexMarkdownFallbackHtml(source){
+  return String(source||'').split('\n').map(cortexMarkdownEscapeHtml).join('<br/>');
+}
+function cortexMarkdownNormalizeSource(raw){
+  const source=String(raw||'').replace(/\r\n?/g,'\n').replace(/^\uFEFF/,'');
+  return source.split(/(```[\s\S]*?```)/g).map(function(part){
+    if(!part)return '';
+    if(part.startsWith('```'))return part;
+    return part
+      .replace(/[ \t]+\n/g,'\n')
+      .replace(/(^|\n)[ \t]*[•◦‣▪◆·]\s+/g,'$1- ')
+      .replace(/(^|\n)[ \t]*([–—])\s+/g,'$1- ')
+      .replace(/(^|\n)[ \t]*([0-9]+)\)\s+/g,'$1$2. ')
+      .replace(/\n{3,}/g,'\n\n');
+  }).join('').trimEnd();
+}
+function cortexMarkdownSafeUrl(url,kind){
+  const value=String(url||'').trim();
+  if(!value)return '';
+  if(kind==='src'){
+    if(/^data:image\/[a-z0-9.+-]+;base64,/i.test(value)||/^https?:\/\//i.test(value)||/^blob:/i.test(value)||value.startsWith('/'))return value;
+    return '';
   }
+  if(/^(https?:|mailto:|tel:|\/|#)/i.test(value))return value;
+  return '';
+}
+function cortexMarkdownSanitizeHtml(html){
+  if(typeof document==='undefined')return String(html||'');
+  const allowedTags=new Set(['A','B','BLOCKQUOTE','BR','CODE','DEL','DIV','EM','FIGURE','FIGCAPTION','H1','H2','H3','H4','HR','I','IMG','LI','OL','P','PRE','S','SPAN','STRONG','SUB','SUP','TABLE','TBODY','TD','TH','THEAD','TR','UL']);
+  const dropCompletely=new Set(['SCRIPT','STYLE','NOSCRIPT','IFRAME','OBJECT','EMBED','LINK','META','SVG','MATH']);
+  const allowedAttrsByTag={
+    A:new Set(['href','title','target','rel']),
+    IMG:new Set(['src','alt','title','loading','decoding','referrerpolicy']),
+    OL:new Set(['start']),
+    TH:new Set(['align','scope','colspan','rowspan']),
+    TD:new Set(['align','colspan','rowspan']),
+    H1:new Set(['data-level']),
+    H2:new Set(['data-level']),
+    H3:new Set(['data-level']),
+    H4:new Set(['data-level']),
+    FIGURE:new Set(['data-lang']),
+    DIV:new Set(['data-lang','data-md-block']),
+    SPAN:new Set(['aria-hidden']),
+    PRE:new Set(['data-lang']),
+    CODE:new Set(['data-lang']),
+    LI:new Set(['data-task']),
+  };
+  const allowedGlobalAttrs=new Set(['class','title','aria-hidden','aria-label','aria-describedby','role']);
+  const tpl=document.createElement('template');
+  tpl.innerHTML=String(html||'');
+  const sanitizeNode=function(node){
+    Array.from(node.childNodes).forEach(function(child){
+      if(child.nodeType===Node.TEXT_NODE)return;
+      if(child.nodeType!==Node.ELEMENT_NODE){child.remove();return;}
+      const tag=child.tagName.toUpperCase();
+      if(!allowedTags.has(tag)){
+        if(dropCompletely.has(tag)){
+          child.remove();
+          return;
+        }
+        child.replaceWith(document.createTextNode(child.textContent||''));
+        return;
+      }
+      Array.from(child.attributes).forEach(function(attr){
+        const name=attr.name;
+        const lower=name.toLowerCase();
+        if(lower.startsWith('on')||lower==='style'){
+          child.removeAttribute(name);
+          return;
+        }
+        const allowedTagAttrs=allowedAttrsByTag[tag];
+        const keep=allowedGlobalAttrs.has(lower)||lower.startsWith('data-')||(allowedTagAttrs&&allowedTagAttrs.has(lower));
+        if(!keep)child.removeAttribute(name);
+      });
+      if(tag==='A'){
+        const safeHref=cortexMarkdownSafeUrl(child.getAttribute('href'),'href');
+        if(safeHref){
+          child.setAttribute('href',safeHref);
+          child.setAttribute('target','_blank');
+          child.setAttribute('rel','noopener noreferrer nofollow');
+        }else{
+          child.removeAttribute('href');
+          child.removeAttribute('target');
+          child.removeAttribute('rel');
+          child.classList.add('cx-md-link-unsafe');
+        }
+      }
+      if(tag==='IMG'){
+        const safeSrc=cortexMarkdownSafeUrl(child.getAttribute('src'),'src');
+        if(safeSrc){
+          child.setAttribute('src',safeSrc);
+          child.setAttribute('loading','lazy');
+          child.setAttribute('decoding','async');
+        }else{
+          const altText=child.getAttribute('alt')||'';
+          child.replaceWith(document.createTextNode(altText));
+          return;
+        }
+      }
+      sanitizeNode(child);
+    });
+  };
+  sanitizeNode(tpl.content);
+  return tpl.innerHTML;
+}
+function cortexMarkdownGetRenderer(){
+  if(cortexMarkdownRendererCache)return cortexMarkdownRendererCache;
+  if(typeof marked==='undefined'||!marked||typeof marked.Renderer!=='function')return null;
+  const renderer=new marked.Renderer();
+  renderer.html=function(html){return cortexMarkdownEscapeHtml(html);};
+  renderer.heading=function(text,level){
+    const safeLevel=Math.max(1,Math.min(4,level||1));
+    return `<h${safeLevel} class="cx-md-heading cx-md-heading-${safeLevel}" data-level="${safeLevel}">${text}</h${safeLevel}>`;
+  };
+  renderer.paragraph=function(text){return `<p class="cx-md-paragraph">${text}</p>`;};
+  renderer.blockquote=function(quote){return `<blockquote class="cx-md-blockquote">${quote}</blockquote>`;};
+  renderer.list=function(body,ordered,start){
+    const startAttr=ordered&&start&&start!==1?` start="${Number(start)||1}"`:'';
+    return ordered
+      ? `<ol class="cx-md-list cx-md-list-ordered"${startAttr}>${body}</ol>`
+      : `<ul class="cx-md-list cx-md-list-unordered">${body}</ul>`;
+  };
+  renderer.listitem=function(text,task,checked){
+    if(task)return `<li class="cx-md-task${checked?' is-checked':''}" data-task="${checked?'checked':'unchecked'}">${text}</li>`;
+    return `<li class="cx-md-list-item">${text}</li>`;
+  };
+  renderer.hr=function(){return '<hr class="cx-md-hr"/>';};
+  renderer.codespan=function(text){return `<code class="cx-md-inline-code">${text}</code>`;};
+  renderer.code=function(code,infostring){
+    const lang=String(infostring||'').trim().split(/[\s{]/)[0].toLowerCase();
+    const label=lang||'text';
+    const langAttr=lang?` data-lang="${cortexMarkdownEscapeHtml(lang)}"`:'';
+    return `<figure class="cx-md-code-shell"${langAttr}><div class="cx-md-codebar"><span class="cx-md-code-label">${cortexMarkdownEscapeHtml(label)}</span></div><pre class="cx-md-code-pre"><code class="cx-md-code">${code}</code></pre></figure>`;
+  };
+  renderer.table=function(header,body){
+    return `<div class="cx-md-table-shell"><table class="cx-md-table"><thead>${header}</thead><tbody>${body}</tbody></table></div>`;
+  };
+  renderer.tablerow=function(content){return `<tr class="cx-md-table-row">${content}</tr>`;};
+  renderer.tablecell=function(content,flags){
+    const align=flags&&flags.align?` is-${String(flags.align).toLowerCase()}`:'';
+    const tag=flags&&flags.header?'th':'td';
+    const scope=flags&&flags.header?' scope="col"':'';
+    return `<${tag} class="cx-md-table-cell${align}"${scope}>${content}</${tag}>`;
+  };
+  renderer.link=function(href,title,text){
+    const safeHref=cortexMarkdownSafeUrl(href,'href');
+    if(!safeHref)return `<span class="cx-md-link-unsafe">${text}</span>`;
+    const safeTitle=title?` title="${cortexMarkdownEscapeHtml(title)}"`:'';
+    return `<a class="cx-md-link" href="${cortexMarkdownEscapeHtml(safeHref)}"${safeTitle} target="_blank" rel="noopener noreferrer nofollow">${text}</a>`;
+  };
+  renderer.image=function(href,title,text){
+    const safeSrc=cortexMarkdownSafeUrl(href,'src');
+    if(!safeSrc)return text?`<span class="cx-md-image-alt">${text}</span>`:'';
+    const safeTitle=title?` title="${cortexMarkdownEscapeHtml(title)}"`:'';
+    const safeAlt=cortexMarkdownEscapeHtml(text||'');
+    return `<figure class="cx-md-image-shell"><img class="cx-md-image" src="${cortexMarkdownEscapeHtml(safeSrc)}" alt="${safeAlt}" loading="lazy" decoding="async"${safeTitle}/></figure>`;
+  };
+  cortexMarkdownRendererCache=renderer;
+  return renderer;
+}
+function MarkdownText({text,isUser,compact}){
   const html=React.useMemo(function(){
     try{
-      if(typeof marked==='undefined'||typeof marked.parse!=='function')return String(text||'').replace(/\n/g,'<br/>');
-      const raw=String(text||'');
-      const result=marked.parse(raw,{breaks:true,gfm:true,mangle:false,headerIds:false});
-      if(typeof result!=='string')return sanitize(raw.replace(/\n/g,'<br/>'));
-      // Wrap tables in scrollable container for mobile
-      return sanitize(result.replace(/<table/g,'<div class="cx-md-table-wrap"><table').replace(/<\/table>/g,'</table></div>'));
-    }catch(e){return sanitize(String(text||'').replace(/\n/g,'<br/>'));}
+      const source=cortexMarkdownNormalizeSource(text);
+      if(typeof marked==='undefined'||typeof marked.parse!=='function')return cortexMarkdownFallbackHtml(source);
+      const renderer=cortexMarkdownGetRenderer();
+      const result=marked.parse(source,{breaks:true,gfm:true,mangle:false,headerIds:false,renderer:renderer||undefined});
+      if(typeof result!=='string')return cortexMarkdownFallbackHtml(source);
+      return cortexMarkdownSanitizeHtml(result);
+    }catch(e){
+      return cortexMarkdownFallbackHtml(cortexMarkdownNormalizeSource(text));
+    }
   },[text]);
   return React.createElement('div',{
-    className:'cx-md'+(isUser?' cx-md-user':''),
+    className:'cx-md'+(isUser?' cx-md-user':'')+(compact?' cx-md-compact':''),
     style:{maxWidth:'100%',overflowX:'hidden'},
     dangerouslySetInnerHTML:{__html:html},
   });
 }
 
-function PageAIWorkspace({ onNavigate }) {
+function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity, layoutCompact }) {
   const MAX_HISTORY = 100000;
+  const compactLayout = Boolean(layoutCompact || layoutDensity === 'compact' || (layoutProfile && layoutProfile.density === 'compact') || layoutMode === 'mobile');
   function lsGet(key,def){try{const v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
   function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
   const [surface, setSurface] = React.useState(function(){return lsGet('cx_surface','assistant');});
@@ -10189,7 +10580,7 @@ function PageAIWorkspace({ onNavigate }) {
   const [editState, setEditState] = React.useState(null);
   const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'Belum ada proxy yang dicek.', health:null });
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
-  const chatBottomRef = React.useRef(null);
+  const chatFeedScrollRef = React.useRef(null);
   const fileInputRef = React.useRef(null);
   const sttInputRef = React.useRef(null);
   const [sttFile, setSttFile] = React.useState(null);
@@ -10301,8 +10692,18 @@ function PageAIWorkspace({ onNavigate }) {
   const deepseekReady=!!(ph.deepseek&&ph.deepseek.configured)||directDeepseekReady;
   const featherlessReady=!!(ph.featherless&&ph.featherless.configured)||directFeatherlessReady;
   const openaiReady=!!(ph.openai&&ph.openai.configured)||directOpenAIReady;
+  const chatFeedMaxHeight = layoutProfile && layoutProfile.height
+    ? Math.max(
+        compactLayout ? 180 : 220,
+        Math.min(compactLayout ? 320 : 380, Math.round(layoutProfile.height * (compactLayout ? 0.30 : 0.34)))
+      )
+    : (compactLayout ? 220 : 380);
 
-  React.useEffect(function(){if(chatBottomRef.current)chatBottomRef.current.scrollIntoView({behavior:'smooth'});},[chatFeed,composerBusy]);
+  React.useEffect(function(){
+    const el=chatFeedScrollRef.current;
+    if(!el) return;
+    el.scrollTop = el.scrollHeight;
+  },[chatFeed.length,composerBusy,surface,layoutMode,layoutDensity]);
 
   function sanitizeText(t){return String(t||'').replace(/<think>[\s\S]*?<\/think>/gi,' ').replace(/\s+/g,' ').trim();}
   function extractText(payload){
@@ -10955,13 +11356,13 @@ function PageAIWorkspace({ onNavigate }) {
     ),
   },
 
-    // ── COMPACT SINGLE-LINE STICKY BAR (Liquid Glass) ───────────────────────
+      // ── COMPACT SINGLE-LINE STICKY BAR (Liquid Glass) ───────────────────────
     React.createElement('div',{
       style:{
         position:'sticky',top:0,zIndex:20,
         display:'flex',alignItems:'center',gap:8,
-        height:52,
-        margin:'0 -18px',padding:'0 12px',
+        height:compactLayout ? 46 : 52,
+        margin:'0 calc(var(--cortex-page-shell-pad-x, 18px) * -1)',padding:'0 12px',
         background:'linear-gradient(180deg,rgba(14,10,32,0.96) 0%,rgba(8,6,20,0.94) 100%)',
         backdropFilter:'blur(32px) saturate(180%)',WebkitBackdropFilter:'blur(32px) saturate(180%)',
         borderBottom:'1px solid rgba(168,85,247,0.12)',
@@ -11143,7 +11544,7 @@ function PageAIWorkspace({ onNavigate }) {
     // AIW HER0
     // ════════════════════════════════════════════════════════════════════════
     React.createElement('div',{style:{
-      borderRadius:22,padding:'14px 18px',marginBottom:2,
+      borderRadius:22,padding:compactLayout ? '12px 14px' : '14px 18px',marginBottom:2,
       background:`linear-gradient(135deg,${DL.accent}14,${DL.teal}08,rgba(0,0,0,0))`,
       border:`1px solid ${DL.accent}22`,
     }},
@@ -11163,7 +11564,7 @@ function PageAIWorkspace({ onNavigate }) {
     // ════════════════════════════════════════════════════════════════════════
     // AIW STATUS CARDS
     // ════════════════════════════════════════════════════════════════════════
-    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))',gap:6,marginBottom:2}},
+    React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(120px,1fr))',gap:compactLayout ? 5 : 6,marginBottom:2}},
       [
         {label:'Gemini',ready:geminiReady,color:DL.teal,icon:'✶',note:'Chat · Image · Video · TTS'},
         {label:'DeepSeek',ready:deepseekReady,color:DL.accentB,icon:'◈',note:'Reasoning V4 Flash'},
@@ -11188,13 +11589,14 @@ function PageAIWorkspace({ onNavigate }) {
     // ════════════════════════════════════════════════════════════════════════
     // CHAT SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:16,alignItems:'flex-start',width:'100%'}},
-      React.createElement('div',{style:{flex:'1 1 380px',minWidth:0,display:'flex',flexDirection:'column',gap:12,paddingTop:12}},
+    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:compactLayout?12:16,alignItems:'flex-start',width:'100%'}},
+      React.createElement('div',{style:{flex:'1 1 380px',minWidth:0,display:'flex',flexDirection:'column',gap:compactLayout?10:12,paddingTop:compactLayout?8:12}},
 
       // ── Chat Feed ────────────────────────────────────────────────────────
       React.createElement('div',{
+        ref:chatFeedScrollRef,
         className:'hide-scrollbar',
-        style:{display:'flex',flexDirection:'column',gap:8,minHeight:200,maxHeight:380,overflowY:'auto',padding:'4px 2px 6px'},
+        style:{display:'flex',flexDirection:'column',gap:8,minHeight:200,maxHeight:chatFeedMaxHeight,overflowY:'auto',padding:'4px 2px 6px'},
       },
         chatFeed.map(function(msg,i){
           const isUser=msg.role==='user';
@@ -11262,7 +11664,7 @@ function PageAIWorkspace({ onNavigate }) {
                     React.createElement('button',{onClick:()=>submitEdit(i,editState.text),style:{padding:'6px 14px',borderRadius:9,border:'none',background:DL.accent,color:'#fff',fontSize:10,fontWeight:800,cursor:'pointer'}},'Kirim ↵'),
                   ),
                 )
-                :React.createElement(MarkdownText,{text:msg.text,isUser:isUser}),
+                :React.createElement(MarkdownText,{text:msg.text,isUser:isUser,compact:compactLayout}),
             ),
             // Action toolbar
             showActions&&!isEditing&&React.createElement('div',{
@@ -11309,7 +11711,6 @@ function PageAIWorkspace({ onNavigate }) {
           ),
           React.createElement('span',{style:{fontSize:10,color:DL.mute,marginLeft:4}},`${activeChatModel.label} mengetik...`),
         ),
-        React.createElement('div',{ref:chatBottomRef}),
       ),
 
       // ── Input Bar (with drag-and-drop) ────────────────────────────────────
@@ -11322,7 +11723,7 @@ function PageAIWorkspace({ onNavigate }) {
           if(file)processDroppedFile(file);
         },
         style:{
-          borderRadius:22,padding:12,
+          borderRadius:22,padding:compactLayout?10:12,
           background:dragOver?'rgba(168,85,247,0.12)':'rgba(10,10,26,0.7)',
           border:dragOver?`2px dashed ${DL.accent}`:`1.5px solid ${isThinking?activeChatModel.color+'55':DL.glassBorder}`,
           backdropFilter:'blur(24px) saturate(180%)',
@@ -11414,7 +11815,7 @@ function PageAIWorkspace({ onNavigate }) {
     ),
 
     // ── Right column: observability ─────────────────────────────────────
-    React.createElement('div',{style:{flex:'0 1 320px',minWidth:0,display:'flex',flexDirection:'column',gap:8}},
+    React.createElement('div',{style:{flex:'0 1 320px',minWidth:0,display:'flex',flexDirection:'column',gap:compactLayout?6:8}},
 
       React.createElement('div',{style:{padding:'10px 12px',borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
         React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4}},
@@ -11896,7 +12297,7 @@ function PageAIWorkspace({ onNavigate }) {
                 React.createElement('button',{onClick:function(){setSttHistory(prev=>prev.filter((_,i)=>i!==idx));},style:{padding:'5px 8px',borderRadius:9,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:9,fontWeight:800,cursor:'pointer'}},'✕'),
               ),
             ),
-            React.createElement('div',{style:{padding:'10px 14px 14px',fontSize:12,color:DL.text,maxHeight:200,overflowY:'auto'}},React.createElement(MarkdownText,{text:item.text})),
+            React.createElement('div',{style:{padding:'10px 14px 14px',fontSize:12,color:DL.text,maxHeight:200,overflowY:'auto'}},React.createElement(MarkdownText,{text:item.text,compact:true})),
           );
         }),
       ),
@@ -12532,7 +12933,7 @@ function cortexSetMotionVars(x, y, force) {
   root.style.setProperty('--cortex-shake-force', (force || 0).toFixed(3));
 }
 
-function CortexMotionSensorControl() {
+function CortexMotionSensorControl({ compact = false }) {
   const supported = typeof window !== 'undefined' &&
     ('DeviceOrientationEvent' in window || 'DeviceMotionEvent' in window);
   const needsGesture = typeof DeviceOrientationEvent !== 'undefined' &&
@@ -12673,11 +13074,21 @@ function CortexMotionSensorControl() {
       ? 'Motion sensor is active'
       : 'Enable subtle gyro tilt and shake response',
     'data-status':status,
-    style:{ '--sensor-color':color },
+    style:{
+      '--sensor-color':color,
+      minWidth: compact ? 84 : undefined,
+      padding: compact ? '6px 8px' : undefined,
+    },
   },
     React.createElement('span', { className:'sensor-dot' }),
-    React.createElement('span', { className:'sensor-label-full' }, label),
-    React.createElement('span', { className:'sensor-label-short' }, 'Gyro')
+    React.createElement('span', {
+      className:'sensor-label-full',
+      style: compact ? { display:'none' } : undefined,
+    }, label),
+    React.createElement('span', {
+      className:'sensor-label-short',
+      style: compact ? { display:'inline' } : undefined,
+    }, 'Gyro')
   );
 }
 
@@ -12792,26 +13203,76 @@ const CORTEX_DEVELOPER_NAME = 'Habib Arsy';
 const CORTEX_DEVELOPER_ROLE = 'Developer';
 const CORTEX_DEVELOPER_WA_URL = 'https://wa.me/6281330039520?text=' + encodeURIComponent('Halo Habib Arsy, saya ingin membahas CORTEX Studio dan paket konten kuliahnya.');
 
-function useCortexLayoutMode() {
-  const detect = () => {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-    if (w >= 1180) return 'desktop';
-    if (w >= 760 || (coarse && Math.min(w, h) >= 700)) return 'tablet';
-    return 'mobile';
+function getCortexViewportProfile() {
+  const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+  const width = Math.max(1, Math.round((vv && vv.width) || window.innerWidth || 0));
+  const height = Math.max(1, Math.round((vv && vv.height) || window.innerHeight || 0));
+  const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  const orientation = width >= height ? 'landscape' : 'portrait';
+  const aspect = width / Math.max(1, height);
+  let mode = 'mobile';
+  if (width >= 1180) mode = 'desktop';
+  else if (width >= 760 || (coarse && Math.min(width, height) >= 700)) mode = 'tablet';
+
+  const compactHeight = height <= 720 || (orientation === 'landscape' && height <= 520);
+  const compactWidth = width <= 430;
+  const density = compactHeight ? 'compact' : 'regular';
+  const padX = mode === 'desktop' ? 24 : compactWidth ? 16 : 18;
+  const padTop = mode === 'desktop' ? (density === 'compact' ? 18 : 22) : (density === 'compact' ? 12 : 16);
+  const padBottomValue = mode === 'desktop'
+    ? 96
+    : Math.max(68, Math.min(Math.round(height * 0.12), mode === 'tablet' ? 104 : 100));
+  const bottomClearance = `calc(${padBottomValue}px + env(safe-area-inset-bottom))`;
+
+  return {
+    width,
+    height,
+    aspect,
+    coarse,
+    orientation,
+    mode,
+    density,
+    compactHeight,
+    compactWidth,
+    pagePadX: padX,
+    pagePadTop: padTop,
+    pagePadBottom: bottomClearance,
+    mobileFabClearance: bottomClearance,
   };
-  const [mode, setMode] = React.useState(detect);
+}
+
+function useCortexViewportProfile() {
+  const detect = React.useCallback(() => getCortexViewportProfile(), []);
+  const [profile, setProfile] = React.useState(detect);
   React.useEffect(() => {
-    const onResize = () => setMode(detect());
+    if (typeof window === 'undefined') return undefined;
+    let raf = 0;
+    const vv = window.visualViewport;
+    const onResize = () => {
+      if (raf) window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(() => setProfile(detect()));
+    };
     window.addEventListener('resize', onResize);
     window.addEventListener('orientationchange', onResize);
+    if (vv) {
+      vv.addEventListener('resize', onResize);
+      vv.addEventListener('scroll', onResize);
+    }
     return () => {
+      if (raf) window.cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('orientationchange', onResize);
+      if (vv) {
+        vv.removeEventListener('resize', onResize);
+        vv.removeEventListener('scroll', onResize);
+      }
     };
-  }, []);
-  return mode;
+  }, [detect]);
+  return profile;
+}
+
+function useCortexLayoutMode() {
+  return useCortexViewportProfile().mode;
 }
 
 const CORTEX_THEME_ORDER = ['neural', 'aurora', 'gold', 'neon', 'bloom', 'monochrome'];
@@ -13923,10 +14384,11 @@ function CortexLibraryShell() {
     );
   };
 
-  const mode = useCortexLayoutMode();
+  const viewport = useCortexViewportProfile();
+  const mode = viewport.mode;
+  const compactLayout = viewport.density === 'compact';
   const mobileFabDocked = mode !== 'desktop';
-  const coarsePointer = typeof window !== 'undefined' &&
-    window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const coarsePointer = viewport.coarse;
   const [sidebarDocked, setSidebarDocked] = React.useState(typeof window !== 'undefined' &&
     !coarsePointer && window.innerWidth >= 1280);
   React.useEffect(() => {
@@ -13934,7 +14396,7 @@ function CortexLibraryShell() {
     const onResize = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        setSidebarDocked(typeof window !== 'undefined' && !window.matchMedia('(pointer: coarse)').matches && window.innerWidth >= 1280);
+        setSidebarDocked(typeof window !== 'undefined' && !viewport.coarse && window.innerWidth >= 1280);
       }, 150);
     };
     window.addEventListener('resize', onResize);
@@ -14043,8 +14505,8 @@ function CortexLibraryShell() {
   const sidebarFabVisible = sidebarDocked ? !sidebarPinnedHidden : sidebarOpen;
   const sidebarFabDefaultPos = React.useMemo(() => ({
     x: fabViewportLeft,
-    y: Math.max(14, window.innerHeight - 116),
-  }), [fabViewportLeft]);
+    y: Math.max(14, viewport.height - (compactLayout ? 104 : 116)),
+  }), [compactLayout, fabViewportLeft, viewport.height]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -14588,6 +15050,10 @@ function CortexLibraryShell() {
       onNavigate:navigate,
       themeId:theme.id,
       theme,
+      layoutMode:mode,
+      layoutProfile:viewport,
+      layoutDensity:viewport.density,
+      layoutCompact:compactLayout,
       onThemeChange:setThemeId,
       highlightTone,
       onHighlightToneChange:setHighlightTone,
@@ -14648,12 +15114,21 @@ function CortexLibraryShell() {
     'data-theme-id':theme.id,
     className:'cortex-library-root',
     style:{
-    width:'100vw', height:'100dvh', minHeight:'100vh',
-    background:theme.colors.bg, color:theme.colors.text, overflow:'hidden',
-    fontFamily:'"SF Pro Display", "Inter", -apple-system, sans-serif',
-    display:'flex', flexDirection:sidebarDocked ? 'row' : 'column',
-    position:'relative',
-  }},
+      width:'100vw',
+      height:'100dvh',
+      minHeight:'100vh',
+      background:theme.colors.bg,
+      color:theme.colors.text,
+      overflow:'hidden',
+      fontFamily:'"SF Pro Display", "Inter", -apple-system, sans-serif',
+      display:'flex',
+      flexDirection:sidebarDocked ? 'row' : 'column',
+      position:'relative',
+      '--cortex-page-shell-pad-x': `${viewport.pagePadX}px`,
+      '--cortex-page-shell-pad-top': `${viewport.pagePadTop}px`,
+      '--cortex-page-shell-pad-bottom': viewport.pagePadBottom,
+      '--cortex-mobile-fab-clearance': viewport.mobileFabClearance,
+    }},
     React.createElement(CortexInteractiveWallpaper, { wallpaper, exhibition:isWelcomePage }),
     React.createElement('div', { className:'cortex-library-ambient-orbs', style:{ position:'absolute', inset:0, pointerEvents:'none', filter:coarsePointer ? 'none' : 'blur(24px)', opacity:isWelcomePage ? (coarsePointer ? 0.26 : 0.48) : (coarsePointer ? 0.08 : 0.18) }},
       [
@@ -14830,8 +15305,12 @@ function CortexLibraryShell() {
           display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap',
           flexDirection:mode === 'mobile' ? 'column' : 'row',
           alignItems:mode === 'mobile' ? 'stretch' : 'center',
-          padding:mode === 'mobile' ? '10px 12px 12px' : '14px 22px',
-          gap:mode === 'mobile' ? 10 : 0,
+          padding:mode === 'mobile'
+            ? '10px 12px 12px'
+            : compactLayout
+              ? '10px 14px'
+              : '14px 22px',
+          gap:mode === 'mobile' ? 10 : compactLayout ? 6 : 0,
           borderBottom:`1px solid ${theme.colors.glassBorder}`,
           background:'rgba(10,10,26,0.42)',
           backdropFilter:coarsePointer ? 'blur(10px) saturate(125%)' : 'blur(16px)',
@@ -14847,7 +15326,7 @@ function CortexLibraryShell() {
             gap:10,
           }},
             React.createElement('div', { style:{ minWidth:0, flex:1 }},
-              React.createElement('div', { style:{ fontSize:mode === 'mobile' ? 13 : 15, color:theme.colors.text, fontWeight:900, lineHeight:1.15, whiteSpace:'normal' }},
+              React.createElement('div', { style:{ fontSize:mode === 'mobile' ? 13 : compactLayout ? 14 : 15, color:theme.colors.text, fontWeight:900, lineHeight:1.15, whiteSpace:'normal' }},
                 currentTopbarTitle),
             ),
             React.createElement('div', { style:{ display:'flex', gap:6, alignItems:'center', flexWrap:'wrap', justifyContent:'flex-end', flex:'0 0 auto' }},
@@ -14862,25 +15341,26 @@ function CortexLibraryShell() {
                   React.createElement(B1Button, {
                     label:'',
                     icon: sidebarDocked ? (sidebarPinnedHidden ? 'open' : 'close') : 'sidebar',
-                    onClick: toggleSidebar,
-                    className:'cortex-motion-press',
-                    style:{
-                      padding:'8px 11px',
+                  onClick: toggleSidebar,
+                  className:'cortex-motion-press',
+                  style:{
+                      padding: compactLayout ? '7px 10px' : '8px 11px',
                       borderRadius:16,
-                      minHeight:36,
-                      fontSize:12,
+                      minHeight: compactLayout ? 34 : 36,
+                      fontSize: compactLayout ? 11 : 12,
                       flex:'0 0 auto',
                       minWidth:40,
                     }
                   }),
-                  React.createElement(CortexMotionSensorControl, null),
-                  React.createElement(CortexTextZoomControl, { value:textZoom, onChange:setTextZoom, mode }),
+                  React.createElement(CortexMotionSensorControl, { compact:compactLayout }),
+                  React.createElement(CortexTextZoomControl, { value:textZoom, onChange:setTextZoom, mode, compact:compactLayout }),
                 ),
                 React.createElement(CortexTopbarSearch, {
                   value:topbarSearch,
                   onChange:setTopbarSearch,
                   onSubmit:submitTopbarSearch,
                   mode,
+                  compact:compactLayout,
                   style:{ width:'100%', flex:'1 1 100%', minWidth:0 }
                 }),
               )
@@ -14891,21 +15371,22 @@ function CortexLibraryShell() {
                   onClick: toggleSidebar,
                   className:'cortex-motion-press',
                   style:{
-                    padding:'8px 12px',
+                    padding: compactLayout ? '7px 10px' : '8px 12px',
                     borderRadius:16,
-                    minHeight:36,
-                    fontSize:12,
+                    minHeight: compactLayout ? 34 : 36,
+                    fontSize: compactLayout ? 11 : 12,
                     flex:'0 0 auto',
-                    minWidth:92,
+                    minWidth: compactLayout ? 74 : 92,
                   }
                 }),
-                React.createElement(CortexMotionSensorControl, null),
-                React.createElement(CortexTextZoomControl, { value:textZoom, onChange:setTextZoom, mode }),
+                React.createElement(CortexMotionSensorControl, { compact:compactLayout }),
+                React.createElement(CortexTextZoomControl, { value:textZoom, onChange:setTextZoom, mode, compact:compactLayout }),
                 React.createElement(CortexTopbarSearch, {
                   value:topbarSearch,
                   onChange:setTopbarSearch,
                   onSubmit:submitTopbarSearch,
                   mode,
+                  compact:compactLayout,
                 }),
               ),
           )
@@ -14915,19 +15396,19 @@ function CortexLibraryShell() {
           className:['cortex-library-content', `cortex-page-enter-${navDirection}`].join(' '),
           style:{
             flex:1, minHeight:0, overflow:'hidden',
-            padding:mode === 'desktop' ? 24 : mode === 'tablet' ? 18 : 0,
+            padding:mode === 'desktop' ? 24 : compactLayout ? 12 : 18,
           }
         },
           React.createElement('div', { className:'cortex-library-stage', style:{
             height:'100%', width:'100%',
             maxWidth:mode === 'desktop' ? 'none' : '100%',
             margin:'0 auto', overflow:'hidden',
-            borderRadius:mode === 'mobile' ? 0 : 28,
+            borderRadius:mode === 'mobile' ? 0 : compactLayout ? 22 : 28,
             border:mode === 'mobile' ? 'none' : `1px solid ${theme.colors.glassBorder}`,
             background:isWelcomePage ? 'rgba(10,10,26,0.38)' : 'rgba(10,10,26,0.58)',
-            boxShadow:mode === 'mobile' ? 'none' : coarsePointer ? `0 8px 22px ${theme.colors.shadowColor}` : `0 14px 42px ${theme.colors.shadowColor}, inset 0 1px 0 ${theme.colors.glassHighlight}`,
-            backdropFilter:coarsePointer ? 'blur(6px) saturate(112%)' : (isWelcomePage ? 'blur(12px) saturate(150%)' : 'blur(16px) saturate(150%)'),
-            WebkitBackdropFilter:coarsePointer ? 'blur(6px) saturate(112%)' : (isWelcomePage ? 'blur(12px) saturate(150%)' : 'blur(16px) saturate(150%)'),
+            boxShadow:mode === 'mobile' ? 'none' : coarsePointer ? `0 8px 22px ${theme.colors.shadowColor}` : (compactLayout ? `0 10px 28px ${theme.colors.shadowColor}` : `0 14px 42px ${theme.colors.shadowColor}, inset 0 1px 0 ${theme.colors.glassHighlight}`),
+            backdropFilter:coarsePointer ? 'blur(6px) saturate(112%)' : (isWelcomePage ? 'blur(12px) saturate(150%)' : compactLayout ? 'blur(12px) saturate(140%)' : 'blur(16px) saturate(150%)'),
+            WebkitBackdropFilter:coarsePointer ? 'blur(6px) saturate(112%)' : (isWelcomePage ? 'blur(12px) saturate(150%)' : compactLayout ? 'blur(12px) saturate(140%)' : 'blur(16px) saturate(150%)'),
           }},
             React.createElement(ThemeProvider, { themeId:theme.id },
               React.createElement('div', { className:'cortex-library-stage-inner', style:{ height:'100%', overflow:'hidden', position:'relative' }}, renderPage())
