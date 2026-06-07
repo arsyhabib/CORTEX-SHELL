@@ -10099,10 +10099,11 @@ function PageProgressDashboard({ onNavigate, contentIndex, visualManifest }) {
 function MarkdownText({text,isUser}){
   const html=React.useMemo(function(){
     try{
-      if(typeof marked==='undefined')return String(text||'').replace(/\n/g,'<br/>');
-      marked.setOptions({breaks:true,gfm:true});
-      return marked.parse(String(text||''));
-    }catch(e){return String(text||'');}
+      if(typeof marked==='undefined'||typeof marked.parse!=='function')return String(text||'').replace(/\n/g,'<br/>');
+      const raw=String(text||'');
+      const result=marked.parse(raw,{breaks:true,gfm:true,mangle:false,headerIds:false});
+      return typeof result==='string'?result:raw.replace(/\n/g,'<br/>');
+    }catch(e){return String(text||'').replace(/\n/g,'<br/>');}
   },[text]);
   return React.createElement('div',{
     className:'cx-md'+(isUser?' cx-md-user':''),
@@ -10719,119 +10720,126 @@ function PageAIWorkspace({ onNavigate }) {
     ),
   },
 
-    // ── TABS ────────────────────────────────────────────────────────────────
-    React.createElement('div',{style:{marginBottom:16}},
-      React.createElement('div',{
-        style:{display:'flex',gap:0,borderRadius:18,overflow:'hidden',border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)'},
-      },
-        ['assistant','visual','audio','connect'].map(function(s){
-          const active=surface===s;
-          const tabColors={assistant:DL.accent,visual:DL.teal,audio:'#f59e0b',connect:DL.accentB};
-          const tc=tabColors[s]||DL.accent;
-          return React.createElement('button',{
-            key:s,
-            onClick:()=>setSurface(s),
-            style:{
-              flex:1,padding:'10px 4px',border:'none',cursor:'pointer',
-              background:active?`${tc}18`:'transparent',
-              color:active?tc:DL.mute,
-              fontWeight:active?800:500,fontSize:11,
-              borderBottom:active?`2px solid ${tc}`:'2px solid transparent',
-              transition:'all 0.3s cubic-bezier(0.16,1,0.3,1)',
-              display:'flex',flexDirection:'column',alignItems:'center',gap:2,
+    // ── STICKY HEADER (Tabs + Model Controls) ────────────────────────────────
+    React.createElement('div',{style:{
+      position:'sticky',top:0,zIndex:20,
+      margin:'0 -18px',padding:'8px 18px 12px',
+      background:'rgba(8,8,20,0.96)',
+      backdropFilter:'blur(22px)',WebkitBackdropFilter:'blur(22px)',
+      borderBottom:'1px solid rgba(255,255,255,0.07)',
+    }},
+      // ── Tab bar ────────────────────────────────────────────────────────
+      React.createElement('div',{style:{marginBottom:surface==='assistant'?10:0}},
+        React.createElement('div',{
+          style:{display:'flex',gap:0,borderRadius:18,overflow:'hidden',border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)'},
+        },
+          ['assistant','visual','audio','connect'].map(function(s){
+            const active=surface===s;
+            const tabColors={assistant:DL.accent,visual:DL.teal,audio:'#f59e0b',connect:DL.accentB};
+            const tc=tabColors[s]||DL.accent;
+            return React.createElement('button',{
+              key:s,
+              onClick:()=>setSurface(s),
+              style:{
+                flex:1,padding:'10px 4px',border:'none',cursor:'pointer',
+                background:active?`${tc}18`:'transparent',
+                color:active?tc:DL.mute,
+                fontWeight:active?800:500,fontSize:11,
+                borderBottom:active?`2px solid ${tc}`:'2px solid transparent',
+                transition:'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+                display:'flex',flexDirection:'column',alignItems:'center',gap:2,
+              },
             },
-          },
-            React.createElement('span',{style:{fontSize:16,lineHeight:1}},tabIcons[s]),
-            React.createElement('span',{style:{fontSize:9,letterSpacing:0.3,textTransform:'uppercase'}},s),
-          );
-        }),
+              React.createElement('span',{style:{fontSize:16,lineHeight:1}},tabIcons[s]),
+              React.createElement('span',{style:{fontSize:9,letterSpacing:0.3,textTransform:'uppercase'}},s),
+            );
+          }),
+        ),
+      ),
+      // ── Model controls (assistant only) ────────────────────────────────
+      surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+        // Active Model Hero
+        React.createElement('div',{
+          style:{
+            display:'flex',alignItems:'center',gap:14,padding:'12px 16px',borderRadius:20,
+            background:`linear-gradient(135deg,${activeChatModel.color}14,rgba(0,0,0,0.0))`,
+            border:`1px solid ${activeChatModel.color}30`,
+            position:'relative',overflow:'hidden',
+          }
+        },
+          React.createElement('div',{style:{position:'absolute',right:-20,top:-20,width:100,height:100,borderRadius:'50%',background:`radial-gradient(circle,${activeChatModel.color}18,transparent 70%)`,pointerEvents:'none'}}),
+          React.createElement(OrbSVG,{color:activeChatModel.color,thinking:isThinking,size:46}),
+          React.createElement('div',{style:{flex:1,minWidth:0}},
+            React.createElement('div',{style:{fontSize:13,fontWeight:900,color:activeChatModel.color,letterSpacing:0.3}},activeChatModel.label),
+            React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:1}},`via ${activeChatModel.provider} · History ${chatFeed.length}/${MAX_HISTORY}`),
+          ),
+          !activeChatModel.ready&&React.createElement(B1Badge,{color:DL.gold},'Key Pending'),
+          activeChatModel.ready&&React.createElement(B1Badge,{color:activeChatModel.color},'Ready'),
+        ),
+        // Model Selector Strip
+        React.createElement('div',{
+          className:'hide-scrollbar',
+          style:{display:'flex',gap:6,overflowX:'auto',paddingBottom:2,paddingTop:1},
+        },
+          chatModels.map(function(m,idx){
+            const active=chatModel===m.id;
+            return React.createElement('button',{
+              key:m.id,
+              onClick:()=>setChatModel(m.id),
+              style:{
+                flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:4,
+                padding:'8px 12px',borderRadius:16,cursor:'pointer',outline:'none',
+                border:active?`1.5px solid ${m.color}`:`1px solid ${DL.glassBorder}`,
+                background:active?`${m.color}1c`:'rgba(255,255,255,0.04)',
+                transition:'all 0.28s cubic-bezier(0.16,1,0.3,1)',
+                opacity:m.ready?1:0.45,
+                boxShadow:active?`0 0 16px ${m.color}28,inset 0 0 0 1px ${m.color}18`:'none',
+                animation:active&&idx===0?'cortex-ai-model-in 0.3s ease both':'none',
+                minWidth:62,
+              },
+            },
+              React.createElement(OrbSVG,{color:m.color,thinking:false,size:28}),
+              React.createElement('div',{style:{fontSize:9,fontWeight:active?800:600,color:active?m.color:DL.mute,lineHeight:1.2,textAlign:'center',maxWidth:58,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.shortLabel),
+            );
+          }),
+        ),
+        // Session Strip
+        React.createElement('div',{style:{display:'flex',gap:6,alignItems:'center',overflowX:'auto',paddingBottom:2},className:'hide-scrollbar'},
+          React.createElement('div',{style:{display:'flex',gap:5,flex:1,overflowX:'auto'},className:'hide-scrollbar'},
+            [...chatSessions].sort(function(a,b){return (b.pinned?1:0)-(a.pinned?1:0)||(a.createdAt-b.createdAt);}).map(function(sess){
+              const isActive=sess.id===activeChatId;
+              const mDef=chatModels.find(function(m){return m.id===sess.model;})||chatModels[0];
+              const showMenu=sessionMenu===sess.id;
+              return React.createElement('div',{key:sess.id,style:{position:'relative',flexShrink:0}},
+                React.createElement('button',{
+                  onClick:function(){switchSession(sess.id);},
+                  style:{display:'flex',alignItems:'center',gap:5,padding:'5px 9px 5px 7px',borderRadius:12,border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.1)',background:isActive?mDef.color+'1e':'rgba(255,255,255,0.05)',cursor:'pointer',transition:'all 0.2s',minWidth:0,maxWidth:120,color:isActive?mDef.color:DL.sub,outline:'none'}
+                },
+                  sess.pinned&&React.createElement('span',{style:{fontSize:9,flexShrink:0}},'📌'),
+                  React.createElement('span',{style:{fontSize:9,fontWeight:isActive?800:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:70}},sess.title),
+                  React.createElement('span',{style:{fontSize:8,opacity:0.6,flexShrink:0}},sess.feed.length),
+                ),
+                showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:100,background:'rgba(14,12,30,0.97)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 8px 24px rgba(0,0,0,0.5)',backdropFilter:'blur(16px)'}},
+                  React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},sess.pinned?'📌 Unpin':'📌 Pin Chat'),
+                  React.createElement('button',{onClick:function(){deleteSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},'🗑 Hapus'),
+                ),
+              );
+            }),
+          ),
+          React.createElement('button',{
+            onClick:createSession,
+            disabled:chatSessions.length>=10,
+            title:`${chatSessions.length}/10 sesi`,
+            style:{flexShrink:0,width:28,height:28,borderRadius:9,border:`1px dashed ${chatSessions.length>=10?DL.mute:DL.accent+'66'}`,background:'transparent',color:chatSessions.length>=10?DL.mute:DL.accent,fontSize:18,fontWeight:300,cursor:chatSessions.length>=10?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}
+          },'+'),
+        ),
       ),
     ),
 
     // ════════════════════════════════════════════════════════════════════════
     // CHAT SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:12}},
-
-      // ── Active Model Hero ────────────────────────────────────────────────
-      React.createElement('div',{
-        style:{
-          display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:22,
-          background:`linear-gradient(135deg,${activeChatModel.color}14,rgba(0,0,0,0.0))`,
-          border:`1px solid ${activeChatModel.color}30`,
-          position:'relative',overflow:'hidden',
-        }
-      },
-        React.createElement('div',{style:{position:'absolute',right:-20,top:-20,width:100,height:100,borderRadius:'50%',background:`radial-gradient(circle,${activeChatModel.color}18,transparent 70%)`,pointerEvents:'none'}}),
-        React.createElement(OrbSVG,{color:activeChatModel.color,thinking:isThinking,size:52}),
-        React.createElement('div',{style:{flex:1,minWidth:0}},
-          React.createElement('div',{style:{fontSize:13,fontWeight:900,color:activeChatModel.color,letterSpacing:0.3}},activeChatModel.label),
-          React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:1}},`via ${activeChatModel.provider} · History ${chatFeed.length}/${MAX_HISTORY}`),
-        ),
-        !activeChatModel.ready&&React.createElement(B1Badge,{color:DL.gold},'Key Pending'),
-        activeChatModel.ready&&React.createElement(B1Badge,{color:activeChatModel.color},'Ready'),
-      ),
-
-      // ── Model Selector Scrollable Strip ──────────────────────────────────
-      React.createElement('div',{
-        className:'hide-scrollbar',
-        style:{display:'flex',gap:6,overflowX:'auto',paddingBottom:2,paddingTop:1},
-      },
-        chatModels.map(function(m,idx){
-          const active=chatModel===m.id;
-          return React.createElement('button',{
-            key:m.id,
-            onClick:()=>setChatModel(m.id),
-            style:{
-              flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:4,
-              padding:'8px 12px',borderRadius:16,cursor:'pointer',outline:'none',
-              border:active?`1.5px solid ${m.color}`:`1px solid ${DL.glassBorder}`,
-              background:active?`${m.color}1c`:'rgba(255,255,255,0.04)',
-              transition:'all 0.28s cubic-bezier(0.16,1,0.3,1)',
-              opacity:m.ready?1:0.45,
-              boxShadow:active?`0 0 16px ${m.color}28,inset 0 0 0 1px ${m.color}18`:'none',
-              animation:active&&idx===0?'cortex-ai-model-in 0.3s ease both':'none',
-              minWidth:62,
-            },
-          },
-            React.createElement(OrbSVG,{color:m.color,thinking:false,size:28}),
-            React.createElement('div',{style:{fontSize:9,fontWeight:active?800:600,color:active?m.color:DL.mute,lineHeight:1.2,textAlign:'center',maxWidth:58,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.shortLabel),
-          );
-        }),
-      ),
-
-      // ── Session Strip ────────────────────────────────────────────────────
-      React.createElement('div',{style:{display:'flex',gap:6,alignItems:'center',overflowX:'auto',paddingBottom:2},className:'hide-scrollbar'},
-        // Session cards
-        React.createElement('div',{style:{display:'flex',gap:5,flex:1,overflowX:'auto'},className:'hide-scrollbar'},
-          [...chatSessions].sort(function(a,b){return (b.pinned?1:0)-(a.pinned?1:0)||(a.createdAt-b.createdAt);}).map(function(sess){
-            const isActive=sess.id===activeChatId;
-            const mDef=chatModels.find(function(m){return m.id===sess.model;})||chatModels[0];
-            const showMenu=sessionMenu===sess.id;
-            return React.createElement('div',{key:sess.id,style:{position:'relative',flexShrink:0}},
-              React.createElement('button',{
-                onClick:function(){switchSession(sess.id);},
-                style:{display:'flex',alignItems:'center',gap:5,padding:'5px 9px 5px 7px',borderRadius:12,border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.1)',background:isActive?mDef.color+'1e':'rgba(255,255,255,0.05)',cursor:'pointer',transition:'all 0.2s',minWidth:0,maxWidth:120,color:isActive?mDef.color:DL.sub,outline:'none'}
-              },
-                sess.pinned&&React.createElement('span',{style:{fontSize:9,flexShrink:0}},'📌'),
-                React.createElement('span',{style:{fontSize:9,fontWeight:isActive?800:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:70}},sess.title),
-                React.createElement('span',{style:{fontSize:8,opacity:0.6,flexShrink:0}},sess.feed.length),
-              ),
-              showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:100,background:'rgba(14,12,30,0.97)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 8px 24px rgba(0,0,0,0.5)',backdropFilter:'blur(16px)'}},
-                React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},sess.pinned?'📌 Unpin':'📌 Pin Chat'),
-                React.createElement('button',{onClick:function(){deleteSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},'🗑 Hapus'),
-              ),
-            );
-          }),
-        ),
-        // Add new session button
-        React.createElement('button',{
-          onClick:createSession,
-          disabled:chatSessions.length>=10,
-          title:`${chatSessions.length}/10 sesi`,
-          style:{flexShrink:0,width:28,height:28,borderRadius:9,border:`1px dashed ${chatSessions.length>=10?DL.mute:DL.accent+'66'}`,background:'transparent',color:chatSessions.length>=10?DL.mute:DL.accent,fontSize:18,fontWeight:300,cursor:chatSessions.length>=10?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}
-        },'+'),
-      ),
+    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:12,paddingTop:12}},
 
       // ── Chat Feed ────────────────────────────────────────────────────────
       React.createElement('div',{
