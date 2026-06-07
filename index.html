@@ -2147,6 +2147,24 @@
     max-width: 100%;
     height: auto;
   }
+  /* Prevent text overflow and horizontal scroll on all cards */
+  .cortex-library-root * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  /* Ensure page fills entire screen with no gaps */
+  .cortex-library-root,
+  .cortex-page-shell,
+  .cortex-page-scroll,
+  .cortex-motion-page {
+    position: relative;
+  }
+  /* Force single-column for any remaining flex-wrap layouts */
+  [data-screen-label] [style*="flexWrap: 'wrap'"],
+  [data-screen-label] [style*='flexWrap:"wrap"'],
+  [data-screen-label] [style*="flex-wrap: wrap"] {
+    flex-direction: column !important;
+  }
 }
 
 @media (max-width: 1279px) {
@@ -10536,7 +10554,7 @@ function cortexReadAIWorkspaceRuntime() {
       gemini:{
         chatModel:'gemini-2.5-flash',
         imageModel:'gemini-2.0-flash-preview-image-generation',
-        videoModel:'veo-3.1-fast-generate-preview',
+        videoModel:'veo-2.0-generate-001',
         ttsModel:'gemini-2.5-flash-preview-tts',
       },
       deepseek:{
@@ -11149,7 +11167,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   function providerKey(p){return String(((runtime.apiKeys||{})[p])||'').trim();}
   function providerModel(p,slot){
     const e=(runtime.providers||{})[p]||{};
-    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'gemini-2.0-flash-preview-image-generation';if(slot==='video')return e.videoModel||'veo-3.1-fast-generate-preview';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
+    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'gemini-2.0-flash-preview-image-generation';if(slot==='video')return e.videoModel||'veo-2.0-generate-001';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
     if(p==='deepseek')return e.defaultModel||'deepseek-v4-flash';
     if(p==='featherless'){if(slot==='balanced')return e.balancedVisionModel||'unsloth/gemma-3-12b-it';return e.fastVisionModel||'unsloth/gemma-3-4b-it';}
     if(p==='openai'){if(slot==='image')return e.imageModel||'gpt-image-2';return e.chatModel||'gpt-4.1-nano';}
@@ -11301,11 +11319,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     {id:'featherless-vision',label:'Gemma Vision',sub:'Visual Q&A',color:'#c084fc',bgGrad:'linear-gradient(135deg,#c084fc,#a855f7)'},
   ];
   const videoModels=[
-    {id:'veo',label:'Veo 3.1 Fast',sub:'Gemini · Google',color:'#06d6a0'},
-    {id:'sora',label:'Sora 2',sub:'OpenAI · Video',color:'#22c55e'},
+    {id:'veo',label:'Veo 2.0 Fast',sub:'Gemini API · Google',color:'#06d6a0'},
+    {id:'sora',label:'Sora',sub:'OpenAI API · Video',color:'#22c55e'},
   ];
   const geminiTtsVoices=['Aoede','Charon','Fenrir','Kore','Puck','Zephyr','Leda','Orus','Elara'];
-  const openaiTtsVoices=['alloy','ash','ballad','coral','echo','fable','nova','onyx','sage','shimmer'];
+  const openaiTtsVoices=['alloy','ash','coral','echo','fable','nova','onyx','shimmer'];
   const activeChatModel=chatModels.find(m=>m.id===chatModel)||chatModels[0];
   const activeImageModel=imageModels.find(m=>m.id===imageModel)||imageModels[0];
   const activeVideoModel=videoModels.find(m=>m.id===videoGenModel)||videoModels[0];
@@ -11501,9 +11519,9 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           try{
             const p=await cortexRequest({
               provider:'openai',route:'/providers/openai/video/generate',
-              body:{model:'sora',prompt:videoPrompt,width:1280,height:720,n_seconds:5,n_variants:1},
+              body:{model:'sora',prompt:videoPrompt,resolution:'1280x720',n_seconds:5,n_variants:1},
               directRoute:openaiVideoUrl(),
-              directBody:{model:'sora',prompt:videoPrompt,width:1280,height:720,n_seconds:5,n_variants:1},
+              directBody:{model:'sora',prompt:videoPrompt,resolution:'1280x720',n_seconds:5,n_variants:1},
             });
             // Sora may return job_id or immediate video URL
             const soraId=(p&&(p.id||p.job_id))||null;
@@ -11607,20 +11625,19 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     setTtsBusy(true);
     try{
       if(ttsProvider==='openai'){
+        // OpenAI TTS: always direct fetch — binary MP3 response, proxy can't handle it
+        // TTS-1 supports all major languages including Bahasa Indonesia natively
         const voice=openaiTtsVoices.includes(ttsVoice)?ttsVoice:'alloy';
-        let src;
-        if(proxyBase){
-          const r=await fetch(`${proxyBase}/providers/openai/audio/speech`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'tts-1-hd',input:text,voice})});
-          if(!r.ok){const e=await r.json().catch(function(){return{};});throw new Error((e.error&&e.error.message)||`HTTP ${r.status}`);}
-          const blob=await r.blob();
-          src=await new Promise(function(res,rej){const rd=new FileReader();rd.onloadend=function(){res(rd.result);};rd.onerror=rej;rd.readAsDataURL(blob);});
-        }else{
-          const key=providerKey('openai');if(!key)throw new Error('OpenAI API key belum diisi.');
-          const r=await fetch(openaiTtsUrl(),{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'tts-1-hd',input:text,voice})});
-          if(!r.ok){const e=await r.json().catch(function(){return{};});throw new Error((e.error&&e.error.message)||`HTTP ${r.status}`);}
-          const blob=await r.blob();
-          src=await new Promise(function(res,rej){const rd=new FileReader();rd.onloadend=function(){res(rd.result);};rd.onerror=rej;rd.readAsDataURL(blob);});
-        }
+        const key=providerKey('openai');if(!key)throw new Error('OpenAI API key belum diisi di Provider Settings.');
+        const r=await fetch('https://api.openai.com/v1/audio/speech',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+          body:JSON.stringify({model:'tts-1',input:text,voice,response_format:'mp3'}),
+          signal:ttsAbortRef.current&&ttsAbortRef.current.signal,
+        });
+        if(!r.ok){const e=await r.json().catch(function(){return{};});throw new Error((e.error&&e.error.message)||`HTTP ${r.status}: OpenAI TTS error`);}
+        const blob=await r.blob();
+        const src=await new Promise(function(res,rej){const rd=new FileReader();rd.onloadend=function(){res(rd.result);};rd.onerror=rej;rd.readAsDataURL(blob);});
         if(src)setTtsHistory(prev=>[{src,mimeType:'audio/mpeg',label:text.slice(0,60)+(text.length>60?'...':''),ts:Date.now(),provider:'openai',voice},...prev].slice(0,20));
         else setTtsHistory(prev=>[{error:'TTS tidak menghasilkan audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
       }else{
@@ -11985,7 +12002,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     title:'AI Workspace',
     subtitle:'Multimodal · Chat · Visual · Audio',
     onBack:()=>onNavigate(19),
-    scrollPadBottom:compactLayout?'calc(28px + env(safe-area-inset-bottom))':'calc(36px + env(safe-area-inset-bottom))',
+    scrollPadBottom:'calc(24px + env(safe-area-inset-bottom))',
     right:React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}},
       React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
         React.createElement('div',{style:{width:10,height:10,borderRadius:'50%',background:connColor,position:'absolute'}}),
@@ -12393,12 +12410,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         }),
         // Action row
         React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}},
-          // Upload (label wrapper for iOS compatibility)
-          React.createElement('label',{
-            htmlFor:'cx-main-file-upload',
+          // Upload — inline input overlay (iOS-proof, no htmlFor dependency)
+          React.createElement('div',{
             title:'Upload gambar atau video',
             style:{
-              width:40,height:40,borderRadius:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+              position:'relative',width:40,height:40,borderRadius:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
               border:`1.5px solid ${uploadedFile?activeChatModel.color+'80':DL.glassBorder}`,
               background:uploadedFile?`${activeChatModel.color}1a`:'rgba(255,255,255,0.06)',
               transition:'all 0.25s ease',
@@ -12406,8 +12422,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
               boxSizing:'border-box',
             }
           },
-            React.createElement('input',{id:'cx-main-file-upload',ref:fileInputRef,type:'file',accept:'image/*,video/*,audio/*,application/pdf,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.markdown,.json,.jsonl,.csv,.xml,.yaml,.yml,.toml,.py,.js,.ts,.html,.css,.sql,.sh,.env',onChange:handleFileSelect,style:{position:'absolute',opacity:0,pointerEvents:'none',width:0,height:0,overflow:'hidden'}}),
-            React.createElement('input',{id:'cx-stt-file-upload',ref:sttInputRef,type:'file',accept:'audio/*',onChange:handleSttFileSelect,style:{position:'absolute',opacity:0,pointerEvents:'none',width:0,height:0,overflow:'hidden'}}),
+            React.createElement('input',{ref:fileInputRef,type:'file',accept:'image/*,video/*,audio/*,application/pdf,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.markdown,.json,.jsonl,.csv,.xml,.yaml,.yml,.toml,.py,.js,.ts,.html,.css,.sql,.sh,.env',onChange:handleFileSelect,style:{position:'absolute',inset:0,width:'100%',height:'100%',opacity:0,cursor:'pointer',fontSize:0,zIndex:2}}),
             React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:uploadedFile?activeChatModel.color:'currentColor',strokeWidth:2,strokeLinecap:'round',style:{color:DL.sub}},
               React.createElement('path',{d:'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48'}),
             ),
@@ -12450,8 +12465,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // ════════════════════════════════════════════════════════════════════════
     // VISUAL SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='visual'&&React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:16,alignItems:'flex-start',width:'100%'}},
-      React.createElement('div',{style:{flex:'1 1 380px',minWidth:0,display:'flex',flexDirection:'column',gap:12}},
+    surface==='visual'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:12,width:'100%'}},
+      React.createElement(React.Fragment,null,
 
       // Header
       React.createElement('div',{
@@ -12519,7 +12534,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       ),
 
       // Reference image
-      React.createElement('input',{id:'cx-vis-ref-upload',ref:visualReferenceInputRef,type:'file',accept:'image/*',onChange:handleVisualReferenceSelect,style:{position:'absolute',opacity:0,pointerEvents:'none',width:0,height:0,overflow:'hidden'}}),
+
       React.createElement('div',{
         className:'cortex-motion-card cortex-motion-press',
         style:{
@@ -12544,11 +12559,15 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             ),
           ),
           React.createElement('div',{style:{display:'flex',gap:6,alignItems:'center',flexShrink:0}},
-            React.createElement('label',{
-              htmlFor:'cx-vis-ref-upload',
+            React.createElement('div',{
               className:'cortex-motion-press',
-              style:{padding:'7px 11px',borderRadius:10,border:`1px solid ${DL.accent}33`,background:`${DL.accent}10`,color:DL.accent,fontSize:10,fontWeight:800,cursor:'pointer',display:'inline-block',lineHeight:1.4},
-            },visualReference?'Change':'Upload'),
+              style:{position:'relative',padding:'7px 11px',borderRadius:10,border:`1px solid ${DL.accent}33`,background:`${DL.accent}10`,color:DL.accent,fontSize:10,fontWeight:800,cursor:'pointer',display:'inline-flex',alignItems:'center',lineHeight:1.4,userSelect:'none',WebkitUserSelect:'none'},
+            },
+              React.createElement('input',{
+                ref:visualReferenceInputRef,type:'file',accept:'image/*',onChange:handleVisualReferenceSelect,
+                style:{position:'absolute',inset:0,width:'100%',height:'100%',opacity:0,cursor:'pointer',fontSize:0,zIndex:2},
+              }),
+              visualReference?'Change':'Upload'),
             visualReference&&React.createElement('button',{
               type:'button',
               onClick:function(){setVisualReference(null);},
@@ -12767,8 +12786,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // ════════════════════════════════════════════════════════════════════════
     // AUDIO (TTS) SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='audio'&&React.createElement('div',{style:{display:'flex',flexWrap:'wrap',gap:16,alignItems:'flex-start',width:'100%'}},
-      React.createElement('div',{style:{flex:'1 1 380px',minWidth:0,display:'flex',flexDirection:'column',gap:12}},
+    surface==='audio'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:12,width:'100%'}},
+      React.createElement(React.Fragment,null,
 
       // Hero: Mic + EQ
       React.createElement('div',{
@@ -12979,8 +12998,14 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             React.createElement('span',{style:{fontSize:10,color:DL.mute,flexShrink:0}},`${(sttFile.size/1024).toFixed(0)} KB`),
             React.createElement('button',{onClick:function(){setSttFile(null);},className:'cortex-motion-press',style:{background:'none',border:'none',color:DL.mute,cursor:'pointer',fontSize:14,lineHeight:1,padding:2}},'×'),
           )
-          :React.createElement('label',{htmlFor:'cx-stt-file-upload',className:'cortex-motion-press',
-            style:{width:'100%',padding:'14px',borderRadius:14,border:`2px dashed ${DL.accent}40`,background:'transparent',color:DL.accent,fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10,boxSizing:'border-box'}},
+          :React.createElement('div',{
+            className:'cortex-motion-press',
+            style:{position:'relative',width:'100%',padding:'14px',borderRadius:14,border:`2px dashed ${DL.accent}40`,background:'transparent',color:DL.accent,fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10,boxSizing:'border-box',userSelect:'none',WebkitUserSelect:'none'}
+          },
+            React.createElement('input',{
+              ref:sttInputRef,type:'file',accept:'audio/*,video/*',onChange:handleSttFileSelect,
+              style:{position:'absolute',inset:0,width:'100%',height:'100%',opacity:0,cursor:'pointer',fontSize:0,zIndex:2},
+            }),
             React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.2,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'17 8 12 3 7 8'}),React.createElement('line',{x1:12,y1:3,x2:12,y2:15})),
             'Upload File Audio',
           ),
