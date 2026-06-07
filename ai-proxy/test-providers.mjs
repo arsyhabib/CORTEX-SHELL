@@ -155,6 +155,31 @@ const tests = [
   },
 ];
 
+if (process.env.OPENAI_API_KEY) {
+  tests.splice(3, 0,
+    {
+      name: "openai-chat",
+      run: () => postJson("/providers/openai/chat/completions", {
+        model: "gpt-4.1-nano",
+        messages: [
+          { role: "user", content: "Jawab dengan tepat dua kata: OPENAI SIAP" },
+        ],
+        temperature: 0,
+        max_tokens: 24,
+      }),
+    },
+    {
+      name: "openai-image-generate",
+      run: () => postJson("/providers/openai/image", {
+        model: "gpt-image-2",
+        prompt: "Create a playful premium medical app icon with cyan glass, coral highlights, soft gradients, and no text.",
+        quality: "low",
+        size: "1024x1024",
+      }),
+    },
+  );
+}
+
 const results = [];
 for (const test of tests) {
   const startedAt = Date.now();
@@ -164,7 +189,7 @@ for (const test of tests) {
     const summary = summarizePayload(payload);
     results.push({ name: test.name, ok: true, latencyMs, summary });
     console.log(`${test.name}: OK (${latencyMs}ms) ${summary}`);
-    if (test.name === "gemini-image-generate") saveGeneratedImage(payload);
+    if (test.name.includes("image")) await saveGeneratedImage(payload, test.name);
     if (test.name === "gemini-tts") saveGeneratedAudio(payload);
   } catch (error) {
     const latencyMs = Date.now() - startedAt;
@@ -221,6 +246,8 @@ function summarizePayload(payload) {
     if (mimeType.startsWith("audio/")) return "audio bytes returned";
     if (binaryPart) return "binary payload returned";
   }
+  if (payload.data?.[0]?.b64_json || payload.data?.[0]?.base64 || payload.data?.[0]?.b64Json) return "image bytes returned";
+  if (payload.data?.[0]?.url || payload.output?.[0]?.url) return "image url returned";
   if (payload.choices?.[0]?.message?.content) return truncate(payload.choices[0].message.content);
   if (payload.name) return `operation ${payload.name}`;
   return truncate(JSON.stringify(payload));
@@ -231,14 +258,23 @@ function truncate(text) {
   return clean.length > 110 ? `${clean.slice(0, 107)}...` : clean;
 }
 
-function saveGeneratedImage(payload) {
+async function saveGeneratedImage(payload, testName = "") {
   const imagePart = payload?.candidates?.[0]?.content?.parts?.find(part => {
     const mimeType = part?.inlineData?.mimeType || part?.inlineData?.mime_type || part?.inline_data?.mimeType || part?.inline_data?.mime_type || "";
     return mimeType.startsWith("image/");
   });
-  const data = imagePart?.inlineData?.data || imagePart?.inline_data?.data;
-  if (!data) return;
-  writeFileSync(path.join(artifactsDir, "gemini-image-probe.png"), Buffer.from(data, "base64"));
+  const data = imagePart?.inlineData?.data || imagePart?.inline_data?.data || payload?.data?.[0]?.b64_json || payload?.data?.[0]?.base64 || payload?.data?.[0]?.b64Json;
+  const fileName = testName.includes("openai") ? "openai-image-probe.png" : "gemini-image-probe.png";
+  if (data) {
+    writeFileSync(path.join(artifactsDir, fileName), Buffer.from(data, "base64"));
+    return;
+  }
+  const url = payload?.data?.[0]?.url || payload?.output?.[0]?.url;
+  if (!url) return;
+  const response = await fetch(url);
+  if (!response.ok) return;
+  const buffer = Buffer.from(await response.arrayBuffer());
+  writeFileSync(path.join(artifactsDir, fileName), buffer);
 }
 
 function saveGeneratedAudio(payload) {

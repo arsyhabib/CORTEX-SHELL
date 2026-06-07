@@ -47,6 +47,17 @@ const PROVIDER_CONFIG = {
       videoReasoning: "Kaushika04/Qwen2-VL-2B-Instruct-LoRA-FT_video_finetuned",
     },
   },
+  openai: {
+    label: "OpenAI",
+    configured: Boolean(process.env.OPENAI_API_KEY),
+    apiKey: process.env.OPENAI_API_KEY || "",
+    baseUrl: "https://api.openai.com/v1",
+    models: {
+      chat: "gpt-4.1-nano",
+      image: "gpt-image-2",
+      imageQuality: "low",
+    },
+  },
 };
 
 const CURATED_CATALOG = {
@@ -64,6 +75,13 @@ const CURATED_CATALOG = {
       note: "Fast reasoning lane untuk verifikasi jawaban, penajaman outline, dan drafting structured output.",
       provider: "DeepSeek",
       route: "/providers/deepseek/chat/completions",
+    },
+    {
+      id: PROVIDER_CONFIG.openai.models.chat,
+      label: "GPT-4.1 nano",
+      note: "Chat lane tercepat untuk prompt harian dan jawaban singkat yang tetap tajam.",
+      provider: "OpenAI",
+      route: "/providers/openai/chat/completions",
     },
     {
       id: PROVIDER_CONFIG.featherless.models.fastVision,
@@ -94,6 +112,13 @@ const CURATED_CATALOG = {
       note: "Image generation utama untuk shell, poster, ilustrasi, dan adaptive visual assets.",
       provider: "Google Gemini",
       route: "/providers/gemini/image",
+    },
+    {
+      id: PROVIDER_CONFIG.openai.models.image,
+      label: "GPT Image 2",
+      note: "Image generation low-output untuk visual cepat, murah, dan konsisten.",
+      provider: "OpenAI",
+      route: "/providers/openai/image",
     },
     {
       id: PROVIDER_CONFIG.gemini.models.videoGeneration,
@@ -154,11 +179,19 @@ const CURATED_CATALOG = {
       defaultVisionModel: PROVIDER_CONFIG.featherless.models.fastVision,
       note: "Featherless Basic diposisikan untuk tiga lane multimodal kecil yang masih cepat dan ekonomis.",
     },
+    openai: {
+      label: PROVIDER_CONFIG.openai.label,
+      defaultChatModel: PROVIDER_CONFIG.openai.models.chat,
+      defaultImageModel: PROVIDER_CONFIG.openai.models.image,
+      defaultImageQuality: PROVIDER_CONFIG.openai.models.imageQuality,
+      note: "OpenAI dipakai untuk chat cepat dan image low-output.",
+    },
   },
   notes: [
     "Semua live call berjalan lewat local secure proxy.",
     "Shell publik tetap secret-free dan aman untuk GitHub Pages.",
     "Nano Banana digunakan untuk image generation, sedangkan video generation dipetakan ke Veo karena memang lane resminya berbeda.",
+    "OpenAI dipetakan ke GPT-4.1 nano untuk chat dan GPT Image 2 untuk image low-output.",
   ],
 };
 
@@ -212,6 +245,41 @@ const server = createServer(async (req, res) => {
       const data = await fetchJson(`${PROVIDER_CONFIG.featherless.baseUrl}/chat/completions`, {
         method: "POST",
         headers: authHeaders(PROVIDER_CONFIG.featherless.apiKey),
+        body: JSON.stringify(payload),
+      });
+      writeJson(res, 200, data);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/providers/openai/chat/completions") {
+      assertConfigured("openai");
+      const body = await readJsonBody(req);
+      const payload = {
+        model: body.model || PROVIDER_CONFIG.openai.models.chat,
+        messages: body.messages || [{ role: "user", content: body.prompt || "Say hello." }],
+        temperature: body.temperature ?? 0.2,
+        max_tokens: body.max_tokens ?? body.max_completion_tokens ?? 512,
+        stream: false,
+      };
+      const data = await fetchJson(`${PROVIDER_CONFIG.openai.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: authHeaders(PROVIDER_CONFIG.openai.apiKey),
+        body: JSON.stringify(payload),
+      });
+      writeJson(res, 200, data);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/providers/openai/image") {
+      assertConfigured("openai");
+      const body = await readJsonBody(req);
+      const payload = {
+        model: body.model || PROVIDER_CONFIG.openai.models.image,
+        prompt: body.prompt || "Create a clean educational illustration.",
+        quality: body.quality || PROVIDER_CONFIG.openai.models.imageQuality,
+        size: body.size || "1024x1024",
+      };
+      const data = await fetchJson(`${PROVIDER_CONFIG.openai.baseUrl}/images/generations`, {
+        method: "POST",
+        headers: authHeaders(PROVIDER_CONFIG.openai.apiKey),
         body: JSON.stringify(payload),
       });
       writeJson(res, 200, data);
@@ -345,22 +413,26 @@ function buildHealthPayload() {
     ok: true,
     proxyBaseUrl: `http://${HOST}:${PORT}`,
     repoRoot,
-    providers: {
-      gemini: {
-        configured: PROVIDER_CONFIG.gemini.configured,
-        models: PROVIDER_CONFIG.gemini.models,
-      },
+      providers: {
+        gemini: {
+          configured: PROVIDER_CONFIG.gemini.configured,
+          models: PROVIDER_CONFIG.gemini.models,
+        },
       deepseek: {
         configured: PROVIDER_CONFIG.deepseek.configured,
         models: PROVIDER_CONFIG.deepseek.models,
       },
-      featherless: {
-        configured: PROVIDER_CONFIG.featherless.configured,
-        models: PROVIDER_CONFIG.featherless.models,
+        featherless: {
+          configured: PROVIDER_CONFIG.featherless.configured,
+          models: PROVIDER_CONFIG.featherless.models,
+        },
+        openai: {
+          configured: PROVIDER_CONFIG.openai.configured,
+          models: PROVIDER_CONFIG.openai.models,
+        },
       },
-    },
-  };
-}
+    };
+  }
 
 function writeJson(res, statusCode, payload) {
   res.writeHead(statusCode, {
