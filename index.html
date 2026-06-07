@@ -2248,6 +2248,25 @@
   50%{box-shadow:0 0 32px rgba(168,85,247,0.18),0 0 0 1px rgba(168,85,247,0.12)}
 }
 
+
+/* ═══ AI WORKSPACE MEGA TRANSFORM — FUTURISTIC STYLES ═══ */
+@keyframes cortex-ai-orb-breathe{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.88}}
+@keyframes cortex-ai-orb-thinking{0%,100%{transform:scale(1) rotate(0deg)}25%{transform:scale(1.12) rotate(3deg)}50%{transform:scale(0.94) rotate(-2deg)}75%{transform:scale(1.06) rotate(1deg)}}
+@keyframes cortex-ai-orb-orbit1{from{transform:rotateZ(0deg) rotateX(70deg)}to{transform:rotateZ(360deg) rotateX(70deg)}}
+@keyframes cortex-ai-orb-orbit2{from{transform:rotateZ(0deg) rotateY(55deg)}to{transform:rotateZ(-360deg) rotateY(55deg)}}
+@keyframes cortex-ai-orb-ping{0%{r:26;opacity:0.45;stroke-width:0.6}60%{r:30;opacity:0.12;stroke-width:0.3}100%{r:32;opacity:0;stroke-width:0.1}}
+@keyframes cortex-ai-status-ping{0%{transform:scale(1);opacity:0.7}70%{transform:scale(2.6);opacity:0}100%{transform:scale(2.6);opacity:0}}
+@keyframes cortex-ai-mic-pulse{0%,100%{transform:scale(1);filter:drop-shadow(0 0 4px currentColor)}50%{transform:scale(1.08);filter:drop-shadow(0 0 12px currentColor) drop-shadow(0 0 20px currentColor)}}
+@keyframes cortex-ai-eq-bar{0%,100%{transform:scaleY(0.25);opacity:0.4}50%{transform:scaleY(1);opacity:1}}
+@keyframes cortex-ai-spark-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes cortex-ai-generate-pulse{0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,0)}50%{box-shadow:0 0 0 8px rgba(168,85,247,0.2),0 12px 32px rgba(168,85,247,0.35)}}
+@keyframes cortex-ai-result-iris{0%{clip-path:circle(0% at 50% 50%);opacity:0}100%{clip-path:circle(75% at 50% 50%);opacity:1}}
+@keyframes cortex-ai-float-icon{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+@keyframes cortex-ai-border-flow{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes cortex-ai-shimmer-btn{0%{left:-100%;opacity:0.6}100%{left:200%;opacity:0}}
+@keyframes cortex-ai-particle{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-40px) scale(0);opacity:0}}
+@keyframes cortex-ai-model-in{0%{opacity:0;transform:translateX(-12px) scale(0.92)}100%{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes cortex-ai-connect-glow{0%,100%{box-shadow:0 0 0 0 rgba(6,214,160,0)}50%{box-shadow:0 0 0 6px rgba(6,214,160,0.12),0 0 24px rgba(6,214,160,0.18)}}
   </style>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -10046,14 +10065,13 @@ function PageProgressDashboard({ onNavigate, contentIndex, visualManifest }) {
 }
 
 function PageAIWorkspace({ onNavigate }) {
-  // ─── State ──────────────────────────────────────────────────────────────
   const MAX_HISTORY = 20;
   const [surface, setSurface] = React.useState('assistant');
   const [chatModel, setChatModel] = React.useState('gemini');
   const [imageModel, setImageModel] = React.useState('gemini');
   const [chatPrompt, setChatPrompt] = React.useState('');
   const [chatFeed, setChatFeed] = React.useState([
-    { role:'assistant', model:'cortex', text:'Halo! Saya CORTEX AI Workspace. Pilih model di atas, lalu kirim pesan, upload gambar/video, atau generate visual & audio. Kreasi tak terbatas! ✨' },
+    { role:'assistant', model:'cortex', text:'Halo! Saya CORTEX AI Workspace. ✨\n\nPilih model di atas, lalu kirim pesan, upload gambar atau video, atau buka tab Visual & Audio untuk generate konten.' },
   ]);
   const [composerBusy, setComposerBusy] = React.useState('');
   const [uploadedFile, setUploadedFile] = React.useState(null);
@@ -10065,983 +10083,796 @@ function PageAIWorkspace({ onNavigate }) {
   const [ttsBusy, setTtsBusy] = React.useState(false);
   const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'Belum ada proxy yang dicek.', health:null });
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
-  const [chatPrompt, setChatPrompt] = React.useState('Tolong jelaskan konsep ini dalam bahasa yang sangat sederhana.');
-  const [chatFeed, setChatFeed] = React.useState([
-    { role:'assistant', title:'Cortex AI', text:'Ketik prompt di bawah lalu pilih aksi: chat, image, video, TTS, atau DeepSeek reasoning.' },
-  ]);
-  const [composerBusy, setComposerBusy] = React.useState('');
-  const [composerPreview, setComposerPreview] = React.useState(null);
-  const [composerStatus, setComposerStatus] = React.useState('Belum ada aksi dijalankan.');
-  const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
-  const proxyBase = React.useMemo(function(){
-    return String(runtime.proxyUrl || '').replace(/\/+$/, '');
-  }, [runtime.proxyUrl]);
-  const directMode = React.useMemo(function(){
-    const mode = String(runtime.transportMode || 'auto');
-    if (mode === 'proxy') return false;
-    if (mode === 'direct') return true;
-    return !proxyBase;
-  }, [proxyBase, runtime.transportMode]);
-  const runtimeKeys = runtime.apiKeys || {};
-  const directGeminiReady = !!runtimeKeys.gemini;
-  const directDeepseekReady = !!runtimeKeys.deepseek;
-  const directFeatherlessReady = !!runtimeKeys.featherless;
-  const directOpenAIReady = !!runtimeKeys.openai;
-  const directAnyReady = directGeminiReady || directDeepseekReady || directFeatherlessReady || directOpenAIReady;
+  const chatBottomRef = React.useRef(null);
+  const fileInputRef = React.useRef(null);
 
-  function providerKey(provider) {
-    return String(((runtime.apiKeys || {})[provider]) || '').trim();
-  }
-  function providerModel(provider, slot) {
-    const config = runtime.providers || {};
-    const entry = config[provider] || {};
-    if (provider === 'gemini') {
-      if (slot === 'chat') return entry.chatModel || 'gemini-2.5-flash';
-      if (slot === 'image') return entry.imageModel || 'nano-banana-pro-preview';
-      if (slot === 'video') return entry.videoModel || 'veo-3.1-fast-generate-preview';
-      if (slot === 'tts') return entry.ttsModel || 'gemini-2.5-flash-preview-tts';
-    }
-    if (provider === 'deepseek') return entry.defaultModel || 'deepseek-v4-flash';
-    if (provider === 'featherless') {
-      if (slot === 'balanced') return entry.balancedVisionModel || 'unsloth/gemma-3-12b-it';
-      if (slot === 'video') return entry.videoReasoningModel || 'Kaushika04/Qwen2-VL-2B-Instruct-LoRA-FT_video_finetuned';
-      return entry.fastVisionModel || 'unsloth/gemma-3-4b-it';
-    }
-    if (provider === 'openai') {
-      if (slot === 'image') return entry.imageModel || 'gpt-image-2';
-      return entry.chatModel || 'gpt-4.1-nano';
-    }
+  const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
+  const proxyBase = React.useMemo(function(){ return String(runtime.proxyUrl||'').replace(/\/+$/,''); },[runtime.proxyUrl]);
+  const directMode = React.useMemo(function(){
+    const m=String(runtime.transportMode||'auto');
+    if(m==='proxy')return false; if(m==='direct')return true; return !proxyBase;
+  },[proxyBase,runtime.transportMode]);
+  const runtimeKeys=runtime.apiKeys||{};
+  const directGeminiReady=!!runtimeKeys.gemini, directDeepseekReady=!!runtimeKeys.deepseek;
+  const directFeatherlessReady=!!runtimeKeys.featherless, directOpenAIReady=!!runtimeKeys.openai;
+  const directAnyReady=directGeminiReady||directDeepseekReady||directFeatherlessReady||directOpenAIReady;
+
+  function providerKey(p){return String(((runtime.apiKeys||{})[p])||'').trim();}
+  function providerModel(p,slot){
+    const e=(runtime.providers||{})[p]||{};
+    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'nano-banana-pro-preview';if(slot==='video')return e.videoModel||'veo-3.1-fast-generate-preview';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
+    if(p==='deepseek')return e.defaultModel||'deepseek-v4-flash';
+    if(p==='featherless'){if(slot==='balanced')return e.balancedVisionModel||'unsloth/gemma-3-12b-it';return e.fastVisionModel||'unsloth/gemma-3-4b-it';}
+    if(p==='openai'){if(slot==='image')return e.imageModel||'gpt-image-2';return e.chatModel||'gpt-4.1-nano';}
     return '';
   }
-  function providerImageQuality(provider) {
-    const config = runtime.providers || {};
-    const entry = config[provider] || {};
-    if (provider === 'openai') return entry.imageQuality || 'low';
-    return 'standard';
-  }
+  function providerImageQuality(p){return((runtime.providers||{})[p]||{}).imageQuality||'low';}
+  function geminiGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent?key=${encodeURIComponent(providerKey('gemini'))}`;}
+  function geminiVideoGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predictLongRunning?key=${encodeURIComponent(providerKey('gemini'))}`;}
+  function deepseekChatUrl(){return'https://api.deepseek.com/chat/completions';}
+  function featherlessChatUrl(){return'https://api.featherless.ai/v1/chat/completions';}
+  function openaiChatUrl(){return'https://api.openai.com/v1/chat/completions';}
+  function openaiImageUrl(){return'https://api.openai.com/v1/images/generations';}
 
-  function geminiGenerateUrl(model) {
-    return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(providerKey('gemini'))}`;
+  async function cortexRequest({provider,route,body,directRoute}){
+    if(proxyBase){const r=await fetch(`${proxyBase}${route}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error((p&&p.error&&p.error.message)||p.error||`HTTP ${r.status}`);return p;}
+    if(!directMode)throw new Error('Proxy belum aktif. Pilih Direct mode di Provider Settings.');
+    const key=providerKey(provider);if(!key)throw new Error(`API key ${provider} belum diisi.`);
+    const headers={'Content-Type':'application/json'};if(provider!=='gemini')headers.Authorization=`Bearer ${key}`;
+    const r=await fetch(directRoute,{method:'POST',headers,body:JSON.stringify(body)});const p=await r.json();
+    if(!r.ok)throw new Error((p&&p.error&&p.error.message)||p.error||`HTTP ${r.status}`);return p;
   }
-
-  function geminiVideoGenerateUrl(model) {
-    return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:predictLongRunning?key=${encodeURIComponent(providerKey('gemini'))}`;
-  }
-
-  function deepseekChatUrl() {
-    return 'https://api.deepseek.com/chat/completions';
-  }
-
-  function featherlessChatUrl() {
-    return 'https://api.featherless.ai/v1/chat/completions';
-  }
-
-  function openaiChatUrl() {
-    return 'https://api.openai.com/v1/chat/completions';
-  }
-
-  function openaiImageUrl() {
-    return 'https://api.openai.com/v1/images/generations';
-  }
-
-  async function cortexRequest({ provider, route, body, directRoute }) {
-    if (proxyBase) {
-      const response = await fetch(`${proxyBase}${route}`, {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body:JSON.stringify(body),
-      });
-      const payload = await response.json();
-      if (!response.ok) throw new Error((payload && payload.error && payload.error.message) || payload.error || `HTTP ${response.status}`);
-      return payload;
-    }
-    if (!directMode) {
-      throw new Error('Proxy belum aktif. Pilih Direct mode di Provider Settings atau isi proxy URL.');
-    }
-    const key = providerKey(provider);
-    if (!key) throw new Error(`API key ${provider} belum diisi di Provider Settings.`);
-    const headers = { 'Content-Type':'application/json' };
-    if (provider !== 'gemini') headers.Authorization = `Bearer ${key}`;
-    const response = await fetch(directRoute, {
-      method:'POST',
-      headers,
-      body:JSON.stringify(body),
-    });
-    const payload = await response.json();
-    if (!response.ok) throw new Error((payload && payload.error && payload.error.message) || payload.error || `HTTP ${response.status}`);
-    return payload;
-  }
-
-  const defaultCatalog = React.useMemo(function(){
-    return {
-      text:[
-        {
-          id:'gemini-2.5-flash',
-          label:'Gemini 2.5 Flash',
-          note:'Tutor multimodal utama untuk chat, foto, video, dan ideation cepat dengan latensi rendah.',
-          provider:'Google Gemini',
-          route:'/providers/gemini/chat',
-        },
-        {
-          id:'deepseek-v4-flash',
-          label:'DeepSeek V4 Flash',
-          note:'Reasoning lane cepat untuk evaluasi jawaban, JSON drafting, dan second-opinion logic.',
-          provider:'DeepSeek',
-          route:'/providers/deepseek/chat/completions',
-        },
-        {
-          id:'gpt-4.1-nano',
-          label:'GPT-4.1 nano',
-          note:'Chat lane ringan untuk prompt harian, draft jawaban, dan assistant turn yang cepat.',
-          provider:'OpenAI',
-          route:'/providers/openai/chat/completions',
-        },
-        {
-          id:'unsloth/gemma-3-4b-it',
-          label:'Gemma 3 4B IT',
-          note:'Multimodal Featherless tercepat untuk image-grounded response ringan pada plan Basic.',
-          provider:'Featherless',
-          route:'/providers/featherless/chat/completions',
-        },
-        {
-          id:'unsloth/gemma-3-12b-it',
-          label:'Gemma 3 12B IT',
-          note:'Tier reasoning terbaik di Featherless yang masih masuk strategi latency dan biaya Anda.',
-          provider:'Featherless',
-          route:'/providers/featherless/chat/completions',
-        },
-        {
-          id:'Kaushika04/Qwen2-VL-2B-Instruct-LoRA-FT_video_finetuned',
-          label:'Qwen2-VL 2B Video FT',
-          note:'Lane paling ringan untuk eksperimen video understanding dan klasifikasi visual cepat.',
-          provider:'Featherless',
-          route:'/providers/featherless/chat/completions',
-        },
-      ],
-      visual:[
-        {
-          id:'nano-banana-pro-preview',
-          label:'Nano Banana Pro Preview',
-          note:'Image generation utama. Cocok untuk poster, icon concept, hero visual, dan adaptive scene assets.',
-          provider:'Google Gemini',
-          route:'/providers/gemini/image',
-        },
-        {
-          id:'gpt-image-2',
-          label:'GPT Image 2',
-          note:'Image lane OpenAI dengan quality low untuk aset visual cepat dan hemat.',
-          provider:'OpenAI',
-          route:'/providers/openai/image',
-        },
-        {
-          id:'veo-3.1-fast-generate-preview',
-          label:'Veo 3.1 Fast Generate',
-          note:'Video generation tercepat. Dipakai karena lane video resmi Gemini memang Veo, bukan Nano Banana.',
-          provider:'Google Gemini',
-          route:'/providers/gemini/video/generate',
-        },
-        {
-          id:'unsloth/gemma-3-12b-it',
-          label:'Gemma 3 12B Vision',
-          note:'Understanding lane untuk screenshot materi, diagram, dan visual QA internal.',
-          provider:'Featherless',
-          route:'/providers/featherless/chat/completions',
-        },
-      ],
-      audio:[
-        {
-          id:'gemini-2.5-flash-preview-tts',
-          label:'Gemini TTS',
-          note:'Speech lane native untuk recap, spoken explanation, dan oral drill audio.',
-          provider:'Google Gemini',
-          route:'/providers/gemini/tts',
-        },
-      ],
-      video:[
-        {
-          id:'gemini-2.5-flash',
-          label:'Gemini video chat',
-          note:'Chat multimodal dengan upload video untuk menganalisis rekaman, demonstrasi, atau clip pembelajaran.',
-          provider:'Google Gemini',
-          route:'/providers/gemini/chat',
-        },
-        {
-          id:'veo-3.1-fast-generate-preview',
-          label:'Veo fast generation',
-          note:'Async generation untuk clip motion, opener, atau animasi identitas aplikasi.',
-          provider:'Google Gemini',
-          route:'/providers/gemini/video/generate',
-        },
-      ],
-      providers:{
-        gemini:{
-          label:'Google Gemini',
-          defaultChatModel:'gemini-2.5-flash',
-          defaultImageModel:'nano-banana-pro-preview',
-          defaultVideoModel:'veo-3.1-fast-generate-preview',
-          defaultTtsModel:'gemini-2.5-flash-preview-tts',
-        },
-        deepseek:{
-          label:'DeepSeek',
-          defaultTextModel:'deepseek-v4-flash',
-        },
-        featherless:{
-          label:'Featherless',
-          defaultVisionModel:'unsloth/gemma-3-4b-it',
-          note:'Tiga model dipilih khusus untuk Featherless Basic: 2B, 4B, dan 12B agar tetap cepat namun tetap berguna untuk multimodal reasoning.',
-        },
-        openai:{
-          label:'OpenAI',
-          defaultChatModel:'gpt-4.1-nano',
-          defaultImageModel:'gpt-image-2',
-          defaultImageQuality:'low',
-          note:'OpenAI dipakai untuk chat ringan dan image low-output pada jalur pribadi.',
-        },
-      },
-      notes:[
-        'Seluruh live call harus tetap lewat proxy aman.',
-        'Gemini menjadi multimodal hub untuk chat, image, video, dan TTS.',
-        'DeepSeek dipisah menjadi lane reasoning cepat.',
-        'Featherless dipakai untuk multimodal kecil dan ekonomis.',
-        'OpenAI dipakai untuk chat cepat dan image quality low.',
-      ],
-    };
-  }, []);
 
   React.useEffect(function(){
-    if (!proxyBase) {
-      setRuntimeInfo({
-        status: directAnyReady ? 'connected' : 'idle',
-        catalog:null,
-        health:null,
-        message: directMode ? 'Direct browser mode aktif. Isi key provider di Settings lalu coba prompt.' : 'Secure proxy belum terdeteksi.',
-      });
-      return;
-    }
-    let cancelled = false;
-    Promise.all([
-      fetch(`${proxyBase}/health`, { cache:'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error(`Health ${r.status}`))),
-      fetch(`${proxyBase}/config/models`, { cache:'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error(`Catalog ${r.status}`))),
-    ]).then(function(results){
-      if (cancelled) return;
-      setRuntimeInfo({
-        status:'connected',
-        catalog:results[1] && results[1].catalog ? results[1].catalog : null,
-        health:results[0] || null,
-        message:'Proxy aktif. Catalog provider nyata berhasil dimuat tanpa membocorkan secret ke browser.',
-      });
-    }).catch(function(error){
-      if (cancelled) return;
-      setRuntimeInfo({
-        status:'error',
-        catalog:null,
-        health:null,
-        message:error && error.message ? error.message : 'Proxy check failed',
-      });
-    });
-    return function(){ cancelled = true; };
-  }, [proxyBase]);
+    if(!proxyBase){setRuntimeInfo({status:directAnyReady?'connected':'idle',catalog:null,health:null,message:directMode?'Direct mode aktif.':'Proxy belum terdeteksi.'});return;}
+    let cancelled=false;
+    Promise.all([fetch(`${proxyBase}/health`,{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()),fetch(`${proxyBase}/config/models`,{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject())]).then(function(res){if(cancelled)return;setRuntimeInfo({status:'connected',catalog:res[1]&&res[1].catalog?res[1].catalog:null,health:res[0]||null,message:'Proxy aktif.'});}).catch(function(e){if(cancelled)return;setRuntimeInfo({status:'error',catalog:null,health:null,message:e&&e.message?e.message:'Proxy error'});});
+    return function(){cancelled=true;};
+  },[proxyBase]);
 
-  const modelFamilies = runtimeInfo.catalog || defaultCatalog;
-  const providerHealth = runtimeInfo.health && runtimeInfo.health.providers ? runtimeInfo.health.providers : {};
-  const geminiReady = !!(providerHealth.gemini && providerHealth.gemini.configured);
-  const deepseekReady = !!(providerHealth.deepseek && providerHealth.deepseek.configured);
-  const featherlessReady = !!(providerHealth.featherless && providerHealth.featherless.configured);
-  const openaiReady = !!(providerHealth.openai && providerHealth.openai.configured);
+  const ph=runtimeInfo.health&&runtimeInfo.health.providers?runtimeInfo.health.providers:{};
+  const geminiReady=!!(ph.gemini&&ph.gemini.configured)||directGeminiReady;
+  const deepseekReady=!!(ph.deepseek&&ph.deepseek.configured)||directDeepseekReady;
+  const featherlessReady=!!(ph.featherless&&ph.featherless.configured)||directFeatherlessReady;
+  const openaiReady=!!(ph.openai&&ph.openai.configured)||directOpenAIReady;
 
-  const assistantBubbles = [
-    { who:'Learner', text:'Upload foto slide neurologi ini, jelaskan poin intinya, lalu buatkan 3 soal recall dan 1 prompt visual pendukung.' },
-    { who:'Router', text:'Multimodal tutoring dan media lane diarahkan ke Gemini. Second-opinion reasoning diarahkan ke DeepSeek. Multimodal kecil berlatensi rendah diarahkan ke Featherless. Chat cepat dan image low-output juga tersedia lewat OpenAI.', tone:'system' },
-    { who:'Cortex AI', text:'Workspace ini sekarang diposisikan sebagai panel produksi: shell publik tetap bersih, provider hidup di belakang proxy atau direct browser mode, dan setiap lane punya tugas yang jelas.', tone:'assistant' },
-  ];
-  const statusCards = [
-    { title:'Gemini multimodal', sub:geminiReady || directGeminiReady ? 'Chat, image, video, dan TTS siap' : 'Key Gemini belum diisi', badge:geminiReady || directGeminiReady ? 'Ready' : 'Pending', color:geminiReady || directGeminiReady ? DL.teal : DL.gold },
-    { title:'DeepSeek reasoning', sub:deepseekReady || directDeepseekReady ? 'DeepSeek V4 Flash siap dipakai' : 'Key DeepSeek belum diisi', badge:deepseekReady || directDeepseekReady ? 'Ready' : 'Pending', color:deepseekReady || directDeepseekReady ? DL.accent : DL.gold },
-    { title:'Featherless compact', sub:featherlessReady || directFeatherlessReady ? '3 lane multimodal Basic siap' : 'Key Featherless belum diisi', badge:featherlessReady || directFeatherlessReady ? 'Ready' : 'Pending', color:featherlessReady || directFeatherlessReady ? DL.green : DL.gold },
-    { title:'OpenAI lane', sub:openaiReady || directOpenAIReady ? 'GPT-4.1 nano chat dan GPT Image 2 low siap' : 'Key OpenAI belum diisi', badge:openaiReady || directOpenAIReady ? 'Ready' : 'Pending', color:openaiReady || directOpenAIReady ? DL.accentB : DL.gold },
-    { title:'Runtime mode', sub:proxyBase ? `Proxy terhubung di ${proxyBase}` : directMode ? 'Direct browser mode aktif di localStorage' : 'Bundle publik tetap tanpa secret', badge:proxyBase ? 'Proxy' : directMode ? 'Direct' : 'Safe', color:proxyBase ? DL.teal : directMode ? DL.accent : DL.green },
-  ];
+  React.useEffect(function(){if(chatBottomRef.current)chatBottomRef.current.scrollIntoView({behavior:'smooth'});},[chatFeed,composerBusy]);
 
-  function sanitizeProbeText(text) {
-    return String(text || '')
-      .replace(/<think>[\s\S]*?<\/think>/gi, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+  function sanitizeText(t){return String(t||'').replace(/<think>[\s\S]*?<\/think>/gi,' ').replace(/\s+/g,' ').trim();}
+  function extractText(payload){
+    if(!payload)return'';
+    if(payload.output_text)return sanitizeText(payload.output_text);
+    if(payload.output&&payload.output[0]&&payload.output[0].content){const c=payload.output[0].content;if(Array.isArray(c)){const p=c.find(x=>typeof x.text==='string');if(p)return sanitizeText(p.text);}}
+    if(payload.choices&&payload.choices[0]&&payload.choices[0].message&&payload.choices[0].message.content)return sanitizeText(payload.choices[0].message.content);
+    if(payload.candidates&&payload.candidates[0]&&payload.candidates[0].content&&payload.candidates[0].content.parts){const p=payload.candidates[0].content.parts.find(x=>typeof x.text==='string');return sanitizeText(p?p.text:'');}
+    return'';
   }
-
-  function extractProbeText(payload) {
-    if (!payload) return '';
-    if (payload.output_text) return sanitizeProbeText(payload.output_text);
-    if (payload.output && payload.output[0] && payload.output[0].content) {
-      const content = payload.output[0].content;
-      if (Array.isArray(content)) {
-        const textPart = content.find(part => typeof part.text === 'string');
-        if (textPart && textPart.text) return sanitizeProbeText(textPart.text);
-      }
-    }
-    if (payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content) {
-      return sanitizeProbeText(payload.choices[0].message.content);
-    }
-    if (payload.candidates && payload.candidates[0] && payload.candidates[0].content && payload.candidates[0].content.parts) {
-      const textPart = payload.candidates[0].content.parts.find(part => typeof part.text === 'string');
-      return sanitizeProbeText(textPart ? textPart.text : '');
-    }
-    if (payload.name) return sanitizeProbeText(payload.name);
-    return '';
+  function extractInlineData(payload,mediaKind){
+    const parts=payload&&payload.candidates&&payload.candidates[0]&&payload.candidates[0].content&&payload.candidates[0].content.parts;
+    if(!parts)return null;
+    const part=parts.find(item=>(item.inlineData&&item.inlineData.data)||(item.inline_data&&item.inline_data.data));
+    if(!part)return null;
+    const id=part.inlineData||part.inline_data||{};
+    const mimeType=id.mimeType||id.mime_type||(mediaKind==='audio'?'audio/wav':'image/png');
+    if(!id.data)return null;
+    return{mimeType,data:id.data};
   }
-
-  function refreshRuntime() {
-    if (!proxyBase) {
-      setRuntimeInfo({
-        status: directAnyReady ? 'connected' : 'idle',
-        catalog:null,
-        health:null,
-        message: directMode ? 'Direct browser mode aktif. Isi key provider di Settings lalu coba prompt.' : 'Secure proxy belum terdeteksi.',
-      });
-      return Promise.resolve();
-    }
-    return Promise.all([
-      fetch(`${proxyBase}/health`, { cache:'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error(`Health ${r.status}`))),
-      fetch(`${proxyBase}/config/models`, { cache:'no-store' }).then(r => r.ok ? r.json() : Promise.reject(new Error(`Catalog ${r.status}`))),
-    ]).then(function(results){
-      setRuntimeInfo({
-        status:'connected',
-        catalog:results[1] && results[1].catalog ? results[1].catalog : null,
-        health:results[0] || null,
-        message:'Proxy aktif dan catalog provider berhasil dimuat ulang.',
-      });
-    }).catch(function(error){
-      setRuntimeInfo({
-        status:'error',
-        catalog:null,
-        health:null,
-        message:error && error.message ? error.message : 'Proxy check failed',
-      });
-    });
-  }
-
-  async function runProbe(kind) {
-    const recipes = {
-      gemini:{
-        provider:'Google Gemini',
-        route:'/providers/gemini/chat',
-        message:'Mengirim live probe ke Gemini...',
-        payload:{
-          model:providerModel('gemini', 'chat'),
-          messages:[{ role:'user', content:'Balas persis: GEMINI SIAP' }],
-          generationConfig:{ temperature:0 },
-        },
-        directRoute:geminiGenerateUrl(providerModel('gemini', 'chat')),
-      },
-      deepseek:{
-        provider:'DeepSeek',
-        route:'/providers/deepseek/chat/completions',
-        message:'Mengirim live probe ke DeepSeek...',
-        payload:{
-          model:(((runtime.providers || {}).deepseek || {}).defaultModel) || 'deepseek-v4-flash',
-          temperature:0,
-          max_tokens:24,
-          messages:[{ role:'user', content:'Balas persis: DEEPSEEK SIAP' }],
-        },
-        directRoute:deepseekChatUrl(),
-      },
-      featherless:{
-        provider:'Featherless',
-        route:'/providers/featherless/chat/completions',
-        message:'Mengirim live probe ke Featherless...',
-        payload:{
-          model:((((runtime.providers || {}).featherless) || {}).fastVisionModel) || 'unsloth/gemma-3-4b-it',
-          temperature:0,
-          max_tokens:24,
-          messages:[{ role:'user', content:'Balas persis: FEATHERLESS SIAP' }],
-        },
-        directRoute:featherlessChatUrl(),
-      },
-      openai:{
-        provider:'OpenAI',
-        route:'/providers/openai/chat/completions',
-        message:'Mengirim live probe ke OpenAI GPT-4.1 nano...',
-        payload:{
-          model:providerModel('openai', 'chat'),
-          messages:[{ role:'user', content:'Balas persis: OPENAI SIAP' }],
-          temperature:0,
-        },
-        directRoute:openaiChatUrl(),
-      },
-      image:{
-        provider:'Gemini image',
-        route:'/providers/gemini/image',
-        message:'Meminta sample image generation ke Nano Banana...',
-        payload:{
-          model:providerModel('gemini', 'image'),
-          prompt:'Create a premium playful shell icon with cyan glass, soft glow, and no text.',
-        },
-        directRoute:geminiGenerateUrl(providerModel('gemini', 'image')),
-      },
-      openaiImage:{
-        provider:'OpenAI image',
-        route:'/providers/openai/image',
-        message:'Meminta sample image generation ke GPT Image 2...',
-        payload:{
-          model:providerModel('openai', 'image'),
-          prompt:'Create a premium playful shell icon with cyan glass, soft glow, and no text.',
-          quality:providerImageQuality('openai'),
-          size:'1024x1024',
-        },
-        directRoute:openaiImageUrl(),
-      },
-      tts:{
-        provider:'Gemini TTS',
-        route:'/providers/gemini/tts',
-        message:'Mengirim probe singkat ke Gemini TTS...',
-        payload:{
-          model:providerModel('gemini', 'tts'),
-          text:'Halo, workspace CORTEX siap digunakan.',
-          voiceName:'Kore',
-        },
-        directRoute:geminiGenerateUrl(providerModel('gemini', 'tts')),
-      },
-      video:{
-        provider:'Gemini video',
-        route:'/providers/gemini/video/generate',
-        message:'Memulai video generation ke Veo fast...',
-        payload:{
-          model:providerModel('gemini', 'video'),
-          instances:[{ prompt:'A luxurious playful medical app shell, floating softly, cyan and violet glow, cinematic motion.' }],
-          parameters:{ aspectRatio:'16:9' },
-        },
-        directRoute:geminiVideoGenerateUrl(providerModel('gemini', 'video')),
-      },
-    };
-    const recipe = recipes[kind];
-    if (!recipe) return;
-    setProbeState({ status:'running', provider:recipe.provider, message:recipe.message });
-    try {
-      const payload = await cortexRequest({
-        provider:kind === 'deepseek' ? 'deepseek' : kind === 'featherless' ? 'featherless' : (kind === 'openai' || kind === 'openaiImage') ? 'openai' : 'gemini',
-        route:recipe.route,
-        body:recipe.payload,
-        directRoute:recipe.directRoute,
-      });
-      const text = extractProbeText(payload);
-      if (kind === 'image') {
-        setProbeState({ status:'success', provider:recipe.provider, message:text ? `Image lane hidup. Model reply: ${text}` : 'Image lane hidup. Gemini mengembalikan payload image generation.' });
-        return;
-      }
-      if (kind === 'openaiImage') {
-        setProbeState({ status:'success', provider:recipe.provider, message:text ? `Image lane hidup. Model reply: ${text}` : 'Image lane hidup. OpenAI mengembalikan payload image generation.' });
-        return;
-      }
-      if (kind === 'tts') {
-        setProbeState({ status:'success', provider:recipe.provider, message:'TTS lane hidup. Gemini mengembalikan audio payload.' });
-        return;
-      }
-      if (kind === 'video') {
-        setProbeState({ status:'success', provider:recipe.provider, message:`Video generation started. Operation: ${payload && payload.name ? payload.name : 'queued'}` });
-        return;
-      }
-      setProbeState({ status:'success', provider:recipe.provider, message:text ? `Live reply: ${text}` : 'Probe sukses, tetapi provider tidak mengembalikan teks ringkas.' });
-    } catch (error) {
-      setProbeState({ status:'error', provider:recipe.provider, message:error && error.message ? error.message : 'Live probe gagal.' });
-    }
-  }
-
-  function extractInlineData(payload, mediaKind) {
-    const part = payload && payload.candidates && payload.candidates[0] && payload.candidates[0].content && payload.candidates[0].content.parts
-      ? payload.candidates[0].content.parts.find(item => item.inlineData?.data || item.inline_data?.data)
-      : null;
-    if (!part) return null;
-    const inlineData = part.inlineData || part.inline_data || {};
-    const mimeType = inlineData.mimeType || inlineData.mime_type || (mediaKind === 'audio' ? 'audio/wav' : 'image/png');
-    if (!inlineData.data) return null;
-    return { mimeType, data:inlineData.data };
-  }
-
-  function extractGeneratedImageData(payload) {
-    const openAiImage = payload && Array.isArray(payload.data) && payload.data.length
-      ? payload.data[0]
-      : null;
-    if (openAiImage && openAiImage.url) return { src:openAiImage.url };
-    const base64 = openAiImage && (openAiImage.b64_json || openAiImage.b64Json || openAiImage.base64 || openAiImage.base64_json)
-      ? (openAiImage.b64_json || openAiImage.b64Json || openAiImage.base64 || openAiImage.base64_json)
-      : null;
-    if (base64) return { src:`data:image/png;base64,${base64}` };
-    const openAiOutput = payload && Array.isArray(payload.output) && payload.output.length ? payload.output[0] : null;
-    const openAiContent = openAiOutput && Array.isArray(openAiOutput.content) ? openAiOutput.content : [];
-    const outputPart = openAiContent.find(item => item.type === 'input_image' || item.type === 'image' || item.b64_json || item.base64);
-    if (outputPart && (outputPart.b64_json || outputPart.base64)) {
-      return { src:`data:image/png;base64,${outputPart.b64_json || outputPart.base64}` };
-    }
-    const inlineData = extractInlineData(payload, 'image');
-    if (inlineData) return { src:`data:${inlineData.mimeType};base64,${inlineData.data}` };
+  function extractGeneratedImageData(payload){
+    const d=payload&&Array.isArray(payload.data)&&payload.data.length?payload.data[0]:null;
+    if(d&&d.url)return{src:d.url};
+    const b64=d&&(d.b64_json||d.b64Json||d.base64||d.base64_json)?(d.b64_json||d.b64Json||d.base64||d.base64_json):null;
+    if(b64)return{src:`data:image/png;base64,${b64}`};
+    const id=extractInlineData(payload,'image');if(id)return{src:`data:${id.mimeType};base64,${id.data}`};
     return null;
   }
+  function handleFileSelect(e){
+    const file=e.target.files&&e.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=function(ev){const dataUrl=ev.target.result;setUploadedFile({name:file.name,dataUrl,base64:dataUrl.split(',')[1],mimeType:file.type,type:file.type.startsWith('video')?'video':'image'});};
+    reader.readAsDataURL(file);e.target.value='';
+  }
+  function downloadMedia(src,filename){const a=document.createElement('a');a.href=src;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);}
 
-  async function runComposerAction(action) {
-    const prompt = String(chatPrompt || '').trim();
-    if (!prompt) {
-      setComposerStatus('Ketik prompt dulu sebelum menjalankan aksi.');
-      return;
-    }
-    setComposerBusy(action);
-    setComposerPreview(null);
-    setComposerStatus('Memproses...');
-    setChatFeed(prev => prev.concat([{ role:'user', title:'You', text:prompt }]));
-    try {
-      if (action === 'chat') {
-        const payload = await cortexRequest({
-          provider:'gemini',
-          route:'/providers/gemini/chat',
-          body:{
-            model:providerModel('gemini', 'chat'),
-            messages:chatFeed.concat([{ role:'user', text:prompt }]).map(item => ({
-              role:item.role === 'assistant' ? 'model' : 'user',
-              content:item.text || item.content || '',
-            })),
-            generationConfig:{ temperature:0.2 },
-          },
-          directRoute:geminiGenerateUrl(providerModel('gemini', 'chat')),
-        });
-        const text = extractProbeText(payload) || 'Gemini tidak mengembalikan teks yang bisa diringkas.';
-        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini', text }]));
-        setComposerStatus('Chat selesai.');
-      } else if (action === 'openai') {
-        const payload = await cortexRequest({
-          provider:'openai',
-          route:'/providers/openai/chat/completions',
-          body:{
-            model:providerModel('openai', 'chat'),
-            messages:chatFeed.concat([{ role:'user', text:prompt }]).map(item => ({
-              role:item.role === 'assistant' ? 'assistant' : 'user',
-              content:item.text || item.content || '',
-            })),
-            temperature:0.2,
-          },
-          directRoute:openaiChatUrl(),
-        });
-        const text = extractProbeText(payload) || 'OpenAI tidak mengembalikan teks yang bisa diringkas.';
-        setChatFeed(prev => prev.concat([{ role:'assistant', title:'OpenAI', text }]));
-        setComposerStatus('OpenAI chat selesai.');
-      } else if (action === 'deepseek') {
-        const payload = await cortexRequest({
-          provider:'deepseek',
-          route:'/providers/deepseek/chat/completions',
-          body:{
-            model:providerModel('deepseek', 'chat'),
-            messages:[{ role:'user', content:prompt }],
-            temperature:0.2,
-            max_tokens:512,
-          },
-          directRoute:deepseekChatUrl(),
-        });
-        const text = extractProbeText(payload) || 'DeepSeek tidak mengembalikan teks yang bisa diringkas.';
-        setChatFeed(prev => prev.concat([{ role:'assistant', title:'DeepSeek', text }]));
-        setComposerStatus('DeepSeek selesai.');
-      } else if (action === 'image') {
-        const payload = await cortexRequest({
-          provider:'gemini',
-          route:'/providers/gemini/image',
-          body:{
-            model:providerModel('gemini', 'image'),
-            prompt,
-          },
-          directRoute:geminiGenerateUrl(providerModel('gemini', 'image')),
-        });
-        const inlineData = extractInlineData(payload, 'image');
-        if (inlineData) {
-          setComposerPreview({ kind:'image', src:`data:${inlineData.mimeType};base64,${inlineData.data}` });
-        }
-        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini image', text:'Image generation selesai. Preview ditampilkan di bawah.' }]));
-        setComposerStatus('Image generation selesai.');
-      } else if (action === 'openaiImage') {
-        const payload = await cortexRequest({
-          provider:'openai',
-          route:'/providers/openai/image',
-          body:{
-            model:providerModel('openai', 'image'),
-            prompt,
-            quality:providerImageQuality('openai'),
-            size:'1024x1024',
-          },
-          directRoute:openaiImageUrl(),
-        });
-        const imageData = extractGeneratedImageData(payload);
-        if (imageData) {
-          setComposerPreview({ kind:'image', src:imageData.src });
-        }
-        setChatFeed(prev => prev.concat([{ role:'assistant', title:'OpenAI image', text:'Image generation selesai. Preview ditampilkan di bawah.' }]));
-        setComposerStatus('OpenAI image selesai.');
-      } else if (action === 'tts') {
-        const payload = await cortexRequest({
-          provider:'gemini',
-          route:'/providers/gemini/tts',
-          body:{
-            model:providerModel('gemini', 'tts'),
-            text:prompt,
-            voiceName:'Kore',
-          },
-          directRoute:geminiGenerateUrl(providerModel('gemini', 'tts')),
-        });
-        const inlineData = extractInlineData(payload, 'audio');
-        if (inlineData) {
-          setComposerPreview({ kind:'audio', src:`data:${inlineData.mimeType};base64,${inlineData.data}` });
-        }
-        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini TTS', text:'Audio berhasil dibuat. Putar preview di bawah.' }]));
-        setComposerStatus('TTS selesai.');
-      } else if (action === 'video') {
-        const payload = await cortexRequest({
-          provider:'gemini',
-          route:'/providers/gemini/video/generate',
-          body:{
-            model:providerModel('gemini', 'video'),
-            instances:[{ prompt }],
-            parameters:{ aspectRatio:'16:9' },
-          },
-          directRoute:geminiVideoGenerateUrl(providerModel('gemini', 'video')),
-        });
-        setComposerPreview({ kind:'video', text:payload && payload.name ? `Operation: ${payload.name}` : 'Video generation started.' });
-        setChatFeed(prev => prev.concat([{ role:'assistant', title:'Gemini video', text:payload && payload.name ? `Video generation started. Operation ${payload.name}` : 'Video generation started.' }]));
-        setComposerStatus('Video generation dimulai.');
-      }
-    } catch (error) {
-      setComposerStatus(error && error.message ? error.message : 'Aksi gagal.');
-      setChatFeed(prev => prev.concat([{ role:'assistant', title:'Error', text:error && error.message ? error.message : 'Aksi gagal.' }]));
-    } finally {
-      setComposerBusy('');
-    }
+  const chatModels=[
+    {id:'gemini',label:'Gemini 2.5 Flash',shortLabel:'Gemini',provider:'Google',color:'#06d6a0',ready:geminiReady},
+    {id:'openai',label:'GPT-4.1 nano',shortLabel:'GPT-4.1',provider:'OpenAI',color:'#22c55e',ready:openaiReady},
+    {id:'deepseek',label:'DeepSeek V4 Flash',shortLabel:'DeepSeek',provider:'DeepSeek',color:'#6366f1',ready:deepseekReady},
+    {id:'featherless',label:'Gemma 3 4B',shortLabel:'Gemma 4B',provider:'Featherless',color:'#a855f7',ready:featherlessReady},
+    {id:'featherless-12b',label:'Gemma 3 12B',shortLabel:'Gemma 12B',provider:'Featherless',color:'#c084fc',ready:featherlessReady},
+  ];
+  const imageModels=[
+    {id:'gemini',label:'Nano Banana Pro',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
+    {id:'openai',label:'GPT Image 2',sub:'OpenAI Image',color:'#22c55e',bgGrad:'linear-gradient(135deg,#22c55e,#16a34a)'},
+    {id:'video',label:'Veo 3.1 Fast',sub:'Video Gen',color:'#a855f7',bgGrad:'linear-gradient(135deg,#a855f7,#6366f1)'},
+    {id:'featherless-vision',label:'Gemma Vision',sub:'Visual Q&A',color:'#c084fc',bgGrad:'linear-gradient(135deg,#c084fc,#a855f7)'},
+  ];
+  const activeChatModel=chatModels.find(m=>m.id===chatModel)||chatModels[0];
+  const activeImageModel=imageModels.find(m=>m.id===imageModel)||imageModels[0];
+
+  async function runChat(){
+    const prompt=String(chatPrompt||'').trim();if(!prompt&&!uploadedFile)return;
+    const attached=uploadedFile;
+    const userMsg={role:'user',text:prompt||'(lampiran media)',mediaUrl:attached?attached.dataUrl:null,mediaType:attached?attached.type:null};
+    setChatFeed(prev=>[...prev,userMsg].slice(-MAX_HISTORY));
+    setChatPrompt('');setUploadedFile(null);setComposerBusy(chatModel);
+    try{
+      let text='';
+      const history=chatFeed.slice(-MAX_HISTORY);
+      const toMsgs=(aiRole)=>[...history.map(m=>({role:m.role==='assistant'?aiRole:'user',content:String(m.text||'')})),{role:'user',content:prompt||'(lampiran media)'}];
+      if(chatModel==='gemini'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/chat',body:{model:providerModel('gemini','chat'),messages:toMsgs('model'),generationConfig:{temperature:0.7}},directRoute:geminiGenerateUrl(providerModel('gemini','chat'))});text=extractText(p)||'Gemini tidak mengembalikan respons.';}
+      else if(chatModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:toMsgs('assistant'),temperature:0.7},directRoute:openaiChatUrl()});text=extractText(p)||'OpenAI tidak mengembalikan respons.';}
+      else if(chatModel==='deepseek'){const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});text=extractText(p)||'DeepSeek tidak mengembalikan respons.';}
+      else{const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:toMsgs('assistant'),temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});text=extractText(p)||'Featherless tidak mengembalikan respons.';}
+      setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}].slice(-MAX_HISTORY));
+    }catch(err){setChatFeed(prev=>[...prev,{role:'assistant',model:'error',text:err&&err.message?err.message:'Terjadi kesalahan.'}].slice(-MAX_HISTORY));}
+    finally{setComposerBusy('');}
   }
 
-  function SurfaceCard(item, index) {
-    return React.createElement('div', {
-      key:`${item.title}-${index}`,
-      style:{
-        padding:14,
-        borderRadius:18,
-        border:`1px solid ${DL.glassBorder}`,
-        background:'rgba(255,255,255,0.04)',
-        boxShadow:`0 14px 32px ${DL.shadowColor}`,
-      }
-    },
-      React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, marginBottom:8 }},
-        React.createElement('div', { style:{ color:DL.text, fontSize:13, fontWeight:950, lineHeight:1.15 }}, item.title),
-        React.createElement(B1Badge, { color:item.color || DL.accent }, item.badge)
+  async function runImageGen(){
+    const prompt=String(imagePrompt||'').trim();if(!prompt)return;
+    setImageBusy(true);
+    try{
+      if(imageModel==='video'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/video/generate',body:{model:providerModel('gemini','video'),instances:[{prompt}],parameters:{aspectRatio:'16:9'}},directRoute:geminiVideoGenerateUrl(providerModel('gemini','video'))});const opName=p&&p.name?p.name:'queued';setImageResults(prev=>[{kind:'video-op',text:`Video generation started. Operation: ${opName}`,ts:Date.now()},...prev].slice(0,6));}
+      else if(imageModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',body:{model:providerModel('openai','image'),prompt,quality:providerImageQuality('openai'),size:'1024x1024'},directRoute:openaiImageUrl()});const data=extractGeneratedImageData(p);if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,6));}
+      else if(imageModel==='featherless-vision'){const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:providerModel('featherless','balanced'),messages:[{role:'user',content:`Deskripsikan gambar dari prompt: ${prompt}`}],temperature:0.7,max_tokens:256},directRoute:featherlessChatUrl()});setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now()},...prev].slice(0,6));}
+      else{const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/image',body:{model:providerModel('gemini','image'),prompt},directRoute:geminiGenerateUrl(providerModel('gemini','image'))});const id=extractInlineData(p,'image');if(id)setImageResults(prev=>[{kind:'image',src:`data:${id.mimeType};base64,${id.data}`,prompt,ts:Date.now()},...prev].slice(0,6));}
+    }catch(err){setImageResults(prev=>[{kind:'error',text:err&&err.message?err.message:'Generation gagal.',ts:Date.now()},...prev].slice(0,6));}
+    finally{setImageBusy(false);}
+  }
+
+  async function runTTS(){
+    const text=String(ttsText||'').trim();if(!text)return;
+    setTtsBusy(true);setTtsResult(null);
+    try{const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/tts',body:{model:providerModel('gemini','tts'),text,voiceName:'Kore'},directRoute:geminiGenerateUrl(providerModel('gemini','tts'))});const id=extractInlineData(p,'audio');if(id)setTtsResult({src:`data:${id.mimeType};base64,${id.data}`,mimeType:id.mimeType});else setTtsResult({error:'TTS tidak mengembalikan data audio.'});}
+    catch(err){setTtsResult({error:err&&err.message?err.message:'TTS gagal.'});}
+    finally{setTtsBusy(false);}
+  }
+
+  async function runProbe(kind){
+    const R={
+      gemini:{prov:'gemini',route:'/providers/gemini/chat',body:{model:providerModel('gemini','chat'),messages:[{role:'user',content:'Balas persis: GEMINI SIAP'}],generationConfig:{temperature:0}},dr:geminiGenerateUrl(providerModel('gemini','chat')),label:'Gemini'},
+      openai:{prov:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:[{role:'user',content:'Balas persis: OPENAI SIAP'}],temperature:0},dr:openaiChatUrl(),label:'OpenAI'},
+      deepseek:{prov:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:((runtime.providers||{}).deepseek||{}).defaultModel||'deepseek-v4-flash',temperature:0,max_tokens:24,messages:[{role:'user',content:'Balas persis: DEEPSEEK SIAP'}]},dr:deepseekChatUrl(),label:'DeepSeek'},
+      featherless:{prov:'featherless',route:'/providers/featherless/chat/completions',body:{model:(((runtime.providers||{}).featherless)||{}).fastVisionModel||'unsloth/gemma-3-4b-it',temperature:0,max_tokens:24,messages:[{role:'user',content:'Balas persis: FEATHERLESS SIAP'}]},dr:featherlessChatUrl(),label:'Featherless'},
+      tts:{prov:'gemini',route:'/providers/gemini/tts',body:{model:providerModel('gemini','tts'),text:'CORTEX siap.',voiceName:'Kore'},dr:geminiGenerateUrl(providerModel('gemini','tts')),label:'Gemini TTS'},
+      image:{prov:'gemini',route:'/providers/gemini/image',body:{model:providerModel('gemini','image'),prompt:'A glowing orb.'},dr:geminiGenerateUrl(providerModel('gemini','image')),label:'Gemini Image'},
+    };
+    const r=R[kind];if(!r)return;
+    setProbeState({status:'running',provider:r.label,message:`Mengirim probe ke ${r.label}...`});
+    try{const p=await cortexRequest({provider:r.prov,route:r.route,body:r.body,directRoute:r.dr});const txt=extractText(p);setProbeState({status:'success',provider:r.label,message:txt?`Live reply: ${txt}`:'Probe sukses.'});}
+    catch(err){setProbeState({status:'error',provider:r.label,message:err&&err.message?err.message:'Probe gagal.'});}
+  }
+
+  function refreshRuntime(){
+    if(!proxyBase){setRuntimeInfo({status:directAnyReady?'connected':'idle',catalog:null,health:null,message:directMode?'Direct mode aktif.':'Proxy belum terdeteksi.'});return;}
+    Promise.all([fetch(`${proxyBase}/health`,{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject()),fetch(`${proxyBase}/config/models`,{cache:'no-store'}).then(r=>r.ok?r.json():Promise.reject())]).then(res=>{setRuntimeInfo({status:'connected',catalog:res[1]&&res[1].catalog?res[1].catalog:null,health:res[0]||null,message:'Proxy aktif.'});}).catch(()=>{setRuntimeInfo({status:'error',catalog:null,health:null,message:'Proxy check failed.'});});
+  }
+
+  // ── SVG Components ──────────────────────────────────────────────────────
+  function OrbSVG({color,thinking,size}){
+    const s=size||52;const cx=s/2,cy=s/2,r=s*0.28,r2=s*0.38;
+    return React.createElement('svg',{width:s,height:s,viewBox:`0 0 ${s} ${s}`,style:{display:'block',overflow:'visible'}},
+      React.createElement('defs',null,
+        React.createElement('radialGradient',{id:`og${color.replace('#','')}`,cx:'35%',cy:'30%',r:'65%'},
+          React.createElement('stop',{offset:'0%',stopColor:'#fff',stopOpacity:0.55}),
+          React.createElement('stop',{offset:'45%',stopColor:color,stopOpacity:0.95}),
+          React.createElement('stop',{offset:'100%',stopColor:color,stopOpacity:0.4}),
+        ),
+        React.createElement('filter',{id:`glow${color.replace('#','')}`},
+          React.createElement('feGaussianBlur',{stdDeviation:'3',result:'blur'}),
+          React.createElement('feMerge',null,React.createElement('feMergeNode',{in:'blur'}),React.createElement('feMergeNode',{in:'SourceGraphic'})),
+        ),
       ),
-      React.createElement('div', { style:{ color:DL.mute, fontSize:11, lineHeight:1.5 }}, item.sub)
+      React.createElement('circle',{cx,cy,r:r2+4,fill:'none',stroke:color,strokeWidth:0.5,opacity:0.3,style:{animation:'cortex-ai-orb-ping 2.5s ease-out infinite',transformOrigin:`${cx}px ${cy}px`}}),
+      React.createElement('ellipse',{cx,cy,rx:r2,ry:r2*0.32,fill:'none',stroke:color,strokeWidth:0.8,opacity:0.45,style:{animation:'cortex-ai-orb-orbit1 5s linear infinite',transformOrigin:`${cx}px ${cy}px`}}),
+      React.createElement('ellipse',{cx,cy,rx:r2*0.78,ry:r2*0.25,fill:'none',stroke:color,strokeWidth:0.6,opacity:0.35,style:{animation:'cortex-ai-orb-orbit2 7s linear infinite',transformOrigin:`${cx}px ${cy}px`}}),
+      React.createElement('circle',{cx,cy,r,fill:`url(#og${color.replace('#','')})`,filter:`url(#glow${color.replace('#','')})`,style:{animation:thinking?'cortex-ai-orb-thinking 0.7s ease-in-out infinite':'cortex-ai-orb-breathe 3s ease-in-out infinite',transformOrigin:`${cx}px ${cy}px`}}),
+      React.createElement('circle',{cx:cx-r*0.28,cy:cy-r*0.28,r:r*0.22,fill:'rgba(255,255,255,0.35)'}),
+      React.createElement('circle',{cx,cy,r:r*0.18,fill:'rgba(255,255,255,0.9)'}),
     );
   }
 
-  function ModelRow(item, index) {
-    return React.createElement('div', {
-      key:`${item.id}-${index}`,
-      style:{
-        padding:'12px 13px',
-        borderRadius:16,
-        border:`1px solid ${DL.glassBorder}`,
-        background:'rgba(255,255,255,0.045)',
-        marginBottom:index === 0 ? 0 : 10,
-      }
-    },
-      React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, marginBottom:5 }},
-        React.createElement('div', { style:{ color:DL.text, fontSize:12, fontWeight:900 }}, item.label),
-        React.createElement('div', { style:{ color:DL.accentB, fontSize:10, fontWeight:900 }}, item.id)
-      ),
-      React.createElement('div', { style:{ color:DL.mute, fontSize:11, lineHeight:1.48 }}, item.note)
+  function EqSVG({active,color,bars}){
+    const n=bars||16;const w=4,gap=3,h=40;
+    return React.createElement('svg',{width:n*(w+gap)-gap,height:h,viewBox:`0 0 ${n*(w+gap)-gap} ${h}`,style:{display:'block'}},
+      Array.from({length:n}).map((_,i)=>{
+        const delay=(i%5)*0.12,dur=0.7+(i%3)*0.18;
+        return React.createElement('rect',{key:i,x:i*(w+gap),y:0,width:w,height:h,rx:w/2,
+          fill:color,opacity:active?1:0.25,
+          style:{transformOrigin:`${i*(w+gap)+w/2}px ${h}px`,transform:'scaleY(0.25)',animation:active?`cortex-ai-eq-bar ${dur}s ease-in-out ${delay}s infinite`:'none'}});
+      }),
     );
   }
 
-  function MiniProviderRow(item) {
-    return React.createElement(B3Row, {
-      title:item.title,
-      sub:item.sub,
-      right:React.createElement(B1Badge, { color:item.color }, item.badge),
-    });
+  function MicSVG({active,color,size}){
+    const s=size||44;
+    return React.createElement('svg',{width:s,height:Math.round(s*1.2),viewBox:'0 0 44 54',style:{display:'block',color,animation:active?'cortex-ai-mic-pulse 1.1s ease-in-out infinite':'none'}},
+      React.createElement('defs',null,
+        React.createElement('radialGradient',{id:'micGrad',cx:'35%',cy:'30%',r:'65%'},
+          React.createElement('stop',{offset:'0%',stopColor:'#fff',stopOpacity:0.35}),
+          React.createElement('stop',{offset:'100%',stopColor:color,stopOpacity:0.9}),
+        ),
+      ),
+      React.createElement('rect',{x:12,y:2,width:20,height:30,rx:10,fill:'url(#micGrad)',stroke:color,strokeWidth:1}),
+      React.createElement('path',{d:'M6 26 C6 40 38 40 38 26',stroke:color,strokeWidth:2.5,fill:'none',strokeLinecap:'round'}),
+      React.createElement('line',{x1:22,y1:40,x2:22,y2:48,stroke:color,strokeWidth:2.5,strokeLinecap:'round'}),
+      React.createElement('line',{x1:12,y1:48,x2:32,y2:48,stroke:color,strokeWidth:2.5,strokeLinecap:'round'}),
+      active&&React.createElement('circle',{cx:22,cy:17,r:4,fill:'rgba(255,255,255,0.7)',style:{animation:'cortex-ai-orb-breathe 0.8s ease-in-out infinite',transformOrigin:'22px 17px'}}),
+    );
   }
 
-  return React.createElement(B2PageShell, {
+  function ImageSparkSVG({color}){
+    return React.createElement('svg',{width:32,height:32,viewBox:'0 0 32 32',style:{display:'block'}},
+      React.createElement('path',{d:'M16 3 L18.5 12.5 L28 15 L18.5 17.5 L16 27 L13.5 17.5 L4 15 L13.5 12.5 Z',fill:color,style:{animation:'cortex-ai-spark-spin 8s linear infinite',transformOrigin:'16px 15px'}}),
+      React.createElement('path',{d:'M27 4 L28 7 L31 8 L28 9 L27 12 L26 9 L23 8 L26 7 Z',fill:color,opacity:0.6,style:{animation:'cortex-ai-spark-spin 5s linear infinite reverse',transformOrigin:'27px 8px'}}),
+      React.createElement('path',{d:'M5 22 L6 24.5 L8.5 25.5 L6 26.5 L5 29 L4 26.5 L1.5 25.5 L4 24.5 Z',fill:color,opacity:0.5,style:{animation:'cortex-ai-spark-spin 6s linear infinite',transformOrigin:'5px 25.5px'}}),
+    );
+  }
+
+  function VideoIconSVG({color}){
+    return React.createElement('svg',{width:32,height:32,viewBox:'0 0 32 32',style:{display:'block'}},
+      React.createElement('rect',{x:1,y:6,width:21,height:20,rx:4,fill:'none',stroke:color,strokeWidth:1.5}),
+      React.createElement('polygon',{points:'22,11 31,7 31,25 22,21',fill:'none',stroke:color,strokeWidth:1.5,strokeLinejoin:'round'}),
+      React.createElement('circle',{cx:10,cy:16,r:4,fill:color,opacity:0.8,style:{animation:'cortex-ai-orb-breathe 2s ease-in-out infinite',transformOrigin:'10px 16px'}}),
+    );
+  }
+
+  // ── Computed values ─────────────────────────────────────────────────────
+  const connColor=runtimeInfo.status==='connected'?DL.teal:runtimeInfo.status==='error'?DL.red:DL.gold;
+  const isThinking=!!composerBusy;
+
+  // Tab icons
+  const tabIcons={assistant:'💬',visual:'🎨',audio:'🔊',connect:'⚡'};
+
+  // ── RENDER ────────────────────────────────────────────────────────────────
+  return React.createElement(B2PageShell,{
     label:'P20-AIWorkspace',
     title:'AI Workspace',
-    subtitle:'Gemini + DeepSeek + Featherless + OpenAI',
+    subtitle:'Multimodal · Chat · Visual · Audio',
     onBack:()=>onNavigate(19),
-    right:React.createElement(B1Badge, { color:proxyBase ? DL.teal : directMode ? DL.accent : DL.gold }, proxyBase ? 'Proxy path' : directMode ? 'Direct mode' : 'Secret-safe'),
+    right:React.createElement('div',{style:{display:'flex',gap:5,alignItems:'center'}},
+      React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
+        React.createElement('div',{style:{width:10,height:10,borderRadius:'50%',background:connColor,position:'absolute'}}),
+        runtimeInfo.status==='connected'&&React.createElement('div',{style:{width:10,height:10,borderRadius:'50%',background:connColor,position:'absolute',animation:'cortex-ai-status-ping 2s ease-out infinite'}}),
+      ),
+      React.createElement(B1Badge,{color:connColor},runtimeInfo.status==='connected'?'Live':runtimeInfo.status==='error'?'Error':'Idle'),
+      React.createElement(B1Badge,{color:proxyBase?DL.teal:directMode?DL.accent:DL.gold},proxyBase?'Proxy':directMode?'Direct':'Safe'),
+    ),
   },
-    React.createElement(B3Hero, {
-      kicker:'Production AI orchestration',
-      title:'Multimodal hub yang siap jadi workflow final',
-      subtitle:'Workspace ini sekarang dipetakan untuk Gemini sebagai hub multimodal, DeepSeek sebagai reasoning lane cepat, Featherless sebagai lane multimodal kecil, dan OpenAI untuk chat cepat plus image low-output.',
-      color:DL.accent,
-    }),
 
-    React.createElement(B2Segmented, {
-      value:surface,
-      options:[
-        { value:'assistant', label:'Assistant' },
-        { value:'visual', label:'Visual' },
-        { value:'audio', label:'Audio' },
-        { value:'connect', label:'Connect' },
-      ],
-      onChange:setSurface,
-    }),
-
-    React.createElement(B2Callout, { tone:'caution', title:'Critical provider guardrail' },
-      'Mode private sekarang mendukung dua jalur: proxy lokal atau direct browser mode dengan credential yang disimpan di browser Anda sendiri. Untuk penggunaan pribadi, direct mode bisa dipakai supaya prompt, image, video, dan TTS langsung jalan di GitHub Pages setelah key diisi. Gemini tetap dipakai untuk image/video/TTS, sementara OpenAI menambah lane chat cepat dan image low-output.'),
-
-    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(146px,1fr))', gap:12, marginTop:14, marginBottom:14 }},
-      statusCards.map(SurfaceCard)
+    // ── TABS ────────────────────────────────────────────────────────────────
+    React.createElement('div',{style:{marginBottom:16}},
+      React.createElement('div',{
+        style:{display:'flex',gap:0,borderRadius:18,overflow:'hidden',border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)'},
+      },
+        ['assistant','visual','audio','connect'].map(function(s){
+          const active=surface===s;
+          const tabColors={assistant:DL.accent,visual:DL.teal,audio:'#f59e0b',connect:DL.accentB};
+          const tc=tabColors[s]||DL.accent;
+          return React.createElement('button',{
+            key:s,
+            onClick:()=>setSurface(s),
+            style:{
+              flex:1,padding:'10px 4px',border:'none',cursor:'pointer',
+              background:active?`${tc}18`:'transparent',
+              color:active?tc:DL.mute,
+              fontWeight:active?800:500,fontSize:11,
+              borderBottom:active?`2px solid ${tc}`:'2px solid transparent',
+              transition:'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+              display:'flex',flexDirection:'column',alignItems:'center',gap:2,
+            },
+          },
+            React.createElement('span',{style:{fontSize:16,lineHeight:1}},tabIcons[s]),
+            React.createElement('span',{style:{fontSize:9,letterSpacing:0.3,textTransform:'uppercase'}},s),
+          );
+        }),
+      ),
     ),
 
-    surface === 'assistant' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      assistantBubbles.map((m, i) => React.createElement('div', {
-        key:i,
+    // ════════════════════════════════════════════════════════════════════════
+    // CHAT SURFACE
+    // ════════════════════════════════════════════════════════════════════════
+    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+
+      // ── Active Model Hero ────────────────────────────────────────────────
+      React.createElement('div',{
         style:{
-          marginBottom:i < assistantBubbles.length - 1 ? 12 : 0,
-          display:'flex', justifyContent:m.who === 'Learner' ? 'flex-end' : 'flex-start',
+          display:'flex',alignItems:'center',gap:14,padding:'14px 16px',borderRadius:22,
+          background:`linear-gradient(135deg,${activeChatModel.color}14,rgba(0,0,0,0.0))`,
+          border:`1px solid ${activeChatModel.color}30`,
+          position:'relative',overflow:'hidden',
         }
       },
-        React.createElement('div', { style:{
-          maxWidth:'88%', padding:'11px 13px', borderRadius:16,
-          background:m.who === 'Learner' ? DL.gradA : m.tone === 'system' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)',
-          border:m.who === 'Learner' ? 'none' : `1px solid ${DL.glassBorder}`,
-          color:m.who === 'Learner' ? '#fff' : DL.sub,
-          fontSize:12, lineHeight:1.55,
-          boxShadow:m.who === 'Learner' ? `0 8px 20px ${DL.shadowColor}` : 'none',
-        }},
-          React.createElement('div', { style:{ fontSize:9, fontWeight:900, opacity:0.7, marginBottom:3 }}, m.who),
-          m.text,
-        )
-      )),
-    ),
-
-    surface === 'assistant' && React.createElement(B1Card, { pad:13, style:{ marginBottom:14 }},
-      React.createElement('div', { style:{ display:'grid', gap:10 }},
-        React.createElement(B3Row, {
-          title:'Primary tutor route',
-          sub:'Gemini 2.5 Flash menjadi tutor multimodal utama untuk chat, foto, dan video.',
-          right:React.createElement(B1Badge, { color:DL.teal }, 'Text core'),
-        }),
-        React.createElement(B3Row, {
-          title:'Reasoning lane',
-          sub:'DeepSeek V4 Flash dipisah sebagai evaluator cepat untuk jawaban, rubrik, dan structured JSON.',
-          right:React.createElement(B1Badge, { color:DL.accentB }, 'Reasoning'),
-        }),
-        React.createElement(B3Row, {
-          title:'Compact multimodal lane',
-          sub:'Featherless Basic diposisikan untuk tiga model kecil agar tetap ekonomis dan cepat.',
-          right:React.createElement(B1Badge, { color:DL.gold }, 'Basic plan'),
-        }),
-        React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginTop:2 }},
-          React.createElement(B1Button, {
-            label:probeState.status === 'running' ? 'Probing...' : 'Probe Gemini',
-            onClick:function(){ runProbe('gemini'); },
-            style:{ minWidth:146 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe DeepSeek',
-            variant:'secondary',
-            onClick:function(){ runProbe('deepseek'); },
-            style:{ minWidth:146 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe Featherless',
-            variant:'secondary',
-            onClick:function(){ runProbe('featherless'); },
-            style:{ minWidth:158 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe OpenAI',
-            variant:'secondary',
-            onClick:function(){ runProbe('openai'); },
-            style:{ minWidth:138 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe image',
-            variant:'secondary',
-            onClick:function(){ runProbe('image'); },
-            style:{ minWidth:132 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe OpenAI image',
-            variant:'secondary',
-            onClick:function(){ runProbe('openaiImage'); },
-            style:{ minWidth:166 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe TTS',
-            variant:'secondary',
-            onClick:function(){ runProbe('tts'); },
-            style:{ minWidth:126 },
-          }),
-          React.createElement(B1Button, {
-            label:'Refresh catalog',
-            variant:'secondary',
-            onClick:refreshRuntime,
-            style:{ minWidth:146 },
-          }),
-          React.createElement(B1Button, {
-            label:'Provider settings',
-            variant:'secondary',
-            onClick:function(){ onNavigate(21); },
-            style:{ minWidth:150 },
-          }),
+        React.createElement('div',{style:{position:'absolute',right:-20,top:-20,width:100,height:100,borderRadius:'50%',background:`radial-gradient(circle,${activeChatModel.color}18,transparent 70%)`,pointerEvents:'none'}}),
+        React.createElement(OrbSVG,{color:activeChatModel.color,thinking:isThinking,size:52}),
+        React.createElement('div',{style:{flex:1,minWidth:0}},
+          React.createElement('div',{style:{fontSize:13,fontWeight:900,color:activeChatModel.color,letterSpacing:0.3}},activeChatModel.label),
+          React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:1}},`via ${activeChatModel.provider} · History ${chatFeed.length}/${MAX_HISTORY}`),
         ),
-        React.createElement(B2Callout, {
-          tone:probeState.status === 'error' ? 'danger' : probeState.status === 'success' ? 'info' : 'evidence',
-          title:probeState.provider || 'Live probe',
-        }, probeState.message),
+        !activeChatModel.ready&&React.createElement(B1Badge,{color:DL.gold},'Key Pending'),
+        activeChatModel.ready&&React.createElement(B1Badge,{color:activeChatModel.color},'Ready'),
       ),
-    ),
 
-    surface === 'assistant' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      React.createElement(B1Section, { title:'Try it now', action:composerBusy ? composerBusy : 'Live prompt' }),
-      React.createElement('textarea', {
-        value:chatPrompt,
-        onChange:e => setChatPrompt(e.target.value),
-        placeholder:'Tulis prompt chat, image, video, TTS, atau reasoning di sini...',
-        rows:4,
-        style:{
-          width:'100%',
-          resize:'vertical',
-          padding:'12px 14px',
-          borderRadius:16,
-          border:`1px solid ${DL.glassBorder}`,
-          background:'rgba(255,255,255,0.05)',
-          color:DL.text,
-          outline:'none',
-          fontSize:13,
-          lineHeight:1.55,
-          marginBottom:12,
-        }
-      }),
-      React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:12 }},
-        React.createElement(B1Button, {
-          label:composerBusy === 'chat' ? 'Sending...' : 'Chat Gemini',
-          onClick:function(){ runComposerAction('chat'); },
-          style:{ minWidth:140 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'openai' ? 'Sending...' : 'Chat OpenAI',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('openai'); },
-          style:{ minWidth:136 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'deepseek' ? 'Thinking...' : 'DeepSeek',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('deepseek'); },
-          style:{ minWidth:128 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'image' ? 'Creating...' : 'Generate image',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('image'); },
-          style:{ minWidth:146 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'openaiImage' ? 'Creating...' : 'Generate image (OpenAI)',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('openaiImage'); },
-          style:{ minWidth:190 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'video' ? 'Creating...' : 'Generate video',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('video'); },
-          style:{ minWidth:146 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'tts' ? 'Creating...' : 'Generate TTS',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('tts'); },
-          style:{ minWidth:132 },
+      // ── Model Selector Scrollable Strip ──────────────────────────────────
+      React.createElement('div',{
+        className:'hide-scrollbar',
+        style:{display:'flex',gap:6,overflowX:'auto',paddingBottom:2,paddingTop:1},
+      },
+        chatModels.map(function(m,idx){
+          const active=chatModel===m.id;
+          return React.createElement('button',{
+            key:m.id,
+            onClick:()=>setChatModel(m.id),
+            style:{
+              flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:4,
+              padding:'8px 12px',borderRadius:16,cursor:'pointer',outline:'none',
+              border:active?`1.5px solid ${m.color}`:`1px solid ${DL.glassBorder}`,
+              background:active?`${m.color}1c`:'rgba(255,255,255,0.04)',
+              transition:'all 0.28s cubic-bezier(0.16,1,0.3,1)',
+              opacity:m.ready?1:0.45,
+              boxShadow:active?`0 0 16px ${m.color}28,inset 0 0 0 1px ${m.color}18`:'none',
+              animation:active&&idx===0?'cortex-ai-model-in 0.3s ease both':'none',
+              minWidth:62,
+            },
+          },
+            React.createElement(OrbSVG,{color:m.color,thinking:false,size:28}),
+            React.createElement('div',{style:{fontSize:9,fontWeight:active?800:600,color:active?m.color:DL.mute,lineHeight:1.2,textAlign:'center',maxWidth:58,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.shortLabel),
+          );
         }),
       ),
-      React.createElement(B2Callout, { tone:composerStatus.includes('gagal') || composerStatus.includes('belum') ? 'caution' : 'info', title:'Composer status' }, composerStatus),
-      composerPreview && composerPreview.kind === 'image' && React.createElement('img', {
-        src:composerPreview.src,
-        alt:'Generated image preview',
-        style:{ width:'100%', borderRadius:18, border:`1px solid ${DL.glassBorder}`, marginTop:12, display:'block' },
-      }),
-      composerPreview && composerPreview.kind === 'audio' && React.createElement('audio', {
-        controls:true,
-        src:composerPreview.src,
-        style:{ width:'100%', marginTop:12 },
-      }),
-      composerPreview && composerPreview.kind === 'video' && React.createElement(B2Callout, { tone:'evidence', title:'Video generation' }, composerPreview.text),
-      React.createElement('div', { style:{ marginTop:12, display:'grid', gap:10 }},
-        chatFeed.slice(-6).map((msg, i) => React.createElement('div', {
-          key:`msg-${i}`,
-          style:{
-            padding:'11px 13px',
-            borderRadius:16,
-            background:msg.role === 'assistant' ? 'rgba(255,255,255,0.06)' : DL.gradA,
-            border:msg.role === 'assistant' ? `1px solid ${DL.glassBorder}` : 'none',
-            color:msg.role === 'assistant' ? DL.sub : '#fff',
-            lineHeight:1.55,
-          }
+
+      // ── Chat Feed ────────────────────────────────────────────────────────
+      React.createElement('div',{
+        className:'hide-scrollbar',
+        style:{display:'flex',flexDirection:'column',gap:8,minHeight:200,maxHeight:380,overflowY:'auto',padding:'4px 2px 6px'},
+      },
+        chatFeed.map(function(msg,i){
+          const isUser=msg.role==='user';
+          const mDef=chatModels.find(m=>m.id===msg.model);
+          const bColor=mDef?mDef.color:DL.accent;
+          const isErr=msg.model==='error';
+          return React.createElement('div',{
+            key:i,
+            style:{display:'flex',flexDirection:'column',alignItems:isUser?'flex-end':'flex-start',animation:'cortex-ai-msg-in 0.48s cubic-bezier(0.16,1,0.3,1) both'},
+          },
+            // AI label row
+            !isUser&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4,paddingLeft:2}},
+              !isErr&&mDef&&React.createElement(OrbSVG,{color:isErr?DL.red:bColor,thinking:false,size:18}),
+              isErr&&React.createElement('span',{style:{fontSize:13}},'⚠️'),
+              React.createElement('span',{style:{fontSize:9,fontWeight:900,color:isErr?DL.red:bColor,letterSpacing:0.7,textTransform:'uppercase'}},
+                isErr?'ERROR':msg.model==='cortex'?'CORTEX AI':(mDef?mDef.label:'AI'),
+              ),
+            ),
+            // Bubble
+            React.createElement('div',{
+              style:{
+                maxWidth:'87%',padding:'12px 15px',lineHeight:1.65,fontSize:13,whiteSpace:'pre-wrap',
+                borderRadius:isUser?'20px 20px 6px 20px':'6px 20px 20px 20px',
+                background:isUser?DL.gradA:isErr?'rgba(239,68,68,0.1)':'rgba(255,255,255,0.065)',
+                border:isUser?'none':`1.5px solid ${isErr?DL.red+'55':bColor+'22'}`,
+                color:isUser?'#fff':DL.text,
+                boxShadow:isUser
+                  ?`0 8px 24px ${DL.shadowColor},inset 0 1px 0 rgba(255,255,255,0.15)`
+                  :`0 2px 12px rgba(0,0,0,0.15),inset 0 0 0 1px ${bColor}10`,
+              }
+            },
+              isUser&&msg.mediaUrl&&msg.mediaType==='image'&&React.createElement('img',{
+                src:msg.mediaUrl,alt:'upload',
+                style:{width:'100%',borderRadius:12,marginBottom:10,display:'block',maxHeight:200,objectFit:'cover'},
+              }),
+              isUser&&msg.mediaUrl&&msg.mediaType==='video'&&React.createElement('div',{
+                style:{display:'flex',alignItems:'center',gap:8,background:`${DL.accent}1a`,borderRadius:10,padding:'8px 12px',marginBottom:10}
+              },
+                React.createElement(VideoIconSVG,{color:DL.accent}),
+                React.createElement('span',{style:{fontSize:11,color:DL.accent,fontWeight:700}},'Video attached'),
+              ),
+              msg.text,
+            ),
+          );
+        }),
+        // Typing indicator
+        composerBusy&&React.createElement('div',{
+          style:{display:'flex',alignItems:'center',gap:8,paddingLeft:4,paddingTop:4}
         },
-          React.createElement('div', { style:{ fontSize:9, fontWeight:900, opacity:0.7, marginBottom:3 }}, msg.title || (msg.role === 'assistant' ? 'Assistant' : 'You')),
-          msg.text,
-        ))
-      )
-    ),
-
-    surface === 'visual' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      React.createElement(B1Section, { title:'Visual generation lanes', style:{ marginBottom:10 } }),
-      modelFamilies.visual.map(ModelRow),
-      React.createElement(B2Callout, { tone:'info', title:'Recommended output path' },
-        'Nano Banana tetap menjadi lane utama untuk image generation berfitur penuh. GPT Image 2 dipakai sebagai lane OpenAI low-output yang murah dan cepat. Video generation dipetakan ke Veo fast. Semua output akhir tetap sebaiknya dikonversi ke manifest visual supaya shell bisa menjaga rasio, placeholder, dan fallback dengan konsisten.')
-    ),
-
-    surface === 'audio' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      React.createElement(B1Section, { title:'Audio and speech lanes', style:{ marginBottom:10 } }),
-      modelFamilies.audio.map(ModelRow),
-      React.createElement(B3Row, {
-        title:'Speech output',
-        sub:'Gemini TTS siap untuk spoken recap, oral drilling, atau narasi materi singkat.',
-        right:React.createElement(B1Badge, { color:DL.teal }, 'Ready'),
-      }),
-      modelFamilies.video && modelFamilies.video.length > 0 && React.createElement(B3Row, {
-        title:'Video companion lane',
-        sub:modelFamilies.video[0].route,
-        right:React.createElement(B1Badge, { color:DL.accent }, 'Task-based'),
-      }),
-    ),
-
-    surface === 'connect' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      React.createElement(B1Section, { title:'Connection architecture', style:{ marginBottom:10 } }),
-      [
-        { title:'Private shell', sub:'Browser-only keys tetap berada di localStorage Anda. Bundle publik tidak menyimpan secret.', badge:'Private', color:DL.green },
-        { title:'Proxy route', sub:proxyBase ? `Detected at ${proxyBase}` : 'Proxy optional. Direct mode bisa dipakai tanpa backend.', badge:proxyBase ? 'Detected' : 'Optional', color:proxyBase ? DL.teal : DL.gold },
-        { title:'Gemini status', sub:geminiReady || directGeminiReady ? 'Chat, image, video, dan TTS lane siap.' : 'Key Gemini belum diisi.', badge:geminiReady || directGeminiReady ? 'Ready' : 'Missing', color:geminiReady || directGeminiReady ? DL.teal : DL.red },
-        { title:'DeepSeek status', sub:deepseekReady || directDeepseekReady ? 'DeepSeek V4 Flash siap.' : 'Key DeepSeek belum diisi.', badge:deepseekReady || directDeepseekReady ? 'Ready' : 'Missing', color:deepseekReady || directDeepseekReady ? DL.accent : DL.red },
-        { title:'Featherless status', sub:featherlessReady || directFeatherlessReady ? 'Tiga lane multimodal Basic siap.' : 'Key Featherless belum diisi.', badge:featherlessReady || directFeatherlessReady ? 'Ready' : 'Missing', color:featherlessReady || directFeatherlessReady ? DL.green : DL.red },
-        { title:'OpenAI status', sub:openaiReady || directOpenAIReady ? 'GPT-4.1 nano dan GPT Image 2 low siap.' : 'Key OpenAI belum diisi.', badge:openaiReady || directOpenAIReady ? 'Ready' : 'Missing', color:openaiReady || directOpenAIReady ? DL.accentB : DL.red },
-        { title:'Runtime status', sub:runtimeInfo.message, badge:runtimeInfo.status, color:runtimeInfo.status === 'connected' ? DL.teal : runtimeInfo.status === 'error' ? DL.red : DL.accent },
-      ].map(MiniProviderRow),
-      React.createElement(B2Callout, { tone:'info', title:'Local template' },
-        'Gunakan ai_workspace.local.example.js sebagai template, atau isi key langsung di Provider Settings. Proxy multi-provider tetap tersedia, tetapi mode direct browser sudah bisa dipakai untuk testing pribadi di GitHub Pages.')
-    ),
-
-    React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      React.createElement(B1Section, { title:'Model catalog snapshot', style:{ marginBottom:10 } }),
-      React.createElement('div', { style:{ display:'grid', gap:10 }},
-        React.createElement('div', null,
-          React.createElement('div', { style:{ color:DL.text, fontSize:12, fontWeight:900, marginBottom:6 }}, 'Core orchestration shortlist'),
-          modelFamilies.text.map(ModelRow)
+          React.createElement(OrbSVG,{color:activeChatModel.color,thinking:true,size:22}),
+          React.createElement('div',{style:{display:'flex',gap:4,alignItems:'center'}},
+            [0,1,2].map(j=>React.createElement('div',{key:j,style:{width:8,height:8,borderRadius:'50%',background:activeChatModel.color,opacity:0.8,animation:`cortex-ai-typing-dot 1.2s ease-in-out ${j*0.2}s infinite`}})),
+          ),
+          React.createElement('span',{style:{fontSize:10,color:DL.mute,marginLeft:4}},`${activeChatModel.label} mengetik...`),
         ),
-        surface !== 'visual' && React.createElement('div', null,
-          React.createElement('div', { style:{ color:DL.text, fontSize:12, fontWeight:900, marginBottom:6 }}, 'Media lanes'),
-          modelFamilies.visual.slice(0, 2).map(ModelRow)
+        React.createElement('div',{ref:chatBottomRef}),
+      ),
+
+      // ── Input Bar ────────────────────────────────────────────────────────
+      React.createElement('div',{
+        style:{
+          borderRadius:22,padding:12,
+          background:'rgba(10,10,26,0.7)',
+          border:`1.5px solid ${isThinking?activeChatModel.color+'55':DL.glassBorder}`,
+          backdropFilter:'blur(24px) saturate(180%)',
+          WebkitBackdropFilter:'blur(24px) saturate(180%)',
+          boxShadow:`0 8px 32px rgba(0,0,0,0.25)${isThinking?`,0 0 0 3px ${activeChatModel.color}18`:''}`,
+          transition:'border-color 0.3s ease,box-shadow 0.3s ease',
+          animation:isThinking?'cortex-ai-card-glow-pulse 1.5s ease-in-out infinite':'cortex-ai-card-glow-pulse 4s ease-in-out infinite',
+        }
+      },
+        // File preview
+        uploadedFile&&React.createElement('div',{
+          style:{display:'flex',alignItems:'center',gap:10,marginBottom:10,padding:'8px 10px',borderRadius:14,background:`${activeChatModel.color}10`,border:`1px solid ${activeChatModel.color}30`}
+        },
+          uploadedFile.type==='image'&&React.createElement('img',{src:uploadedFile.dataUrl,style:{width:40,height:40,objectFit:'cover',borderRadius:10,border:`1px solid ${DL.glassBorder}`}}),
+          uploadedFile.type==='video'&&React.createElement('div',{style:{width:40,height:40,borderRadius:10,background:`${DL.accent}15`,display:'flex',alignItems:'center',justifyContent:'center'}},React.createElement(VideoIconSVG,{color:DL.accent})),
+          React.createElement('div',{style:{flex:1,minWidth:0}},
+            React.createElement('div',{style:{fontSize:11,fontWeight:700,color:DL.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},uploadedFile.name),
+            React.createElement('div',{style:{fontSize:9,color:DL.mute,marginTop:1}},uploadedFile.mimeType),
+          ),
+          React.createElement('button',{onClick:()=>setUploadedFile(null),style:{background:'none',border:'none',color:DL.mute,cursor:'pointer',fontSize:20,lineHeight:1,padding:'0 4px',flexShrink:0}},'×'),
         ),
-        modelFamilies.providers && modelFamilies.providers.featherless && React.createElement(B2Callout, { tone:'evidence', title:'Plan note' },
-          modelFamilies.providers.featherless.note)
-        ,
-        modelFamilies.providers && modelFamilies.providers.openai && React.createElement(B2Callout, { tone:'info', title:'OpenAI note' },
-          modelFamilies.providers.openai.note)
-      )
-    )
+        // Textarea
+        React.createElement('textarea',{
+          value:chatPrompt,
+          onChange:e=>setChatPrompt(e.target.value),
+          onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runChat();}},
+          placeholder:`Tanya ${activeChatModel.label}... (Enter kirim, Shift+Enter baris baru)`,
+          rows:3,
+          style:{
+            width:'100%',resize:'none',padding:'10px 12px',borderRadius:14,
+            border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)',
+            color:DL.text,outline:'none',fontSize:13,lineHeight:1.58,fontFamily:'inherit',marginBottom:10,
+            transition:'border-color 0.25s ease',
+          },
+        }),
+        // Action row
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}},
+          React.createElement('input',{ref:fileInputRef,type:'file',accept:'image/*,video/*',onChange:handleFileSelect,style:{display:'none'}}),
+          // Upload btn
+          React.createElement('button',{
+            onClick:()=>fileInputRef.current&&fileInputRef.current.click(),
+            title:'Upload gambar atau video',
+            style:{
+              width:40,height:40,borderRadius:13,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+              border:`1.5px solid ${uploadedFile?activeChatModel.color+'80':DL.glassBorder}`,
+              background:uploadedFile?`${activeChatModel.color}1a`:'rgba(255,255,255,0.06)',
+              transition:'all 0.25s ease',
+              animation:uploadedFile?'cortex-ai-upload-pulse 2s ease-in-out infinite':'none',
+            }
+          },
+            React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:uploadedFile?activeChatModel.color:'currentColor',strokeWidth:2,strokeLinecap:'round',style:{color:DL.sub}},
+              React.createElement('path',{d:'M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48'}),
+            ),
+          ),
+          // Clear
+          chatFeed.length>1&&React.createElement('button',{
+            onClick:()=>setChatFeed([{role:'assistant',model:'cortex',text:'Chat dikosongkan. Mulai percakapan baru! ✨'}]),
+            style:{height:40,padding:'0 12px',borderRadius:13,border:`1px solid ${DL.red}44`,background:`${DL.red}0e`,cursor:'pointer',color:DL.red,fontSize:11,fontWeight:700,flexShrink:0,display:'flex',alignItems:'center',gap:4},
+          },
+            React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('polyline',{points:'3 6 5 6 21 6'}),React.createElement('path',{d:'M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2'})),
+            'Clear',
+          ),
+          React.createElement('div',{style:{flex:1}}),
+          React.createElement('span',{style:{fontSize:9,color:DL.mute,flexShrink:0}},`${chatFeed.length}/${MAX_HISTORY}`),
+          // Send btn
+          React.createElement('button',{
+            onClick:runChat,disabled:!!composerBusy,
+            style:{
+              height:40,padding:'0 18px',borderRadius:13,border:'none',flexShrink:0,
+              background:composerBusy?'rgba(255,255,255,0.07)':`linear-gradient(135deg,${activeChatModel.color},${DL.accent})`,
+              color:composerBusy?DL.mute:'#fff',fontSize:13,fontWeight:800,
+              cursor:composerBusy?'not-allowed':'pointer',
+              boxShadow:composerBusy?'none':`0 6px 20px ${activeChatModel.color}44`,
+              transition:'all 0.3s ease',display:'flex',alignItems:'center',gap:7,
+              position:'relative',overflow:'hidden',
+            },
+          },
+            !composerBusy&&React.createElement('span',{
+              style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent)',animation:'cortex-ai-shimmer-btn 3s ease-in-out infinite',pointerEvents:'none'}
+            }),
+            composerBusy?React.createElement('span',null,'⏳ Thinking...'):React.createElement('span',null,'Kirim'),
+            !composerBusy&&React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('line',{x1:22,y1:2,x2:11,y2:13}),React.createElement('polygon',{points:'22 2 15 22 11 13 2 9 22 2'})),
+          ),
+        ),
+      ),
+    ),
+
+    // ════════════════════════════════════════════════════════════════════════
+    // VISUAL SURFACE
+    // ════════════════════════════════════════════════════════════════════════
+    surface==='visual'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+
+      // Header
+      React.createElement('div',{
+        style:{
+          padding:'20px',borderRadius:24,textAlign:'center',position:'relative',overflow:'hidden',
+          background:`linear-gradient(135deg,${activeImageModel.color}18,${DL.accentB}0a,transparent)`,
+          border:`1px solid ${activeImageModel.color}30`,
+        }
+      },
+        React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:200,height:200,borderRadius:'50%',background:`radial-gradient(circle,${activeImageModel.color}12,transparent 70%)`,pointerEvents:'none'}}),
+        React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',gap:10,marginBottom:6}},
+          imageModel==='video'?React.createElement(VideoIconSVG,{color:activeImageModel.color}):React.createElement(ImageSparkSVG,{color:activeImageModel.color}),
+          React.createElement('div',{style:{fontSize:20,fontWeight:900,color:DL.text}},imageModel==='video'?'Video Generation':'Image Generation'),
+        ),
+        React.createElement('div',{style:{fontSize:11,color:DL.mute}},`${activeImageModel.label} · ${activeImageModel.sub}`),
+      ),
+
+      // Model selector grid
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
+        imageModels.map(function(m){
+          const active=imageModel===m.id;
+          return React.createElement('button',{
+            key:m.id,onClick:()=>setImageModel(m.id),
+            style:{
+              display:'flex',alignItems:'center',gap:10,padding:'12px 14px',
+              borderRadius:18,border:`1.5px solid ${active?m.color:DL.glassBorder}`,
+              background:active?`${m.color}18`:'rgba(255,255,255,0.04)',
+              color:active?m.color:DL.sub,cursor:'pointer',outline:'none',
+              transition:'all 0.3s cubic-bezier(0.16,1,0.3,1)',
+              boxShadow:active?`0 0 22px ${m.color}28`:'none',
+              animation:active?'bubbly-breathe 4s ease-in-out infinite':'none',
+            },
+          },
+            m.id==='video'?React.createElement(VideoIconSVG,{color:m.color}):React.createElement(ImageSparkSVG,{color:m.color}),
+            React.createElement('div',{style:{textAlign:'left',flex:1,minWidth:0}},
+              React.createElement('div',{style:{fontSize:11,fontWeight:800,lineHeight:1.2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.label),
+              React.createElement('div',{style:{fontSize:9,opacity:0.65}},m.sub),
+            ),
+            active&&React.createElement('div',{style:{width:7,height:7,borderRadius:'50%',background:m.color,flexShrink:0,boxShadow:`0 0 10px ${m.color}`}}),
+          );
+        }),
+      ),
+
+      // Prompt + Generate
+      React.createElement('div',{
+        style:{
+          borderRadius:22,padding:14,
+          background:'rgba(10,10,26,0.7)',
+          border:`1px solid ${activeImageModel.color}28`,
+          backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',
+        }
+      },
+        React.createElement('textarea',{
+          value:imagePrompt,onChange:e=>setImagePrompt(e.target.value),
+          placeholder:imageModel==='video'?'Deskripsikan video: gerakan, suasana, gaya sinematik...':imageModel==='featherless-vision'?'Prompt yang ingin dianalisis secara visual...':'Deskripsikan gambar: komposisi, cahaya, warna, mood...',
+          rows:4,
+          style:{width:'100%',resize:'vertical',padding:'12px 14px',borderRadius:14,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)',color:DL.text,outline:'none',fontSize:13,lineHeight:1.55,fontFamily:'inherit',marginBottom:12},
+        }),
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:0}},
+          React.createElement('span',{style:{fontSize:9,color:DL.mute,flex:1}},`${imagePrompt.length} karakter`),
+          React.createElement('button',{
+            onClick:runImageGen,disabled:imageBusy||!imagePrompt.trim(),
+            style:{
+              flex:'0 0 auto',padding:'12px 24px',borderRadius:14,border:'none',
+              background:imageBusy?'rgba(255,255,255,0.06)':`linear-gradient(135deg,${activeImageModel.color},${DL.accent})`,
+              color:imageBusy?DL.mute:'#fff',fontSize:13,fontWeight:800,
+              cursor:(imageBusy||!imagePrompt.trim())?'not-allowed':'pointer',
+              transition:'all 0.3s ease',
+              boxShadow:imageBusy?'none':`0 8px 24px ${activeImageModel.color}44`,
+              animation:imageBusy?'cortex-ai-record-pulse 1s ease-in-out infinite':(imagePrompt.trim()?'cortex-ai-generate-pulse 3s ease-in-out infinite':'none'),
+              position:'relative',overflow:'hidden',
+              display:'flex',alignItems:'center',gap:8,
+            },
+          },
+            !imageBusy&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)',animation:'cortex-ai-shimmer-btn 3s ease-in-out infinite',pointerEvents:'none'}}),
+            imageBusy?'⏳ Generating...':(imageModel==='video'?React.createElement('span',null,'▶ Generate Video'):React.createElement('span',null,'✨ Generate Image')),
+          ),
+        ),
+      ),
+
+      // Results
+      imageResults.length>0&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+        imageResults.map(function(result,i){
+          if(result.kind==='image')return React.createElement('div',{
+            key:`${result.ts}-${i}`,
+            style:{borderRadius:22,overflow:'hidden',border:`1px solid ${DL.glassBorder}`,background:'rgba(0,0,0,0.3)',animation:'cortex-ai-result-iris 0.7s cubic-bezier(0.16,1,0.3,1) both'},
+          },
+            React.createElement('img',{src:result.src,alt:result.prompt,style:{width:'100%',display:'block'}}),
+            React.createElement('div',{style:{padding:'10px 12px',display:'flex',alignItems:'center',gap:8,background:'rgba(0,0,0,0.4)'}},
+              React.createElement('div',{style:{flex:1,fontSize:10,color:DL.mute,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},result.prompt),
+              React.createElement('button',{
+                onClick:()=>downloadMedia(result.src,`cortex-image-${Date.now()}.png`),
+                style:{display:'flex',alignItems:'center',gap:5,padding:'7px 13px',borderRadius:10,border:`1px solid ${DL.teal}44`,background:`${DL.teal}14`,color:DL.teal,fontSize:11,fontWeight:800,cursor:'pointer',flexShrink:0,animation:'cortex-ai-download-bounce 2.5s ease-in-out infinite'},
+              },
+                React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3})),
+                'Download',
+              ),
+            ),
+          );
+          if(result.kind==='video-op')return React.createElement('div',{
+            key:`${result.ts}-${i}`,
+            style:{padding:16,borderRadius:20,border:`1px solid ${DL.accent}44`,background:`${DL.accent}0a`,animation:'cortex-ai-msg-in 0.5s ease both'},
+          },
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:8}},
+              React.createElement(VideoIconSVG,{color:DL.accent}),
+              React.createElement('div',{style:{fontSize:12,fontWeight:800,color:DL.accent}},'Video Generation Started'),
+            ),
+            React.createElement('div',{style:{fontSize:11,color:DL.sub,lineHeight:1.5}},result.text),
+            React.createElement('div',{style:{marginTop:10,fontSize:9,color:DL.mute}},'Video generation berjalan async. Periksa operation status secara manual.'),
+          );
+          if(result.kind==='vision')return React.createElement('div',{key:`${result.ts}-${i}`,style:{padding:14,borderRadius:18,border:`1px solid ${DL.accent}33`,background:'rgba(255,255,255,0.04)'}},
+            React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.accent,marginBottom:6,letterSpacing:0.5}},'◆ VISION ANALYSIS'),
+            React.createElement('div',{style:{fontSize:12,color:DL.text,lineHeight:1.65}},result.text),
+          );
+          return React.createElement('div',{key:`${result.ts}-${i}`,style:{padding:12,borderRadius:16,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
+            React.createElement('div',{style:{fontSize:11,color:DL.red}},'⚠ '+result.text),
+          );
+        }),
+      ),
+    ),
+
+    // ════════════════════════════════════════════════════════════════════════
+    // AUDIO (TTS) SURFACE
+    // ════════════════════════════════════════════════════════════════════════
+    surface==='audio'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:12}},
+
+      // Hero: Mic + EQ
+      React.createElement('div',{
+        style:{
+          padding:'24px 20px',borderRadius:26,textAlign:'center',
+          background:`linear-gradient(160deg,${DL.teal}16,${DL.accent}0c,rgba(0,0,0,0))`,
+          border:`1px solid ${DL.teal}35`,
+          position:'relative',overflow:'hidden',
+        }
+      },
+        React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:160,height:160,borderRadius:'50%',background:`radial-gradient(circle,${DL.teal}10,transparent 65%)`,pointerEvents:'none'}}),
+        React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'center',gap:20,marginBottom:14}},
+          React.createElement(MicSVG,{active:ttsBusy,color:DL.teal,size:44}),
+          React.createElement('div',{style:{textAlign:'left'}},
+            React.createElement('div',{style:{fontSize:18,fontWeight:900,color:DL.text,lineHeight:1.1}},'Text to Speech'),
+            React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:3}},'Gemini 2.5 Flash TTS · Kore Voice'),
+            React.createElement('div',{style:{fontSize:10,color:DL.teal,marginTop:1,fontWeight:700}},ttsResult&&!ttsResult.error?'✓ Audio siap':ttsBusy?'🎙 Generating...':'WAV · 24kHz'),
+          ),
+        ),
+        // Equalizer bars
+        React.createElement('div',{style:{display:'flex',justifyContent:'center'}},
+          React.createElement(EqSVG,{active:ttsBusy||(ttsResult&&!ttsResult.error),color:DL.teal,bars:20}),
+        ),
+      ),
+
+      // Input + Generate
+      React.createElement('div',{
+        style:{borderRadius:22,padding:14,background:'rgba(10,10,26,0.7)',border:`1px solid ${DL.teal}28`,backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)'}
+      },
+        React.createElement('textarea',{
+          value:ttsText,onChange:e=>setTtsText(e.target.value),
+          placeholder:'Ketik teks yang ingin diubah menjadi suara... (bahasa Indonesia & Inggris)',
+          rows:5,
+          style:{width:'100%',resize:'vertical',padding:'12px 14px',borderRadius:14,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)',color:DL.text,outline:'none',fontSize:13,lineHeight:1.65,fontFamily:'inherit',marginBottom:12},
+        }),
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},
+          React.createElement('div',{style:{flex:1,minWidth:0}},
+            React.createElement('div',{style:{fontSize:9,color:DL.mute}},`${ttsText.length} karakter · ~${Math.max(1,Math.round(ttsText.split(/\s+/).filter(Boolean).length/140))} menit`),
+          ),
+          React.createElement('button',{
+            onClick:runTTS,disabled:ttsBusy||!ttsText.trim(),
+            style:{
+              padding:'12px 22px',borderRadius:14,border:'none',
+              background:ttsBusy?'rgba(255,255,255,0.06)':`linear-gradient(135deg,${DL.teal},${DL.accent})`,
+              color:ttsBusy?DL.mute:'#fff',fontSize:13,fontWeight:800,
+              cursor:(ttsBusy||!ttsText.trim())?'not-allowed':'pointer',
+              transition:'all 0.3s ease',
+              boxShadow:ttsBusy?'none':`0 8px 22px ${DL.teal}44`,
+              animation:ttsBusy?'cortex-ai-mic-pulse 1s ease-in-out infinite':'none',
+              display:'flex',alignItems:'center',gap:7,flexShrink:0,
+              position:'relative',overflow:'hidden',
+            },
+          },
+            !ttsBusy&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)',animation:'cortex-ai-shimmer-btn 3s ease-in-out infinite',pointerEvents:'none'}}),
+            React.createElement(MicSVG,{active:false,color:'rgba(255,255,255,0.9)',size:14}),
+            ttsBusy?'Generating...':'Generate Speech',
+          ),
+        ),
+      ),
+
+      // Audio result
+      ttsResult&&!ttsResult.error&&React.createElement('div',{
+        style:{borderRadius:22,overflow:'hidden',border:`1px solid ${DL.teal}44`,animation:'cortex-ai-result-iris 0.6s ease both'}
+      },
+        // Waveform decoration
+        React.createElement('div',{style:{padding:'16px 16px 12px',background:`linear-gradient(180deg,${DL.teal}12,transparent)`,display:'flex',justifyContent:'center'}},
+          React.createElement(EqSVG,{active:true,color:DL.teal,bars:28}),
+        ),
+        React.createElement('div',{style:{padding:'0 12px 12px'}},
+          React.createElement('audio',{controls:true,src:ttsResult.src,style:{width:'100%',borderRadius:12,display:'block',marginBottom:10}}),
+          React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}},
+            React.createElement('button',{
+              onClick:()=>downloadMedia(ttsResult.src,`cortex-tts-${Date.now()}.wav`),
+              style:{padding:'10px',borderRadius:13,border:`1px solid ${DL.teal}44`,background:`${DL.teal}12`,color:DL.teal,fontSize:11,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,animation:'cortex-ai-download-bounce 2.5s ease-in-out infinite'},
+            },
+              React.createElement('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3})),
+              'Download WAV',
+            ),
+            React.createElement('button',{
+              onClick:()=>downloadMedia(ttsResult.src,`cortex-tts-${Date.now()}.mp3`),
+              style:{padding:'10px',borderRadius:13,border:`1px solid ${DL.accent}44`,background:`${DL.accent}12`,color:DL.accent,fontSize:11,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6,animation:'cortex-ai-download-bounce 2.5s ease-in-out 0.3s infinite'},
+            },
+              React.createElement('svg',{width:13,height:13,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3})),
+              'Save MP3',
+            ),
+          ),
+        ),
+      ),
+      ttsResult&&ttsResult.error&&React.createElement('div',{style:{padding:14,borderRadius:18,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
+        React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'⚠ TTS Error'),
+        React.createElement('div',{style:{fontSize:11,color:DL.sub,marginTop:4}},ttsResult.error),
+      ),
+    ),
+
+    // ════════════════════════════════════════════════════════════════════════
+    // CONNECT SURFACE
+    // ════════════════════════════════════════════════════════════════════════
+    surface==='connect'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10}},
+
+      // Provider status grid
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
+        [
+          {title:'Gemini',sub:geminiReady?'Chat · Image · Video · TTS':'API key belum diisi',ready:geminiReady,color:DL.teal,icon:'✶'},
+          {title:'OpenAI',sub:openaiReady?'GPT-4.1 nano · GPT Image 2':'API key belum diisi',ready:openaiReady,color:DL.green,icon:'⬡'},
+          {title:'DeepSeek',sub:deepseekReady?'V4 Flash reasoning':'API key belum diisi',ready:deepseekReady,color:DL.accentB,icon:'◈'},
+          {title:'Featherless',sub:featherlessReady?'3 model multimodal':'API key belum diisi',ready:featherlessReady,color:DL.accent,icon:'◇'},
+        ].map(function(card,i){
+          return React.createElement('div',{key:i,
+            style:{
+              padding:14,borderRadius:20,position:'relative',overflow:'hidden',
+              border:`1px solid ${card.ready?card.color+'44':DL.glassBorder}`,
+              background:card.ready?`${card.color}0c`:'rgba(255,255,255,0.02)',
+              transition:'all 0.3s ease',
+              animation:card.ready?'cortex-ai-connect-glow 3s ease-in-out infinite':'none',
+            }},
+            // Ping ring
+            card.ready&&React.createElement('div',{style:{position:'absolute',top:12,right:12,width:8,height:8}},
+              React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:card.color}}),
+              React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:card.color,animation:'cortex-ai-status-ping 2s ease-out infinite'}}),
+            ),
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:7}},
+              React.createElement(OrbSVG,{color:card.ready?card.color:'#555',thinking:false,size:28}),
+              React.createElement('span',{style:{fontSize:12,fontWeight:900,color:card.ready?card.color:DL.text}},card.title),
+            ),
+            React.createElement('div',{style:{fontSize:9,color:DL.mute,lineHeight:1.4,marginBottom:6}},card.sub),
+            React.createElement(B1Badge,{color:card.ready?card.color:DL.gold},card.ready?'● Ready':'○ Pending'),
+          );
+        }),
+      ),
+
+      // Runtime card
+      React.createElement('div',{style:{padding:14,borderRadius:18,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:6}},
+          React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
+            React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:connColor}}),
+            runtimeInfo.status==='connected'&&React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:connColor,animation:'cortex-ai-status-ping 2s ease-out infinite'}}),
+          ),
+          React.createElement('span',{style:{fontSize:12,fontWeight:800,color:DL.text}},proxyBase?'Proxy mode aktif':directMode?'Direct browser mode':'Secret-safe mode'),
+          React.createElement(B1Badge,{color:connColor},runtimeInfo.status),
+        ),
+        React.createElement('div',{style:{fontSize:10,color:DL.mute,lineHeight:1.5}},runtimeInfo.message),
+      ),
+
+      // Probe
+      React.createElement('div',{style:{padding:12,borderRadius:18,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.03)'}},
+        React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.sub,marginBottom:8,letterSpacing:0.3}},'⚡ LIVE PROBE'),
+        React.createElement('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom: probeState.status!=='idle'?10:0}},
+          ['gemini','openai','deepseek','featherless','tts','image'].map(kind=>
+            React.createElement(B1Button,{key:kind,label:kind,variant:'secondary',onClick:()=>runProbe(kind),style:{fontSize:10,padding:'6px 11px',minWidth:0}})
+          ),
+          React.createElement(B1Button,{label:'Refresh',variant:'secondary',onClick:refreshRuntime,style:{fontSize:10,padding:'6px 11px',minWidth:0}}),
+        ),
+        probeState.status!=='idle'&&React.createElement('div',{style:{padding:'10px 12px',borderRadius:13,border:`1px solid ${probeState.status==='error'?DL.red+'44':probeState.status==='success'?DL.teal+'44':DL.accent+'44'}`,background:probeState.status==='error'?`${DL.red}0a`:probeState.status==='success'?`${DL.teal}0a`:`${DL.accent}0a`}},
+          React.createElement('div',{style:{fontSize:9,fontWeight:800,color:probeState.status==='error'?DL.red:probeState.status==='success'?DL.teal:DL.accent,marginBottom:3}},probeState.provider),
+          React.createElement('div',{style:{fontSize:11,color:DL.sub}},probeState.message),
+        ),
+      ),
+
+      // Settings shortcut
+      React.createElement('button',{
+        onClick:()=>onNavigate(21),
+        style:{width:'100%',padding:'14px',borderRadius:18,border:`1.5px solid ${DL.accent}44`,background:`${DL.accent}0e`,color:DL.accent,fontSize:13,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:10,transition:'all 0.25s ease',position:'relative',overflow:'hidden'},
+      },
+        React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},React.createElement('circle',{cx:12,cy:12,r:3}),React.createElement('path',{d:'M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83'})),
+        'Provider Settings',
+        React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('polyline',{points:'9 18 15 12 9 6'})),
+      ),
+    ),
   );
 }
-
 Object.assign(window, {
   PageQuiz, PageFlashcard, PageProgressDashboard, PageAIWorkspace,
 });
