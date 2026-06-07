@@ -1,0 +1,17 @@
+{
+  "name": "cortex-shell",
+  "version": "1.0.0",
+  "description": "Clean, reproducible shell template for CORTEX medical education platform.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-syntax-jsx": "^7.29.7",
+    "acorn": "^8.16.0"
+  }
+}
