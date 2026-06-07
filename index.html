@@ -18,7 +18,7 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     html, body { margin: 0; padding: 0; width: 100%; overflow: hidden; background: #060818; }
-    #root { position: fixed; inset: 0; overflow: hidden; background: #060818; }
+    #root { position: fixed; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background: #060818; }
     body {
       background: #060818;
       font-family: "SF Pro Display", "Inter", -apple-system, sans-serif;
@@ -2037,10 +2037,13 @@
   }
   .cortex-library-root {
     position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: auto !important;
+    height: auto !important;
     max-width: 100% !important;
-    overflow-x: clip !important;
     overflow: hidden !important;
   }
   .cortex-library-nav {
@@ -15934,9 +15937,7 @@ function CortexLibraryShell() {
     className:'cortex-library-root',
     style:{
       position:'fixed',
-      inset:0,
-      width:'100%',
-      height:'100%',
+      top:0,left:0,right:0,bottom:0,
       background:theme.colors.bg,
       color:theme.colors.text,
       overflow:'hidden',
@@ -16126,10 +16127,10 @@ function CortexLibraryShell() {
           flexDirection:mode === 'mobile' ? 'column' : 'row',
           alignItems:mode === 'mobile' ? 'stretch' : 'center',
           padding:mode === 'mobile'
-            ? '10px 12px 12px'
+            ? 'max(10px,env(safe-area-inset-top)) 12px 12px'
             : compactLayout
-              ? '10px 14px'
-              : '14px 22px',
+              ? 'max(10px,env(safe-area-inset-top)) 14px 10px'
+              : 'max(14px,env(safe-area-inset-top)) 22px 14px',
           gap:mode === 'mobile' ? 10 : compactLayout ? 6 : 0,
           borderBottom:`1px solid ${theme.colors.glassBorder}`,
           background:'rgba(10,10,26,0.42)',
