@@ -10151,6 +10151,9 @@ function PageAIWorkspace({ onNavigate }) {
     return Object.assign({},s,{feed:newFeed,title,updatedAt:Date.now()});
   });});}
   const [imageModel, setImageModel] = React.useState(function(){return lsGet('cx_image_model','gemini');});
+  const [videoAspectRatio, setVideoAspectRatio] = React.useState(function(){return lsGet('cx_vid_ar','16:9');});
+  const [videoDuration, setVideoDuration] = React.useState(function(){return lsGet('cx_vid_dur',5);});
+  const [imageQuality, setImageQuality] = React.useState(function(){return lsGet('cx_img_q','low');});
   const [chatPrompt, setChatPrompt] = React.useState('');
   const [composerBusy, setComposerBusy] = React.useState('');
   const [uploadedFile, setUploadedFile] = React.useState(null);
@@ -10183,6 +10186,30 @@ function PageAIWorkspace({ onNavigate }) {
   const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
   React.useEffect(function(){lsSet('cx_surface',surface);},[surface]);
   React.useEffect(function(){lsSet('cx_image_model',imageModel);},[imageModel]);
+  React.useEffect(function(){lsSet('cx_vid_ar',videoAspectRatio);},[videoAspectRatio]);
+  React.useEffect(function(){lsSet('cx_vid_dur',videoDuration);},[videoDuration]);
+  React.useEffect(function(){lsSet('cx_img_q',imageQuality);},[imageQuality]);
+
+  // Convert Gemini PCM audio (non-playable) into a proper WAV data URL
+  function pcmToWavDataUrl(base64pcm,mimeType){
+    try{
+      const rateM=(mimeType||'').match(/rate=(\d+)/);const sr=rateM?parseInt(rateM[1]):24000;
+      const ch=1,bps=16;
+      const bin=atob(base64pcm);const pcm=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++)pcm[i]=bin.charCodeAt(i);
+      const dSz=pcm.length,bRate=sr*ch*(bps/8),bAlign=ch*(bps/8);
+      const hdr=new ArrayBuffer(44);const v=new DataView(hdr);
+      const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+      ws(0,'RIFF');v.setUint32(4,36+dSz,true);ws(8,'WAVE');ws(12,'fmt ');
+      v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,ch,true);
+      v.setUint32(24,sr,true);v.setUint32(28,bRate,true);
+      v.setUint16(32,bAlign,true);v.setUint16(34,bps,true);
+      ws(36,'data');v.setUint32(40,dSz,true);
+      const wav=new Uint8Array(44+dSz);wav.set(new Uint8Array(hdr));wav.set(pcm,44);
+      let s='';for(let i=0;i<wav.length;i++)s+=String.fromCharCode(wav[i]);
+      return 'data:audio/wav;base64,'+btoa(s);
+    }catch(e){return null;}
+  }
   React.useEffect(function(){lsSet('cx_image_results',imageResults);},[imageResults]);
   React.useEffect(function(){lsSet('cx_tts_text',ttsText);},[ttsText]);
   React.useEffect(function(){lsSet('cx_tts_history',ttsHistory);},[ttsHistory]);
@@ -10483,8 +10510,25 @@ function PageAIWorkspace({ onNavigate }) {
     const prompt=String(imagePrompt||'').trim();if(!prompt)return;
     setImageBusy(true);
     try{
-      if(imageModel==='video'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/video/generate',body:{model:providerModel('gemini','video'),instances:[{prompt}],parameters:{aspectRatio:'16:9'}},directRoute:geminiVideoGenerateUrl(providerModel('gemini','video'))});const opName=p&&p.name?p.name:'queued';setImageResults(prev=>[{kind:'video-op',text:`Video generation started. Operation: ${opName}`,ts:Date.now()},...prev].slice(0,10));}
-      else if(imageModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',body:{model:providerModel('openai','image'),prompt,quality:providerImageQuality('openai'),size:'1024x1024'},directRoute:openaiImageUrl()});const data=extractGeneratedImageData(p);if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,10));}
+      if(imageModel==='video'){
+        const vModel=providerModel('gemini','video');
+        const p=await cortexRequest({
+          provider:'gemini',route:'/providers/gemini/video/generate',
+          body:{model:vModel,instances:[{prompt}],parameters:{aspectRatio:videoAspectRatio,durationSeconds:videoDuration}},
+          directRoute:geminiVideoGenerateUrl(vModel),
+          directBody:{model:vModel,instances:[{prompt}],parameters:{aspectRatio:videoAspectRatio,durationSeconds:videoDuration}},
+        });
+        const opName=p&&p.name?p.name:'queued';
+        setImageResults(prev=>[{kind:'video-op',text:`Video generation started.\n\nOperation: ${opName}\nAspect: ${videoAspectRatio} · Durasi: ${videoDuration}s`,ts:Date.now()},...prev].slice(0,10));
+      }
+      else if(imageModel==='openai'){
+        const oSize=imageQuality==='high'?'1024x1024':imageQuality==='medium'?'1024x1024':'1024x1024';
+        const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',
+          body:{model:providerModel('openai','image'),prompt,quality:imageQuality,size:oSize},
+          directRoute:openaiImageUrl()});
+        const data=extractGeneratedImageData(p);
+        if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,10));
+      }
       else if(imageModel==='featherless-vision'){const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:providerModel('featherless','balanced'),messages:[{role:'user',content:`Deskripsikan gambar dari prompt: ${prompt}`}],temperature:0.7,max_tokens:256},directRoute:featherlessChatUrl()});setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now()},...prev].slice(0,10));}
       else{
         const gImgModel=providerModel('gemini','image');
@@ -10505,8 +10549,24 @@ function PageAIWorkspace({ onNavigate }) {
   async function runTTS(){
     const text=String(ttsText||'').trim();if(!text)return;
     setTtsBusy(true);
-    try{const ttsModel=providerModel('gemini','tts');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/tts',body:{model:ttsModel,text,voiceName:'Kore'},directRoute:geminiGenerateUrl(ttsModel),directBody:{model:ttsModel,contents:[{parts:[{text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Kore'}}}}}});const id=extractInlineData(p,'audio');if(id)setTtsHistory(prev=>[{src:`data:${id.mimeType};base64,${id.data}`,mimeType:id.mimeType,label:text.slice(0,60)+(text.length>60?'...':''),ts:Date.now()},...prev].slice(0,20));else setTtsHistory(prev=>[{error:'TTS tidak mengembalikan data audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
-    catch(err){setTtsHistory(prev=>[{error:err&&err.message?err.message:'TTS gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
+    try{
+      const ttsModel=providerModel('gemini','tts');
+      const p=await cortexRequest({
+        provider:'gemini',route:'/providers/gemini/tts',
+        body:{model:ttsModel,text,voiceName:'Kore'},
+        directRoute:geminiGenerateUrl(ttsModel),
+        directBody:{model:ttsModel,contents:[{parts:[{text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Kore'}}}}},
+      });
+      const id=extractInlineData(p,'audio');
+      if(id){
+        // Gemini TTS returns raw PCM (audio/pcm;rate=24000) which browsers can't play
+        // Convert to WAV by adding proper RIFF/WAV header
+        const isPcm=id.mimeType.toLowerCase().includes('pcm')||id.mimeType.toLowerCase().includes('l16');
+        const src=isPcm?pcmToWavDataUrl(id.data,id.mimeType):('data:'+id.mimeType+';base64,'+id.data);
+        if(src)setTtsHistory(prev=>[{src,mimeType:'audio/wav',label:text.slice(0,60)+(text.length>60?'...':''),ts:Date.now()},...prev].slice(0,20));
+        else setTtsHistory(prev=>[{error:'Konversi audio gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
+      }else setTtsHistory(prev=>[{error:'TTS tidak mengembalikan data audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
+    }catch(err){setTtsHistory(prev=>[{error:err&&err.message?err.message:'TTS gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
     finally{setTtsBusy(false);}
   }
 
@@ -11125,6 +11185,51 @@ function PageAIWorkspace({ onNavigate }) {
           rows:4,
           style:{width:'100%',resize:'vertical',padding:'12px 14px',borderRadius:14,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)',color:DL.text,outline:'none',fontSize:13,lineHeight:1.55,fontFamily:'inherit',marginBottom:12},
         }),
+        // ── Video config (only when video model selected) ──────────────
+        imageModel==='video'&&React.createElement('div',{style:{marginBottom:14,display:'flex',flexDirection:'column',gap:10}},
+          // Aspect ratio
+          React.createElement('div',{},
+            React.createElement('div',{style:{fontSize:10,color:DL.mute,fontWeight:700,marginBottom:6,letterSpacing:0.5}},'ASPECT RATIO'),
+            React.createElement('div',{style:{display:'flex',gap:6,flexWrap:'wrap'}},
+              ['16:9','9:16','1:1','4:3'].map(function(ar){
+                const active=videoAspectRatio===ar;
+                return React.createElement('button',{key:ar,onClick:function(){setVideoAspectRatio(ar);},
+                  style:{padding:'6px 12px',borderRadius:10,border:`1px solid ${active?activeImageModel.color:DL.glassBorder}`,
+                    background:active?activeImageModel.color+'22':'transparent',color:active?activeImageModel.color:DL.sub,
+                    fontSize:10,fontWeight:active?800:600,cursor:'pointer',transition:'all 0.2s'}},
+                  ar);
+              }),
+            ),
+          ),
+          // Duration
+          React.createElement('div',{},
+            React.createElement('div',{style:{fontSize:10,color:DL.mute,fontWeight:700,marginBottom:6,letterSpacing:0.5}},'DURASI'),
+            React.createElement('div',{style:{display:'flex',gap:6}},
+              [5,8].map(function(d){
+                const active=videoDuration===d;
+                return React.createElement('button',{key:d,onClick:function(){setVideoDuration(d);},
+                  style:{padding:'6px 16px',borderRadius:10,border:`1px solid ${active?activeImageModel.color:DL.glassBorder}`,
+                    background:active?activeImageModel.color+'22':'transparent',color:active?activeImageModel.color:DL.sub,
+                    fontSize:10,fontWeight:active?800:600,cursor:'pointer',transition:'all 0.2s'}},
+                  d+'s');
+              }),
+            ),
+          ),
+        ),
+        // ── Image quality (for image models) ──────────────────────────
+        imageModel!=='video'&&React.createElement('div',{style:{marginBottom:14}},
+          React.createElement('div',{style:{fontSize:10,color:DL.mute,fontWeight:700,marginBottom:6,letterSpacing:0.5}},'KUALITAS OUTPUT'),
+          React.createElement('div',{style:{display:'flex',gap:6}},
+            [['low','Cepat · SD'],['medium','Balanced · HD'],['high','Lambat · FHD']].map(function(item){
+              const [q,label]=item;const active=imageQuality===q;
+              return React.createElement('button',{key:q,onClick:function(){setImageQuality(q);},
+                style:{flex:1,padding:'7px 4px',borderRadius:10,border:`1px solid ${active?activeImageModel.color:DL.glassBorder}`,
+                  background:active?activeImageModel.color+'22':'transparent',color:active?activeImageModel.color:DL.sub,
+                  fontSize:9,fontWeight:active?800:600,cursor:'pointer',transition:'all 0.2s',textAlign:'center'}},
+              label);
+            }),
+          ),
+        ),
         React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:0}},
           React.createElement('span',{style:{fontSize:9,color:DL.mute,flex:1}},`${imagePrompt.length} karakter`),
           React.createElement('button',{
@@ -11294,25 +11399,35 @@ function PageAIWorkspace({ onNavigate }) {
           recording&&React.createElement('div',{style:{fontSize:22,fontWeight:900,color:DL.red,fontVariantNumeric:'tabular-nums',letterSpacing:2}},fmtTime(recordTime)),
         ),
         // Recorded audio player + actions
-        recordedAudio&&!recording&&React.createElement('div',{style:{borderRadius:16,overflow:'hidden',border:`1px solid rgba(239,68,68,0.25)`,background:'rgba(239,68,68,0.05)'}},
-          React.createElement('div',{style:{padding:'10px 12px 6px'}},
-            React.createElement('div',{style:{fontSize:10,color:DL.red,fontWeight:700,marginBottom:6}},'⏺ Rekaman selesai · '+fmtTime(recordedAudio.duration||0)),
-            React.createElement('audio',{controls:true,src:recordedAudio.url,style:{width:'100%',borderRadius:10,display:'block',marginBottom:8}}),
+        recordedAudio&&!recording&&React.createElement('div',{style:{borderRadius:16,overflow:'hidden',border:`1px solid ${DL.red}30`,background:`${DL.red}06`}},
+          // Label bar
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,padding:'10px 14px 6px'}},
+            React.createElement('div',{style:{width:8,height:8,borderRadius:'50%',background:DL.red,flexShrink:0}}),
+            React.createElement('span',{style:{fontSize:10,color:DL.red,fontWeight:800,flex:1}},'Rekaman selesai · '+fmtTime(recordedAudio.duration||0)),
           ),
-          React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6,padding:'0 12px 12px'}},
+          // Audio player
+          React.createElement('div',{style:{padding:'0 12px 6px'}},
+            React.createElement('audio',{
+              controls:true,
+              src:recordedAudio.url,
+              style:{width:'100%',display:'block',outline:'none',accentColor:DL.red},
+            }),
+          ),
+          // Action row
+          React.createElement('div',{style:{display:'flex',gap:6,padding:'0 12px 12px'}},
             React.createElement('button',{
-              onClick:function(){downloadMedia(recordedAudio.url,`rekaman-${recordedAudio.ts}.${recordedAudio.mimeType.includes('mp4')?'mp4':'webm'}`);},
-              style:{padding:'9px 4px',borderRadius:11,border:`1px solid ${DL.red}44`,background:`${DL.red}12`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer'}
+              onClick:function(){downloadMedia(recordedAudio.url,'rekaman-'+recordedAudio.ts+'.'+(recordedAudio.mimeType.includes('mp4')?'mp4':'webm'));},
+              style:{flex:1,padding:'9px',borderRadius:11,border:`1px solid ${DL.red}44`,background:`${DL.red}12`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer'}
             },'⬇ Simpan'),
             React.createElement('button',{
               onClick:function(){sendRecordingToSTT(null);},
               disabled:recordSTTBusy,
-              style:{padding:'9px 4px',borderRadius:11,border:`1px solid ${DL.accent}44`,background:recordSTTBusy?'rgba(255,255,255,0.04)':`${DL.accent}12`,color:recordSTTBusy?DL.mute:DL.accent,fontSize:10,fontWeight:800,cursor:recordSTTBusy?'not-allowed':'pointer'}
+              style:{flex:1,padding:'9px',borderRadius:11,border:`1px solid ${DL.accent}44`,background:recordSTTBusy?'rgba(255,255,255,0.04)':`${DL.accent}12`,color:recordSTTBusy?DL.mute:DL.accent,fontSize:10,fontWeight:800,cursor:recordSTTBusy?'not-allowed':'pointer'}
             },recordSTTBusy?'⏳ STT...':'✦ Ke STT'),
             React.createElement('button',{
               onClick:function(){URL.revokeObjectURL(recordedAudio.url);setRecordedAudio(null);},
-              style:{padding:'9px 4px',borderRadius:11,border:`1px solid ${DL.mute}33`,background:'rgba(255,255,255,0.03)',color:DL.mute,fontSize:10,fontWeight:800,cursor:'pointer'}
-            },'✕ Hapus'),
+              style:{flex:'0 0 auto',padding:'9px 12px',borderRadius:11,border:`1px solid ${DL.mute}33`,background:'rgba(255,255,255,0.03)',color:DL.mute,fontSize:10,fontWeight:800,cursor:'pointer'}
+            },'✕'),
           ),
         ),
       ),
@@ -11401,21 +11516,33 @@ function PageAIWorkspace({ onNavigate }) {
             React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'⚠ TTS Error'),
             React.createElement('div',{style:{fontSize:10,color:DL.sub,marginTop:3}},item.error),
           );
-          return React.createElement('div',{key:idx,style:{borderRadius:18,overflow:'hidden',border:`1px solid ${DL.teal}33`,animation:'cortex-ai-result-iris 0.5s ease both'}},
-            React.createElement('div',{style:{padding:'10px 14px 6px',background:`linear-gradient(180deg,${DL.teal}10,transparent)`}},
-              React.createElement('div',{style:{fontSize:10,color:DL.teal,fontWeight:700,marginBottom:6,opacity:0.85}},item.label||'Audio TTS'),
-              React.createElement(EqSVG,{active:false,color:DL.teal,bars:20}),
-            ),
-            React.createElement('div',{style:{padding:'6px 12px 12px'}},
-              React.createElement('audio',{controls:true,src:item.src,style:{width:'100%',borderRadius:10,display:'block',marginBottom:8}}),
-              React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}},
-                React.createElement('button',{onClick:()=>downloadMedia(item.src,`cortex-tts-${item.ts||idx}.wav`),style:{padding:'8px 4px',borderRadius:11,border:`1px solid ${DL.teal}44`,background:`${DL.teal}12`,color:DL.teal,fontSize:10,fontWeight:800,cursor:'pointer'}},
-                  '⬇ WAV'),
-                React.createElement('button',{onClick:()=>downloadMedia(item.src,`cortex-tts-${item.ts||idx}.mp3`),style:{padding:'8px 4px',borderRadius:11,border:`1px solid ${DL.accent}44`,background:`${DL.accent}12`,color:DL.accent,fontSize:10,fontWeight:800,cursor:'pointer'}},
-                  '⬇ MP3'),
-                React.createElement('button',{onClick:function(){setTtsHistory(prev=>prev.filter((_,i)=>i!==idx));},style:{padding:'8px 4px',borderRadius:11,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer'}},
-                  '✕ Hapus'),
+          return React.createElement('div',{key:idx,style:{borderRadius:18,overflow:'hidden',border:`1px solid ${DL.teal}33`,background:'rgba(6,214,160,0.04)',animation:'cortex-ai-result-iris 0.5s ease both'}},
+            // Header
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'10px 14px 8px',background:`linear-gradient(90deg,${DL.teal}12,transparent)`}},
+              React.createElement('div',{style:{width:28,height:28,borderRadius:9,background:`${DL.teal}22`,border:`1px solid ${DL.teal}44`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+                React.createElement(MicSVG,{active:false,color:DL.teal,size:14}),
               ),
+              React.createElement('div',{style:{flex:1,minWidth:0}},
+                React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.teal,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},item.label||'Audio TTS'),
+                React.createElement('div',{style:{fontSize:9,color:DL.mute,marginTop:1}},'WAV · 24kHz · Kore'),
+              ),
+              React.createElement('button',{onClick:function(){setTtsHistory(prev=>prev.filter((_,i)=>i!==idx));},style:{padding:'5px 8px',borderRadius:8,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer',flexShrink:0}},'✕'),
+            ),
+            // Audio player
+            React.createElement('div',{style:{padding:'0 12px 6px'}},
+              React.createElement('audio',{
+                controls:true,src:item.src,
+                style:{width:'100%',display:'block',outline:'none',borderRadius:10,
+                  accentColor:DL.teal},
+              }),
+            ),
+            // Download row
+            React.createElement('div',{style:{display:'flex',gap:6,padding:'0 12px 12px'}},
+              React.createElement('button',{onClick:()=>downloadMedia(item.src,`cortex-tts-${item.ts||idx}.wav`),
+                style:{flex:1,padding:'8px',borderRadius:11,border:`1px solid ${DL.teal}44`,background:`${DL.teal}12`,color:DL.teal,fontSize:10,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:5}},
+                React.createElement('svg',{width:11,height:11,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},
+                  React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3})),
+                'Download WAV'),
             ),
           );
         }),
