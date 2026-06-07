@@ -10139,6 +10139,9 @@ function PageAIWorkspace({ onNavigate }) {
   });
   const [dragOver, setDragOver] = React.useState(false);
   const [sessionMenu, setSessionMenu] = React.useState(null);
+  const [modelPickerOpen, setModelPickerOpen] = React.useState(false);
+  const [videoOps, setVideoOps] = React.useState({});
+  const videoPollRef = React.useRef({});
   const activeSession=React.useMemo(function(){return chatSessions.find(function(s){return s.id===activeChatId;})||chatSessions[0];},[chatSessions,activeChatId]);
   const [chatModel, setChatModelRaw] = React.useState(function(){return activeSession?activeSession.model:'gemini';});
   const [chatFeed, setChatFeedRaw] = React.useState(function(){return activeSession?activeSession.feed:[];});
@@ -10518,8 +10521,13 @@ function PageAIWorkspace({ onNavigate }) {
           directRoute:geminiVideoGenerateUrl(vModel),
           directBody:{model:vModel,instances:[{prompt}],parameters:{aspectRatio:videoAspectRatio,durationSeconds:videoDuration}},
         });
-        const opName=p&&p.name?p.name:'queued';
-        setImageResults(prev=>[{kind:'video-op',text:`Video generation started.\n\nOperation: ${opName}\nAspect: ${videoAspectRatio} · Durasi: ${videoDuration}s`,ts:Date.now()},...prev].slice(0,10));
+        const opName=p&&p.name?p.name:null;
+        if(opName){
+          setImageResults(prev=>[{kind:'video-op',opName,ts:Date.now(),aspect:videoAspectRatio,duration:videoDuration},...prev].slice(0,10));
+          startVideoPolling(opName);
+        }else{
+          setImageResults(prev=>[{kind:'error',text:'Video generation gagal: tidak ada operation name.',ts:Date.now()},...prev].slice(0,10));
+        }
       }
       else if(imageModel==='openai'){
         const oSize=imageQuality==='high'?'1024x1024':imageQuality==='medium'?'1024x1024':'1024x1024';
@@ -10568,6 +10576,45 @@ function PageAIWorkspace({ onNavigate }) {
       }else setTtsHistory(prev=>[{error:'TTS tidak mengembalikan data audio.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));
     }catch(err){setTtsHistory(prev=>[{error:err&&err.message?err.message:'TTS gagal.',label:text.slice(0,60),ts:Date.now()},...prev].slice(0,20));}
     finally{setTtsBusy(false);}
+  }
+
+  // Poll Veo long-running operation for progress/completion
+  function startVideoPolling(opName){
+    const key=providerKey('gemini');
+    const startTime=Date.now();
+    setVideoOps(function(prev){return Object.assign({},prev,{[opName]:{status:'generating',done:false,videoUrl:null,error:null,startTime,elapsed:0}});});
+    if(videoPollRef.current[opName])clearInterval(videoPollRef.current[opName]);
+    videoPollRef.current[opName]=setInterval(async function(){
+      setVideoOps(function(prev){const op=prev[opName];if(!op||op.done)return prev;return Object.assign({},prev,{[opName]:Object.assign({},op,{elapsed:Date.now()-op.startTime})});});
+      if(!key&&!proxyBase)return;
+      try{
+        let p;
+        if(proxyBase){
+          const r=await fetch(`${proxyBase}/providers/gemini/operations?name=${encodeURIComponent(opName)}`,{method:'GET'});
+          if(r.ok)p=await r.json();
+        }else{
+          const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/${opName}?key=${encodeURIComponent(key)}`);
+          if(r.ok)p=await r.json();
+        }
+        if(!p)return;
+        if(p.done){
+          clearInterval(videoPollRef.current[opName]);
+          delete videoPollRef.current[opName];
+          // Extract video URI from various response shapes
+          let videoUrl=null;
+          try{
+            const resp=p.response||{};
+            const samples=(resp.generateVideoResponse||resp).generatedSamples||(resp.videos)||[];
+            const first=samples[0];
+            if(first)videoUrl=(first.video&&first.video.uri)||(first.uri)||first;
+          }catch(e){}
+          const errMsg=p.error?((p.error.message)||'Error'):null;
+          setVideoOps(function(prev){
+            return Object.assign({},prev,{[opName]:{status:errMsg?'error':'done',done:true,videoUrl,error:errMsg,startTime:prev[opName]&&prev[opName].startTime,elapsed:Date.now()-(prev[opName]&&prev[opName].startTime||Date.now())}});
+          });
+        }
+      }catch(e){}
+    },10000);
   }
 
   function handleSttFileSelect(e){
@@ -10780,119 +10827,157 @@ function PageAIWorkspace({ onNavigate }) {
     ),
   },
 
-    // ── STICKY HEADER (Tabs + Model Controls) ────────────────────────────────
-    React.createElement('div',{style:{
-      position:'sticky',top:0,zIndex:20,
-      margin:'0 -18px',padding:'8px 18px 12px',
-      background:'rgba(8,8,20,0.96)',
-      backdropFilter:'blur(22px)',WebkitBackdropFilter:'blur(22px)',
-      borderBottom:'1px solid rgba(255,255,255,0.07)',
-    }},
-      // ── Tab bar ────────────────────────────────────────────────────────
-      React.createElement('div',{style:{marginBottom:surface==='assistant'?10:0}},
-        React.createElement('div',{
-          style:{display:'flex',gap:0,borderRadius:18,overflow:'hidden',border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)'},
+    // ── COMPACT SINGLE-LINE STICKY BAR ────────────────────────────────────
+    React.createElement('div',{
+      style:{
+        position:'sticky',top:0,zIndex:20,
+        display:'flex',alignItems:'center',gap:8,
+        height:48,
+        margin:'0 -18px',padding:'0 10px',
+        background:'rgba(8,8,20,0.97)',
+        backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',
+        borderBottom:'1px solid rgba(255,255,255,0.08)',
+      },
+      // Close model picker when clicking outside
+      onClick:function(e){
+        if(modelPickerOpen&&!e.target.closest('[data-model-picker]'))setModelPickerOpen(false);
+      }
+    },
+
+      // ── MODEL PILL (assistant only) ─────────────────────────────────
+      surface==='assistant'&&React.createElement('div',{'data-model-picker':true,style:{position:'relative',flexShrink:0}},
+        React.createElement('button',{
+          onClick:function(e){e.stopPropagation();setModelPickerOpen(function(o){return !o;});},
+          style:{
+            display:'flex',alignItems:'center',gap:5,padding:'5px 8px 5px 5px',
+            borderRadius:14,border:`1.5px solid ${activeChatModel.color}50`,
+            background:modelPickerOpen?`${activeChatModel.color}28`:`${activeChatModel.color}14`,
+            cursor:'pointer',transition:'all 0.2s',outline:'none',
+            boxShadow:modelPickerOpen?`0 0 18px ${activeChatModel.color}40`:'none',
+          },
         },
-          ['assistant','visual','audio','connect'].map(function(s){
-            const active=surface===s;
-            const tabColors={assistant:DL.accent,visual:DL.teal,audio:'#f59e0b',connect:DL.accentB};
-            const tc=tabColors[s]||DL.accent;
+          React.createElement(OrbSVG,{color:activeChatModel.color,thinking:isThinking,size:22}),
+          React.createElement('span',{style:{fontSize:11,fontWeight:900,color:activeChatModel.color,maxWidth:72,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},activeChatModel.shortLabel),
+          React.createElement('svg',{width:10,height:10,viewBox:'0 0 10 10',style:{transform:modelPickerOpen?'rotate(180deg)':'none',transition:'transform 0.2s',flexShrink:0,opacity:0.7}},
+            React.createElement('path',{d:'M2 3.5L5 6.5L8 3.5',stroke:activeChatModel.color,strokeWidth:1.5,strokeLinecap:'round',fill:'none'}),
+          ),
+        ),
+        // ── Floating model picker popover ───────────────────────────────
+        modelPickerOpen&&React.createElement('div',{
+          'data-model-picker':true,
+          style:{
+            position:'absolute',top:'calc(100% + 8px)',left:0,zIndex:200,
+            background:'rgba(8,6,22,0.98)',backdropFilter:'blur(28px)',WebkitBackdropFilter:'blur(28px)',
+            border:`1px solid ${DL.glassBorder}`,borderRadius:20,padding:10,
+            display:'flex',gap:6,
+            boxShadow:`0 20px 60px rgba(0,0,0,0.7),0 0 0 1px ${activeChatModel.color}20`,
+          },
+        },
+          chatModels.map(function(m){
+            const active=chatModel===m.id;
             return React.createElement('button',{
-              key:s,
-              onClick:()=>setSurface(s),
+              key:m.id,
+              onClick:function(e){e.stopPropagation();setChatModel(m.id);setModelPickerOpen(false);},
               style:{
-                flex:1,padding:'10px 4px',border:'none',cursor:'pointer',
-                background:active?`${tc}18`:'transparent',
-                color:active?tc:DL.mute,
-                fontWeight:active?800:500,fontSize:11,
-                borderBottom:active?`2px solid ${tc}`:'2px solid transparent',
-                transition:'all 0.3s cubic-bezier(0.16,1,0.3,1)',
-                display:'flex',flexDirection:'column',alignItems:'center',gap:2,
+                display:'flex',flexDirection:'column',alignItems:'center',gap:5,
+                padding:'9px 10px',borderRadius:14,cursor:'pointer',outline:'none',
+                border:active?`1.5px solid ${m.color}`:`1px solid ${DL.glassBorder}`,
+                background:active?`${m.color}22`:'rgba(255,255,255,0.04)',
+                opacity:m.ready?1:0.4,transition:'all 0.22s',
+                boxShadow:active?`0 0 18px ${m.color}44`:'none',
               },
             },
-              React.createElement('span',{style:{fontSize:16,lineHeight:1}},tabIcons[s]),
-              React.createElement('span',{style:{fontSize:9,letterSpacing:0.3,textTransform:'uppercase'}},s),
+              React.createElement(OrbSVG,{color:m.color,thinking:false,size:28}),
+              React.createElement('div',{style:{fontSize:9,fontWeight:active?900:600,color:active?m.color:DL.mute,whiteSpace:'nowrap'}},m.shortLabel),
+              active&&React.createElement('div',{style:{width:16,height:2,borderRadius:1,background:m.color}}),
             );
           }),
         ),
       ),
-      // ── Model controls (assistant only) ────────────────────────────────
-      surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10}},
-        // Active Model Hero
-        React.createElement('div',{
-          style:{
-            display:'flex',alignItems:'center',gap:14,padding:'12px 16px',borderRadius:20,
-            background:`linear-gradient(135deg,${activeChatModel.color}14,rgba(0,0,0,0.0))`,
-            border:`1px solid ${activeChatModel.color}30`,
-            position:'relative',overflow:'hidden',
-          }
-        },
-          React.createElement('div',{style:{position:'absolute',right:-20,top:-20,width:100,height:100,borderRadius:'50%',background:`radial-gradient(circle,${activeChatModel.color}18,transparent 70%)`,pointerEvents:'none'}}),
-          React.createElement(OrbSVG,{color:activeChatModel.color,thinking:isThinking,size:46}),
-          React.createElement('div',{style:{flex:1,minWidth:0}},
-            React.createElement('div',{style:{fontSize:13,fontWeight:900,color:activeChatModel.color,letterSpacing:0.3}},activeChatModel.label),
-            React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:1}},`via ${activeChatModel.provider} · History ${chatFeed.length}/${MAX_HISTORY}`),
-          ),
-          !activeChatModel.ready&&React.createElement(B1Badge,{color:DL.gold},'Key Pending'),
-          activeChatModel.ready&&React.createElement(B1Badge,{color:activeChatModel.color},'Ready'),
-        ),
-        // Model Selector Strip
-        React.createElement('div',{
-          className:'hide-scrollbar',
-          style:{display:'flex',gap:6,overflowX:'auto',paddingBottom:2,paddingTop:1},
-        },
-          chatModels.map(function(m,idx){
-            const active=chatModel===m.id;
-            return React.createElement('button',{
-              key:m.id,
-              onClick:()=>setChatModel(m.id),
+
+      // ── DIVIDER ────────────────────────────────────────────────────
+      surface==='assistant'&&React.createElement('div',{style:{width:1,height:22,background:'rgba(255,255,255,0.09)',flexShrink:0}}),
+
+      // ── SESSION STRIP (assistant only, takes flex space) ───────────
+      surface==='assistant'&&React.createElement('div',{
+        className:'hide-scrollbar',
+        style:{flex:1,display:'flex',alignItems:'center',gap:5,overflowX:'auto',minWidth:0},
+      },
+        [...chatSessions].sort(function(a,b){return (b.pinned?1:0)-(a.pinned?1:0)||(a.createdAt-b.createdAt);}).map(function(sess){
+          const isActive=sess.id===activeChatId;
+          const mDef=chatModels.find(function(m){return m.id===sess.model;})||chatModels[0];
+          const showMenu=sessionMenu===sess.id;
+          return React.createElement('div',{key:sess.id,style:{position:'relative',flexShrink:0}},
+            React.createElement('button',{
+              onClick:function(){switchSession(sess.id);},
               style:{
-                flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:4,
-                padding:'8px 12px',borderRadius:16,cursor:'pointer',outline:'none',
-                border:active?`1.5px solid ${m.color}`:`1px solid ${DL.glassBorder}`,
-                background:active?`${m.color}1c`:'rgba(255,255,255,0.04)',
-                transition:'all 0.28s cubic-bezier(0.16,1,0.3,1)',
-                opacity:m.ready?1:0.45,
-                boxShadow:active?`0 0 16px ${m.color}28,inset 0 0 0 1px ${m.color}18`:'none',
-                animation:active&&idx===0?'cortex-ai-model-in 0.3s ease both':'none',
-                minWidth:62,
+                display:'flex',alignItems:'center',gap:4,padding:'4px 8px 4px 7px',borderRadius:10,
+                border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.08)',
+                background:isActive?mDef.color+'22':'rgba(255,255,255,0.04)',
+                cursor:'pointer',transition:'all 0.2s',color:isActive?mDef.color:DL.sub,
+                outline:'none',maxWidth:100,
               },
             },
-              React.createElement(OrbSVG,{color:m.color,thinking:false,size:28}),
-              React.createElement('div',{style:{fontSize:9,fontWeight:active?800:600,color:active?m.color:DL.mute,lineHeight:1.2,textAlign:'center',maxWidth:58,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},m.shortLabel),
-            );
-          }),
-        ),
-        // Session Strip
-        React.createElement('div',{style:{display:'flex',gap:6,alignItems:'center',overflowX:'auto',paddingBottom:2},className:'hide-scrollbar'},
-          React.createElement('div',{style:{display:'flex',gap:5,flex:1,overflowX:'auto'},className:'hide-scrollbar'},
-            [...chatSessions].sort(function(a,b){return (b.pinned?1:0)-(a.pinned?1:0)||(a.createdAt-b.createdAt);}).map(function(sess){
-              const isActive=sess.id===activeChatId;
-              const mDef=chatModels.find(function(m){return m.id===sess.model;})||chatModels[0];
-              const showMenu=sessionMenu===sess.id;
-              return React.createElement('div',{key:sess.id,style:{position:'relative',flexShrink:0}},
-                React.createElement('button',{
-                  onClick:function(){switchSession(sess.id);},
-                  style:{display:'flex',alignItems:'center',gap:5,padding:'5px 9px 5px 7px',borderRadius:12,border:isActive?`1.5px solid ${mDef.color}`:'1px solid rgba(255,255,255,0.1)',background:isActive?mDef.color+'1e':'rgba(255,255,255,0.05)',cursor:'pointer',transition:'all 0.2s',minWidth:0,maxWidth:120,color:isActive?mDef.color:DL.sub,outline:'none'}
-                },
-                  sess.pinned&&React.createElement('span',{style:{fontSize:9,flexShrink:0}},'📌'),
-                  React.createElement('span',{style:{fontSize:9,fontWeight:isActive?800:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:70}},sess.title),
-                  React.createElement('span',{style:{fontSize:8,opacity:0.6,flexShrink:0}},sess.feed.length),
-                ),
-                showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:100,background:'rgba(14,12,30,0.97)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 8px 24px rgba(0,0,0,0.5)',backdropFilter:'blur(16px)'}},
-                  React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},sess.pinned?'📌 Unpin':'📌 Pin Chat'),
-                  React.createElement('button',{onClick:function(){deleteSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left',display:'flex',alignItems:'center',gap:6}},'🗑 Hapus'),
-                ),
-              );
-            }),
-          ),
-          React.createElement('button',{
-            onClick:createSession,
-            disabled:chatSessions.length>=10,
-            title:`${chatSessions.length}/10 sesi`,
-            style:{flexShrink:0,width:28,height:28,borderRadius:9,border:`1px dashed ${chatSessions.length>=10?DL.mute:DL.accent+'66'}`,background:'transparent',color:chatSessions.length>=10?DL.mute:DL.accent,fontSize:18,fontWeight:300,cursor:chatSessions.length>=10?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1}
-          },'+'),
-        ),
+              sess.pinned&&React.createElement('span',{style:{fontSize:8,flexShrink:0}},'📌'),
+              React.createElement('span',{style:{fontSize:9,fontWeight:isActive?800:600,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:60}},sess.title),
+              React.createElement('span',{style:{fontSize:8,opacity:0.5,flexShrink:0,marginLeft:2}},sess.feed.length),
+            ),
+            showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:300,background:'rgba(10,8,26,0.98)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 12px 36px rgba(0,0,0,0.6)',backdropFilter:'blur(20px)'}},
+              React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left'}},sess.pinned?'📌 Unpin':'📌 Pin'),
+              React.createElement('button',{onClick:function(){deleteSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:DL.red,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left'}},'🗑 Hapus'),
+            ),
+          );
+        }),
+        React.createElement('button',{
+          onClick:createSession,disabled:chatSessions.length>=10,
+          style:{flexShrink:0,width:22,height:22,borderRadius:7,border:`1px dashed ${chatSessions.length>=10?DL.mute:DL.accent+'66'}`,background:'transparent',color:chatSessions.length>=10?DL.mute:DL.accent,fontSize:14,fontWeight:400,cursor:chatSessions.length>=10?'not-allowed':'pointer',display:'flex',alignItems:'center',justifyContent:'center',lineHeight:1,flexShrink:0},
+        },'+'),
+      ),
+
+      // ── NON-ASSISTANT spacer ────────────────────────────────────────
+      surface!=='assistant'&&React.createElement('div',{style:{flex:1}}),
+
+      // ── HISTORY + STATUS DOT (assistant only) ──────────────────────
+      surface==='assistant'&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexShrink:0}},
+        React.createElement('span',{style:{fontSize:9,color:DL.mute,fontVariantNumeric:'tabular-nums',letterSpacing:0.3}},chatFeed.length+'/'+MAX_HISTORY),
+        React.createElement('div',{style:{
+          width:7,height:7,borderRadius:'50%',flexShrink:0,
+          background:activeChatModel.ready?activeChatModel.color:DL.gold,
+          boxShadow:`0 0 8px ${activeChatModel.ready?activeChatModel.color:DL.gold}`,
+          animation:isThinking?'cortex-ai-orb-breathing 0.8s ease-in-out infinite':'none',
+        }}),
+      ),
+
+      // ── DIVIDER ────────────────────────────────────────────────────
+      React.createElement('div',{style:{width:1,height:22,background:'rgba(255,255,255,0.09)',flexShrink:0}}),
+
+      // ── TAB ICON BUTTONS (always visible, right side) ──────────────
+      React.createElement('div',{style:{display:'flex',gap:2,flexShrink:0}},
+        ['assistant','visual','audio','connect'].map(function(s){
+          const active=surface===s;
+          const tabColors={assistant:DL.accent,visual:DL.teal,audio:'#f59e0b',connect:DL.accentB};
+          const tc=tabColors[s]||DL.accent;
+          return React.createElement('button',{
+            key:s,onClick:function(){setSurface(s);if(s!=='assistant')setModelPickerOpen(false);},
+            title:s.charAt(0).toUpperCase()+s.slice(1),
+            style:{
+              width:34,height:34,borderRadius:10,border:'none',cursor:'pointer',
+              background:active?`${tc}20`:'transparent',
+              position:'relative',display:'flex',alignItems:'center',justifyContent:'center',
+              transition:'all 0.22s cubic-bezier(0.16,1,0.3,1)',outline:'none',
+              boxShadow:active?`0 0 14px ${tc}30`:'none',
+            },
+          },
+            React.createElement('span',{
+              style:{fontSize:16,lineHeight:1,
+                filter:active?`drop-shadow(0 0 5px ${tc})`:'grayscale(0.7)',
+                opacity:active?1:0.45,
+                transition:'all 0.22s',
+              },
+            },tabIcons[s]),
+            active&&React.createElement('div',{style:{position:'absolute',bottom:3,left:'50%',transform:'translateX(-50%)',width:14,height:2,borderRadius:1,background:tc,boxShadow:`0 0 6px ${tc}`}}),
+          );
+        }),
       ),
     ),
 
@@ -11271,17 +11356,58 @@ function PageAIWorkspace({ onNavigate }) {
               ),
             ),
           );
-          if(result.kind==='video-op')return React.createElement('div',{
-            key:`${result.ts}-${i}`,
-            style:{padding:16,borderRadius:20,border:`1px solid ${DL.accent}44`,background:`${DL.accent}0a`,animation:'cortex-ai-msg-in 0.5s ease both'},
-          },
-            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:8}},
-              React.createElement(VideoIconSVG,{color:DL.accent}),
-              React.createElement('div',{style:{fontSize:12,fontWeight:800,color:DL.accent}},'Video Generation Started'),
-            ),
-            React.createElement('div',{style:{fontSize:11,color:DL.sub,lineHeight:1.5}},result.text),
-            React.createElement('div',{style:{marginTop:10,fontSize:9,color:DL.mute}},'Video generation berjalan async. Periksa operation status secara manual.'),
-          );
+          if(result.kind==='video-op'){
+            const op=videoOps[result.opName]||{};
+            const elapsed=op.elapsed||0;
+            const elapsedStr=Math.floor(elapsed/60000)+'m '+Math.floor((elapsed%60000)/1000)+'s';
+            const progressPct=Math.min(95,Math.round((elapsed/120000)*100));
+            const isDone=op.done&&!op.error;
+            const isErr=op.error;
+            const isGenerating=op.status==='generating'||(!op.done&&op.status);
+            return React.createElement('div',{
+              key:`${result.ts}-${i}`,
+              style:{borderRadius:22,overflow:'hidden',border:`1px solid ${isDone?DL.teal:isErr?DL.red:DL.accent}40`,background:`linear-gradient(135deg,${isDone?DL.teal:isErr?DL.red:DL.accent}0a,rgba(0,0,0,0))`,animation:'cortex-ai-msg-in 0.5s ease both'},
+            },
+              // Header
+              React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,padding:'14px 16px 10px'}},
+                React.createElement('div',{style:{width:36,height:36,borderRadius:12,background:isDone?`${DL.teal}22`:isErr?`${DL.red}22`:`${DL.accent}22`,border:`1px solid ${isDone?DL.teal:isErr?DL.red:DL.accent}44`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,animation:isGenerating?'cortex-ai-record-pulse 2s ease-in-out infinite':'none'}},
+                  React.createElement(VideoIconSVG,{color:isDone?DL.teal:isErr?DL.red:DL.accent}),
+                ),
+                React.createElement('div',{style:{flex:1,minWidth:0}},
+                  React.createElement('div',{style:{fontSize:12,fontWeight:900,color:isDone?DL.teal:isErr?DL.red:DL.text}},
+                    isDone?'✓ Video Siap!':isErr?'✕ Gagal':isGenerating?'Generating Video...':'Video Queued'),
+                  React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:2}},
+                    `${result.aspect||'16:9'} · ${result.duration||5}s`+(isGenerating?` · ${elapsedStr}`:'')),
+                ),
+                isGenerating&&React.createElement('div',{style:{fontSize:11,color:DL.accent,fontWeight:800,fontVariantNumeric:'tabular-nums',flexShrink:0}},elapsedStr),
+              ),
+              // Progress bar (while generating)
+              isGenerating&&React.createElement('div',{style:{padding:'0 16px 12px'}},
+                React.createElement('div',{style:{height:4,borderRadius:4,background:'rgba(255,255,255,0.08)',overflow:'hidden',marginBottom:6}},
+                  React.createElement('div',{style:{height:'100%',width:`${progressPct}%`,borderRadius:4,background:`linear-gradient(90deg,${DL.accent},${DL.teal})`,transition:'width 2s ease',boxShadow:`0 0 10px ${DL.accent}88`}}),
+                ),
+                React.createElement('div',{style:{fontSize:9,color:DL.mute}},`Estimasi ~1-4 menit · Operation: ${(result.opName||'').slice(0,40)}${(result.opName||'').length>40?'...':''}`),
+              ),
+              // Video player (when done)
+              isDone&&op.videoUrl&&React.createElement('div',{style:{padding:'0 12px 12px'}},
+                React.createElement('video',{controls:true,src:op.videoUrl,style:{width:'100%',borderRadius:14,display:'block',maxHeight:300,background:'#000',marginBottom:8}}),
+                React.createElement('button',{onClick:function(){downloadMedia(op.videoUrl,'cortex-video-'+result.ts+'.mp4');},
+                  style:{width:'100%',padding:'10px',borderRadius:12,border:`1px solid ${DL.teal}44`,background:`${DL.teal}12`,color:DL.teal,fontSize:11,fontWeight:800,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:6}},
+                  React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'7 10 12 15 17 10'}),React.createElement('line',{x1:12,y1:15,x2:12,y2:3})),
+                  'Download Video MP4'),
+              ),
+              // No video URL when done (URI not accessible)
+              isDone&&!op.videoUrl&&React.createElement('div',{style:{padding:'0 16px 14px',fontSize:10,color:DL.sub}},
+                'Video selesai dibuat. URI tersedia tapi tidak dapat diakses langsung dari browser.'),
+              // Error
+              isErr&&React.createElement('div',{style:{padding:'0 16px 14px',fontSize:11,color:DL.red}},op.error),
+              // Not yet started polling
+              !op.status&&React.createElement('div',{style:{padding:'0 16px 12px',fontSize:10,color:DL.mute}},
+                React.createElement('button',{onClick:function(){startVideoPolling(result.opName);},style:{padding:'8px 14px',borderRadius:11,border:`1px solid ${DL.accent}44`,background:`${DL.accent}12`,color:DL.accent,fontSize:10,fontWeight:800,cursor:'pointer'}},
+                '▶ Mulai Tracking Progress'),
+              ),
+            );
+          }
           if(result.kind==='vision')return React.createElement('div',{key:`${result.ts}-${i}`,style:{padding:14,borderRadius:18,border:`1px solid ${DL.accent}33`,background:'rgba(255,255,255,0.04)'}},
             React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.accent,marginBottom:6,letterSpacing:0.5}},'◆ VISION ANALYSIS'),
             React.createElement('div',{style:{fontSize:12,color:DL.text,lineHeight:1.65}},result.text),
