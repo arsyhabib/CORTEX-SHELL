@@ -10065,21 +10065,23 @@ function PageProgressDashboard({ onNavigate, contentIndex, visualManifest }) {
 }
 
 function PageAIWorkspace({ onNavigate }) {
-  const MAX_HISTORY = 20;
-  const [surface, setSurface] = React.useState('assistant');
-  const [chatModel, setChatModel] = React.useState('gemini');
-  const [imageModel, setImageModel] = React.useState('gemini');
+  const MAX_HISTORY = 100;
+  function lsGet(key,def){try{const v=localStorage.getItem(key);return v!==null?JSON.parse(v):def;}catch(e){return def;}}
+  function lsSet(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch(e){}}
+  const [surface, setSurface] = React.useState(function(){return lsGet('cx_surface','assistant');});
+  const [chatModel, setChatModel] = React.useState(function(){return lsGet('cx_chat_model','gemini');});
+  const [imageModel, setImageModel] = React.useState(function(){return lsGet('cx_image_model','gemini');});
   const [chatPrompt, setChatPrompt] = React.useState('');
-  const [chatFeed, setChatFeed] = React.useState([
-    { role:'assistant', model:'cortex', text:'Halo! Saya CORTEX AI Workspace. ✨\n\nPilih model di atas, lalu kirim pesan, upload gambar atau video, atau buka tab Visual & Audio untuk generate konten.' },
-  ]);
+  const [chatFeed, setChatFeed] = React.useState(function(){
+    return lsGet('cx_chat_feed',[{ role:'assistant', model:'cortex', text:'Halo! Saya CORTEX AI Workspace. ✨\n\nPilih model di atas, lalu kirim pesan, upload gambar atau video, atau buka tab Visual & Audio untuk generate konten.' }]);
+  });
   const [composerBusy, setComposerBusy] = React.useState('');
   const [uploadedFile, setUploadedFile] = React.useState(null);
   const [imagePrompt, setImagePrompt] = React.useState('');
-  const [imageResults, setImageResults] = React.useState([]);
+  const [imageResults, setImageResults] = React.useState(function(){return lsGet('cx_image_results',[]);});
   const [imageBusy, setImageBusy] = React.useState(false);
-  const [ttsText, setTtsText] = React.useState('');
-  const [ttsResult, setTtsResult] = React.useState(null);
+  const [ttsText, setTtsText] = React.useState(function(){return lsGet('cx_tts_text','');});
+  const [ttsResult, setTtsResult] = React.useState(function(){return lsGet('cx_tts_result',null);});
   const [ttsBusy, setTtsBusy] = React.useState(false);
   const [runtimeInfo, setRuntimeInfo] = React.useState({ status:'idle', catalog:null, message:'Belum ada proxy yang dicek.', health:null });
   const [probeState, setProbeState] = React.useState({ status:'idle', provider:'', message:'Belum ada live probe.' });
@@ -10087,6 +10089,13 @@ function PageAIWorkspace({ onNavigate }) {
   const fileInputRef = React.useRef(null);
 
   const runtime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
+  React.useEffect(function(){lsSet('cx_surface',surface);},[surface]);
+  React.useEffect(function(){lsSet('cx_chat_model',chatModel);},[chatModel]);
+  React.useEffect(function(){lsSet('cx_image_model',imageModel);},[imageModel]);
+  React.useEffect(function(){lsSet('cx_chat_feed',chatFeed);},[chatFeed]);
+  React.useEffect(function(){lsSet('cx_image_results',imageResults);},[imageResults]);
+  React.useEffect(function(){lsSet('cx_tts_text',ttsText);},[ttsText]);
+  React.useEffect(function(){if(ttsResult&&!ttsResult.error)lsSet('cx_tts_result',ttsResult);else if(ttsResult===null)lsSet('cx_tts_result',null);},[ttsResult]);
   const proxyBase = React.useMemo(function(){ return String(runtime.proxyUrl||'').replace(/\/+$/,''); },[runtime.proxyUrl]);
   const directMode = React.useMemo(function(){
     const m=String(runtime.transportMode||'auto');
@@ -10217,11 +10226,11 @@ function PageAIWorkspace({ onNavigate }) {
     const prompt=String(imagePrompt||'').trim();if(!prompt)return;
     setImageBusy(true);
     try{
-      if(imageModel==='video'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/video/generate',body:{model:providerModel('gemini','video'),instances:[{prompt}],parameters:{aspectRatio:'16:9'}},directRoute:geminiVideoGenerateUrl(providerModel('gemini','video'))});const opName=p&&p.name?p.name:'queued';setImageResults(prev=>[{kind:'video-op',text:`Video generation started. Operation: ${opName}`,ts:Date.now()},...prev].slice(0,6));}
-      else if(imageModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',body:{model:providerModel('openai','image'),prompt,quality:providerImageQuality('openai'),size:'1024x1024'},directRoute:openaiImageUrl()});const data=extractGeneratedImageData(p);if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,6));}
-      else if(imageModel==='featherless-vision'){const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:providerModel('featherless','balanced'),messages:[{role:'user',content:`Deskripsikan gambar dari prompt: ${prompt}`}],temperature:0.7,max_tokens:256},directRoute:featherlessChatUrl()});setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now()},...prev].slice(0,6));}
-      else{const gImgModel=providerModel('gemini','image');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/image',body:{model:gImgModel,prompt},directRoute:geminiImagePredictUrl(gImgModel),directBody:{instances:[{prompt}],parameters:{sampleCount:1}}});const id=extractGeneratedImageData(p);if(id)setImageResults(prev=>[{kind:'image',src:id.src,prompt,ts:Date.now()},...prev].slice(0,6));}
-    }catch(err){setImageResults(prev=>[{kind:'error',text:err&&err.message?err.message:'Generation gagal.',ts:Date.now()},...prev].slice(0,6));}
+      if(imageModel==='video'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/video/generate',body:{model:providerModel('gemini','video'),instances:[{prompt}],parameters:{aspectRatio:'16:9'}},directRoute:geminiVideoGenerateUrl(providerModel('gemini','video'))});const opName=p&&p.name?p.name:'queued';setImageResults(prev=>[{kind:'video-op',text:`Video generation started. Operation: ${opName}`,ts:Date.now()},...prev].slice(0,10));}
+      else if(imageModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',body:{model:providerModel('openai','image'),prompt,quality:providerImageQuality('openai'),size:'1024x1024'},directRoute:openaiImageUrl()});const data=extractGeneratedImageData(p);if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,10));}
+      else if(imageModel==='featherless-vision'){const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:providerModel('featherless','balanced'),messages:[{role:'user',content:`Deskripsikan gambar dari prompt: ${prompt}`}],temperature:0.7,max_tokens:256},directRoute:featherlessChatUrl()});setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now()},...prev].slice(0,10));}
+      else{const gImgModel=providerModel('gemini','image');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/image',body:{model:gImgModel,prompt},directRoute:geminiImagePredictUrl(gImgModel),directBody:{instances:[{prompt}],parameters:{sampleCount:1}}});const id=extractGeneratedImageData(p);if(id)setImageResults(prev=>[{kind:'image',src:id.src,prompt,ts:Date.now()},...prev].slice(0,10));}
+    }catch(err){setImageResults(prev=>[{kind:'error',text:err&&err.message?err.message:'Generation gagal.',ts:Date.now()},...prev].slice(0,10));}
     finally{setImageBusy(false);}
   }
 
