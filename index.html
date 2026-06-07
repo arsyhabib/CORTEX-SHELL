@@ -17,7 +17,7 @@
   <meta name='application-name' content='CORTEX Studio'>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-    html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; }
+    html, body, #root { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #060818; }
     body {
       background: #060818;
       font-family: "SF Pro Display", "Inter", -apple-system, sans-serif;
@@ -2025,16 +2025,20 @@
 /* Mobile compatibility guardrails for iPhone/Android aspect ratios. */
 @media (max-width: 760px) {
   :root {
-    --cortex-mobile-fab-clearance: calc(176px + env(safe-area-inset-bottom));
+    --cortex-mobile-fab-clearance: calc(72px + env(safe-area-inset-bottom));
   }
   html, body {
     width: 100%;
     max-width: 100%;
     overflow-x: clip;
+    background: #060818;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
   .cortex-library-root {
     height: 100svh !important;
-    min-height: 100svh !important;
+    height: 100dvh !important;
+    min-height: -webkit-fill-available !important;
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: clip !important;
@@ -2174,7 +2178,6 @@
   .cortex-motion-page,
   [data-screen-label] > .hide-scrollbar {
     padding-top: 16px !important;
-    padding-bottom: calc(188px + env(safe-area-inset-bottom)) !important;
   }
   .cortex-motion-card {
     border-radius: 18px !important;
@@ -15876,7 +15879,7 @@ function CortexLibraryShell() {
     style:{
       width:'100vw',
       height:'100dvh',
-      minHeight:'100vh',
+      minHeight:'-webkit-fill-available',
       background:theme.colors.bg,
       color:theme.colors.text,
       overflow:'hidden',
