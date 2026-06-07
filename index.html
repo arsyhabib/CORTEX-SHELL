@@ -9828,7 +9828,7 @@ function cortexReadAIWorkspaceRuntime() {
     providers:{
       gemini:{
         chatModel:'gemini-2.5-flash',
-        imageModel:'nano-banana-pro-preview',
+        imageModel:'imagen-3.0-fast-generate-001',
         videoModel:'veo-3.1-fast-generate-preview',
         ttsModel:'gemini-2.5-flash-preview-tts',
       },
@@ -10100,26 +10100,28 @@ function PageAIWorkspace({ onNavigate }) {
   function providerKey(p){return String(((runtime.apiKeys||{})[p])||'').trim();}
   function providerModel(p,slot){
     const e=(runtime.providers||{})[p]||{};
-    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'nano-banana-pro-preview';if(slot==='video')return e.videoModel||'veo-3.1-fast-generate-preview';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
+    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'imagen-3.0-fast-generate-001';if(slot==='video')return e.videoModel||'veo-3.1-fast-generate-preview';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
     if(p==='deepseek')return e.defaultModel||'deepseek-v4-flash';
     if(p==='featherless'){if(slot==='balanced')return e.balancedVisionModel||'unsloth/gemma-3-12b-it';return e.fastVisionModel||'unsloth/gemma-3-4b-it';}
     if(p==='openai'){if(slot==='image')return e.imageModel||'gpt-image-2';return e.chatModel||'gpt-4.1-nano';}
     return '';
   }
   function providerImageQuality(p){return((runtime.providers||{})[p]||{}).imageQuality||'low';}
-  function geminiGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:generateContent?key=${encodeURIComponent(providerKey('gemini'))}`;}
+  function geminiGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}
+  function geminiImagePredictUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predict?key=${encodeURIComponent(providerKey('gemini'))}`; }:generateContent?key=${encodeURIComponent(providerKey('gemini'))}`;}
   function geminiVideoGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predictLongRunning?key=${encodeURIComponent(providerKey('gemini'))}`;}
   function deepseekChatUrl(){return'https://api.deepseek.com/chat/completions';}
   function featherlessChatUrl(){return'https://api.featherless.ai/v1/chat/completions';}
   function openaiChatUrl(){return'https://api.openai.com/v1/chat/completions';}
   function openaiImageUrl(){return'https://api.openai.com/v1/images/generations';}
 
-  async function cortexRequest({provider,route,body,directRoute}){
+  async function cortexRequest({provider,route,body,directRoute,directBody}){
     if(proxyBase){const r=await fetch(`${proxyBase}${route}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const p=await r.json();if(!r.ok)throw new Error((p&&p.error&&p.error.message)||p.error||`HTTP ${r.status}`);return p;}
     if(!directMode)throw new Error('Proxy belum aktif. Pilih Direct mode di Provider Settings.');
     const key=providerKey(provider);if(!key)throw new Error(`API key ${provider} belum diisi.`);
     const headers={'Content-Type':'application/json'};if(provider!=='gemini')headers.Authorization=`Bearer ${key}`;
-    const r=await fetch(directRoute,{method:'POST',headers,body:JSON.stringify(body)});const p=await r.json();
+    const sendBody=directBody!==undefined?directBody:body;
+    const r=await fetch(directRoute,{method:'POST',headers,body:JSON.stringify(sendBody)});const p=await r.json();
     if(!r.ok)throw new Error((p&&p.error&&p.error.message)||p.error||`HTTP ${r.status}`);return p;
   }
 
@@ -10158,6 +10160,7 @@ function PageAIWorkspace({ onNavigate }) {
     return{mimeType,data:id.data};
   }
   function extractGeneratedImageData(payload){
+    if(payload&&Array.isArray(payload.predictions)&&payload.predictions.length){const pr=payload.predictions[0];if(pr.bytesBase64Encoded)return{src:`data:${pr.mimeType||'image/png'};base64,${pr.bytesBase64Encoded}`};}
     const d=payload&&Array.isArray(payload.data)&&payload.data.length?payload.data[0]:null;
     if(d&&d.url)return{src:d.url};
     const b64=d&&(d.b64_json||d.b64Json||d.base64||d.base64_json)?(d.b64_json||d.b64Json||d.base64||d.base64_json):null;
@@ -10181,7 +10184,7 @@ function PageAIWorkspace({ onNavigate }) {
     {id:'featherless-12b',label:'Gemma 3 12B',shortLabel:'Gemma 12B',provider:'Featherless',color:'#c084fc',ready:featherlessReady},
   ];
   const imageModels=[
-    {id:'gemini',label:'Nano Banana Pro',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
+    {id:'gemini',label:'Imagen 3 Fast',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
     {id:'openai',label:'GPT Image 2',sub:'OpenAI Image',color:'#22c55e',bgGrad:'linear-gradient(135deg,#22c55e,#16a34a)'},
     {id:'video',label:'Veo 3.1 Fast',sub:'Video Gen',color:'#a855f7',bgGrad:'linear-gradient(135deg,#a855f7,#6366f1)'},
     {id:'featherless-vision',label:'Gemma Vision',sub:'Visual Q&A',color:'#c084fc',bgGrad:'linear-gradient(135deg,#c084fc,#a855f7)'},
@@ -10198,11 +10201,13 @@ function PageAIWorkspace({ onNavigate }) {
     try{
       let text='';
       const history=chatFeed.slice(-MAX_HISTORY);
-      const toMsgs=(aiRole)=>[...history.map(m=>({role:m.role==='assistant'?aiRole:'user',content:String(m.text||'')})),{role:'user',content:prompt||'(lampiran media)'}];
-      if(chatModel==='gemini'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/chat',body:{model:providerModel('gemini','chat'),messages:toMsgs('model'),generationConfig:{temperature:0.7}},directRoute:geminiGenerateUrl(providerModel('gemini','chat'))});text=extractText(p)||'Gemini tidak mengembalikan respons.';}
-      else if(chatModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:toMsgs('assistant'),temperature:0.7},directRoute:openaiChatUrl()});text=extractText(p)||'OpenAI tidak mengembalikan respons.';}
-      else if(chatModel==='deepseek'){const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});text=extractText(p)||'DeepSeek tidak mengembalikan respons.';}
-      else{const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:toMsgs('assistant'),temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});text=extractText(p)||'Featherless tidak mengembalikan respons.';}
+      function toAlternating(hist,userMsg,aiRole){const raw=[...hist.map(m=>({role:m.role==='assistant'?aiRole:'user',content:String(m.text||'')})),{role:'user',content:userMsg}];const out=[];for(const m of raw){if(out.length&&out[out.length-1].role===m.role)continue;out.push(m);}while(out.length&&out[0].role!=='user')out.shift();return out;}
+      function toGeminiContents(hist,userMsg){return toAlternating(hist,userMsg,'model').map(m=>({role:m.role,parts:[{text:m.content}]}));}
+      const pText=prompt||'(lampiran media)';
+      if(chatModel==='gemini'){const gModel=providerModel('gemini','chat');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/chat',body:{model:gModel,messages:toAlternating(history,pText,'model'),generationConfig:{temperature:0.7}},directRoute:geminiGenerateUrl(gModel),directBody:{model:gModel,contents:toGeminiContents(history,pText),generationConfig:{temperature:0.7}}});text=extractText(p)||'Gemini tidak mengembalikan respons.';}
+      else if(chatModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:toAlternating(history,pText,'assistant'),temperature:0.7},directRoute:openaiChatUrl()});text=extractText(p)||'OpenAI tidak mengembalikan respons.';}
+      else if(chatModel==='deepseek'){const dMsgs=toAlternating(history,pText,'assistant');const p=await cortexRequest({provider:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:providerModel('deepseek','chat'),messages:dMsgs,temperature:0.7,max_tokens:512},directRoute:deepseekChatUrl()});text=extractText(p)||'DeepSeek tidak mengembalikan respons.';}
+      else{const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');const fMsgs=toAlternating(history,pText,'assistant');const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:fm,messages:fMsgs,temperature:0.7,max_tokens:512},directRoute:featherlessChatUrl()});text=extractText(p)||'Featherless tidak mengembalikan respons.';}
       setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}].slice(-MAX_HISTORY));
     }catch(err){setChatFeed(prev=>[...prev,{role:'assistant',model:'error',text:err&&err.message?err.message:'Terjadi kesalahan.'}].slice(-MAX_HISTORY));}
     finally{setComposerBusy('');}
@@ -10215,7 +10220,7 @@ function PageAIWorkspace({ onNavigate }) {
       if(imageModel==='video'){const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/video/generate',body:{model:providerModel('gemini','video'),instances:[{prompt}],parameters:{aspectRatio:'16:9'}},directRoute:geminiVideoGenerateUrl(providerModel('gemini','video'))});const opName=p&&p.name?p.name:'queued';setImageResults(prev=>[{kind:'video-op',text:`Video generation started. Operation: ${opName}`,ts:Date.now()},...prev].slice(0,6));}
       else if(imageModel==='openai'){const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',body:{model:providerModel('openai','image'),prompt,quality:providerImageQuality('openai'),size:'1024x1024'},directRoute:openaiImageUrl()});const data=extractGeneratedImageData(p);if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,6));}
       else if(imageModel==='featherless-vision'){const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:providerModel('featherless','balanced'),messages:[{role:'user',content:`Deskripsikan gambar dari prompt: ${prompt}`}],temperature:0.7,max_tokens:256},directRoute:featherlessChatUrl()});setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now()},...prev].slice(0,6));}
-      else{const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/image',body:{model:providerModel('gemini','image'),prompt},directRoute:geminiGenerateUrl(providerModel('gemini','image'))});const id=extractInlineData(p,'image');if(id)setImageResults(prev=>[{kind:'image',src:`data:${id.mimeType};base64,${id.data}`,prompt,ts:Date.now()},...prev].slice(0,6));}
+      else{const gImgModel=providerModel('gemini','image');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/image',body:{model:gImgModel,prompt},directRoute:geminiImagePredictUrl(gImgModel),directBody:{instances:[{prompt}],parameters:{sampleCount:1}}});const id=extractGeneratedImageData(p);if(id)setImageResults(prev=>[{kind:'image',src:id.src,prompt,ts:Date.now()},...prev].slice(0,6));}
     }catch(err){setImageResults(prev=>[{kind:'error',text:err&&err.message?err.message:'Generation gagal.',ts:Date.now()},...prev].slice(0,6));}
     finally{setImageBusy(false);}
   }
@@ -10223,7 +10228,7 @@ function PageAIWorkspace({ onNavigate }) {
   async function runTTS(){
     const text=String(ttsText||'').trim();if(!text)return;
     setTtsBusy(true);setTtsResult(null);
-    try{const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/tts',body:{model:providerModel('gemini','tts'),text,voiceName:'Kore'},directRoute:geminiGenerateUrl(providerModel('gemini','tts'))});const id=extractInlineData(p,'audio');if(id)setTtsResult({src:`data:${id.mimeType};base64,${id.data}`,mimeType:id.mimeType});else setTtsResult({error:'TTS tidak mengembalikan data audio.'});}
+    try{const ttsModel=providerModel('gemini','tts');const p=await cortexRequest({provider:'gemini',route:'/providers/gemini/tts',body:{model:ttsModel,text,voiceName:'Kore'},directRoute:geminiGenerateUrl(ttsModel),directBody:{model:ttsModel,contents:[{parts:[{text}]}],generationConfig:{responseModalities:['AUDIO'],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Kore'}}}}}});const id=extractInlineData(p,'audio');if(id)setTtsResult({src:`data:${id.mimeType};base64,${id.data}`,mimeType:id.mimeType});else setTtsResult({error:'TTS tidak mengembalikan data audio.'});}
     catch(err){setTtsResult({error:err&&err.message?err.message:'TTS gagal.'});}
     finally{setTtsBusy(false);}
   }
