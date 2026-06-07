@@ -7701,7 +7701,8 @@ Object.assign(window, { PageSidebar, PageSearch, PageSettings, PageMotionShowcas
    Additive helpers for reading, clinical content, image cards, and media states.
    Depends on Batch 1 atoms: DL, B1Card, B1Badge, B1Topbar, B1Button. */
 
-function B2PageShell({ label, title, subtitle, onBack, right, children, footer }) {
+function B2PageShell({ label, title, subtitle, onBack, right, children, footer, scrollPadBottom, scrollStyle }) {
+  const bottomPadding = scrollPadBottom || 'var(--cortex-page-shell-pad-bottom, calc(96px + env(safe-area-inset-bottom)))';
   return React.createElement('div', {
     'data-screen-label': label,
     className:'cortex-page-shell',
@@ -7722,7 +7723,12 @@ function B2PageShell({ label, title, subtitle, onBack, right, children, footer }
         flex:1,
         minHeight:0,
         overflowY:'auto',
-        padding:'var(--cortex-page-shell-pad-top, 22px) var(--cortex-page-shell-pad-x, 18px) var(--cortex-page-shell-pad-bottom, calc(96px + env(safe-area-inset-bottom)))',
+        overscrollBehavior:'contain',
+        overscrollBehaviorY:'contain',
+        WebkitOverflowScrolling:'touch',
+        scrollbarGutter:'stable',
+        padding:`var(--cortex-page-shell-pad-top, 22px) var(--cortex-page-shell-pad-x, 18px) ${bottomPadding}`,
+        ...scrollStyle,
       }
     }, children),
     footer
@@ -10639,6 +10645,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   const [chatPrompt, setChatPrompt] = React.useState('');
   const [composerBusy, setComposerBusy] = React.useState('');
   const [uploadedFile, setUploadedFile] = React.useState(null);
+  const visualReferenceInputRef = React.useRef(null);
+  const [visualReference, setVisualReference] = React.useState(null);
   const [imagePrompt, setImagePrompt] = React.useState('');
   const [imageResults, setImageResults] = React.useState(function(){return lsGet('cx_image_results',[]);});
   const [imageBusy, setImageBusy] = React.useState(false);
@@ -10824,7 +10832,40 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     }
     e.target.value='';
   }
+  function handleVisualReferenceSelect(e){
+    const file=e.target.files&&e.target.files[0];if(!file)return;
+    if(!file.type.startsWith('image/')){
+      alert('Pilih file gambar untuk referensi visual.');
+      e.target.value='';
+      return;
+    }
+    const reader=new FileReader();
+    reader.onload=function(ev){
+      const dataUrl=ev.target.result;
+      setVisualReference({name:file.name,dataUrl,base64:dataUrl.split(',')[1],mimeType:file.type,size:file.size});
+    };
+    reader.readAsDataURL(file);
+    e.target.value='';
+  }
   function downloadMedia(src,filename){const a=document.createElement('a');a.href=src;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+
+  function buildGeminiReferenceContents(promptText, reference){
+    const parts=[];
+    if(reference&&reference.base64){
+      parts.push({inline_data:{mime_type:reference.mimeType||'image/png',data:reference.base64}});
+    }
+    if(promptText)parts.push({text:promptText});
+    return [{role:'user',parts:parts.length?parts:[{text:promptText||'Analisis referensi gambar ini.'}]}];
+  }
+
+  function buildOpenAiVisionMessages(promptText, reference){
+    const parts=[];
+    if(reference&&reference.base64){
+      parts.push({type:'image_url',image_url:{url:`data:${reference.mimeType||'image/png'};base64,${reference.base64}`,detail:'auto'}});
+    }
+    if(promptText)parts.push({type:'text',text:promptText});
+    return [{role:'user',content:parts.length?parts:promptText}];
+  }
 
   const chatModels=[
     {id:'gemini',label:'Gemini 2.5 Flash',shortLabel:'Gemini',provider:'Google',color:'#06d6a0',ready:geminiReady},
@@ -11013,47 +11054,95 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     runChatCore(newText,[...histBefore,editedMsg],null);
   }
   async function runImageGen(){
-    const prompt=String(imagePrompt||'').trim();if(!prompt)return;
+    const prompt=String(imagePrompt||'').trim();
+    const reference=visualReference&&visualReference.base64?visualReference:null;
+    const promptText=prompt||(reference?'Gunakan gambar referensi terlampir sebagai konteks visual.':'');
+    if(!promptText&&!reference)return;
     setImageBusy(true);
     try{
       if(imageModel==='video'){
         const vModel=providerModel('gemini','video');
+        const opTemp=`pending-${Date.now()}-${Math.random().toString(36).slice(2,6)}`;
+        const videoPrompt=reference
+          ? `${promptText}\n\nGunakan referensi gambar terlampir sebagai acuan gaya, framing, dan subjek visual.`
+          : promptText;
+        setImageResults(prev=>[{kind:'video-op',opName:opTemp,ts:Date.now(),aspect:videoAspectRatio,duration:videoDuration,pending:true},...prev].slice(0,10));
+        setVideoOps(function(prev){
+          return Object.assign({},prev,{[opTemp]:{status:'requesting',done:false,videoUrl:null,error:null,startTime:Date.now(),elapsed:0,prompt:videoPrompt}});
+        });
         const p=await cortexRequest({
           provider:'gemini',route:'/providers/gemini/video/generate',
-          body:{model:vModel,instances:[{prompt}],parameters:{aspectRatio:videoAspectRatio,durationSeconds:videoDuration}},
+          body:{model:vModel,instances:[{prompt:videoPrompt}],parameters:{aspectRatio:videoAspectRatio,durationSeconds:videoDuration}},
           directRoute:geminiVideoGenerateUrl(vModel),
-          directBody:{model:vModel,instances:[{prompt}],parameters:{aspectRatio:videoAspectRatio,durationSeconds:videoDuration}},
+          directBody:{model:vModel,instances:[{prompt:videoPrompt}],parameters:{aspectRatio:videoAspectRatio,durationSeconds:videoDuration}},
         });
         const opName=p&&p.name?p.name:null;
         if(opName){
-          setImageResults(prev=>[{kind:'video-op',opName,ts:Date.now(),aspect:videoAspectRatio,duration:videoDuration},...prev].slice(0,10));
+          setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{opName,pending:false}):item;}).slice(0,10));
+          setVideoOps(function(prev){
+            const draft=prev[opTemp]||{};
+            const next=Object.assign({},prev);
+            delete next[opTemp];
+            next[opName]=Object.assign({},draft,{status:'generating',done:false,videoUrl:null,error:null,startTime:draft.startTime||Date.now(),elapsed:0,prompt:videoPrompt});
+            return next;
+          });
           startVideoPolling(opName);
         }else{
-          setImageResults(prev=>[{kind:'error',text:'Video generation gagal: tidak ada operation name.',ts:Date.now()},...prev].slice(0,10));
+          setImageResults(prev=>prev.map(function(item){return item.opName===opTemp?Object.assign({},item,{pending:false,error:'Video generation gagal: tidak ada operation name.'}):item;}).slice(0,10));
+          setVideoOps(function(prev){
+            return Object.assign({},prev,{[opTemp]:Object.assign({},prev[opTemp]||{},{status:'error',done:true,videoUrl:null,error:'Video generation gagal: tidak ada operation name.',elapsed:Date.now()-((prev[opTemp]&&prev[opTemp].startTime)||Date.now())})});
+          });
         }
       }
       else if(imageModel==='openai'){
         const oSize=imageQuality==='high'?'1024x1024':imageQuality==='medium'?'1024x1024':'1024x1024';
+        const oPrompt=reference
+          ? `${promptText}\n\nGunakan gambar referensi terlampir sebagai style guide visual.`
+          : promptText;
         const p=await cortexRequest({provider:'openai',route:'/providers/openai/image',
-          body:{model:providerModel('openai','image'),prompt,quality:imageQuality,size:oSize},
+          body:{model:providerModel('openai','image'),prompt:oPrompt,quality:imageQuality,size:oSize},
           directRoute:openaiImageUrl()});
         const data=extractGeneratedImageData(p);
-        if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt,ts:Date.now()},...prev].slice(0,10));
+        if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt:oPrompt,ts:Date.now()},...prev].slice(0,10));
       }
-      else if(imageModel==='featherless-vision'){const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',body:{model:providerModel('featherless','balanced'),messages:[{role:'user',content:`Deskripsikan gambar dari prompt: ${prompt}`}],temperature:0.7,max_tokens:256},directRoute:featherlessChatUrl()});setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now()},...prev].slice(0,10));}
+      else if(imageModel==='featherless-vision'){
+        const visionPrompt=reference
+          ? `${promptText}\n\nAnalisis gambar referensi yang dilampirkan. Jelaskan komposisi, subjek, warna, pencahayaan, dan detail penting secara terstruktur.`
+          : promptText;
+        const p=await cortexRequest({
+          provider:'featherless',
+          route:'/providers/featherless/chat/completions',
+          body:{
+            model:providerModel('featherless','balanced'),
+            messages:buildOpenAiVisionMessages(visionPrompt,reference),
+            temperature:0.7,
+            max_tokens:256,
+          },
+          directRoute:featherlessChatUrl(),
+        });
+        setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now(),hasReference:Boolean(reference)},...prev].slice(0,10));
+      }
       else{
         const gImgModel=providerModel('gemini','image');
+        const contents=buildGeminiReferenceContents(promptText,reference);
         const p=await cortexRequest({
           provider:'gemini',route:'/providers/gemini/image',
-          body:{model:gImgModel,prompt},
+          body:{model:gImgModel,prompt:promptText,contents},
           directRoute:geminiGenerateUrl(gImgModel),
-          directBody:{model:gImgModel,contents:[{parts:[{text:prompt}]}],generationConfig:{responseModalities:['IMAGE']}},
+          directBody:{model:gImgModel,contents,generationConfig:{responseModalities:['IMAGE']}},
         });
         const id=extractInlineData(p,'image');
-        if(id){setImageResults(prev=>[{kind:'image',src:'data:'+id.mimeType+';base64,'+id.data,prompt,ts:Date.now()},...prev].slice(0,10));}
+        if(id){setImageResults(prev=>[{kind:'image',src:'data:'+id.mimeType+';base64,'+id.data,prompt:promptText,ts:Date.now(),hasReference:Boolean(reference)},...prev].slice(0,10));}
         else{setImageResults(prev=>[{kind:'error',text:'Gambar tidak berhasil digenerate. Coba prompt lain.',ts:Date.now()},...prev].slice(0,10));}
       }
-    }catch(err){setImageResults(prev=>[{kind:'error',text:err&&err.message?err.message:'Generation gagal.',ts:Date.now()},...prev].slice(0,10));}
+    }catch(err){
+      const message=err&&err.message?err.message:'Generation gagal.';
+      if(imageModel==='video'){
+        setImageResults(prev=>prev.map(function(item){return item.pending||String(item.opName||'').startsWith('pending-')?Object.assign({},item,{pending:false,error:message}):item;}).slice(0,10));
+      } else {
+        setImageResults(prev=>[{kind:'error',text:message,ts:Date.now()},...prev].slice(0,10));
+      }
+    }
     finally{setImageBusy(false);}
   }
 
@@ -11420,6 +11509,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     title:'AI Workspace',
     subtitle:'Multimodal · Chat · Visual · Audio',
     onBack:()=>onNavigate(19),
+    scrollPadBottom:compactLayout?'calc(28px + env(safe-area-inset-bottom))':'calc(36px + env(safe-area-inset-bottom))',
     right:React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}},
       React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
         React.createElement('div',{style:{width:10,height:10,borderRadius:'50%',background:connColor,position:'absolute'}}),
@@ -11555,7 +11645,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
                     cursor:'pointer',fontSize:9,fontWeight:700,outline:'none',
                     transition:'all 0.2s',padding:0,
                   },
-                },'✕'),
+                },'×'),
               ),
               showMenu&&React.createElement('div',{style:{position:'absolute',top:'110%',left:0,zIndex:300,background:'rgba(10,8,26,0.98)',border:`1px solid ${DL.glassBorder}`,borderRadius:12,padding:'6px',display:'flex',flexDirection:'column',gap:4,minWidth:120,boxShadow:'0 12px 36px rgba(0,0,0,0.6)',backdropFilter:'blur(20px)'}},
                 React.createElement('button',{onClick:function(){pinSession(sess.id);},style:{padding:'6px 10px',borderRadius:8,border:'none',background:'transparent',color:sess.pinned?DL.gold:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',textAlign:'left'}},sess.pinned?'Unpin':'Pin'),
@@ -11716,7 +11806,9 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       border:`1px solid ${DL.accent}22`,
     }},
       React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
-        React.createElement('div',{style:{width:38,height:38,borderRadius:12,background:`linear-gradient(135deg,${DL.accent},${DL.teal})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,color:'#fff',flexShrink:0,boxShadow:`0 4px 16px ${DL.accent}44`}},'✦'),
+        React.createElement('div',{style:{width:38,height:38,borderRadius:12,background:`linear-gradient(135deg,${DL.accent},${DL.teal})`,display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:`0 4px 16px ${DL.accent}44`}},
+          React.createElement(OrbSVG,{color:'#fff',thinking:false,size:18}),
+        ),
         React.createElement('div',{style:{flex:1,minWidth:0}},
           React.createElement('div',{style:{fontSize:14,fontWeight:900,color:DL.text}},'AI Workspace'),
           React.createElement('div',{style:{fontSize:9,color:DL.mute,marginTop:1}},'Chat · Image · Video · TTS · Multimodal orchestration'),
@@ -11763,7 +11855,19 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       React.createElement('div',{
         ref:chatFeedScrollRef,
         className:'hide-scrollbar',
-        style:{display:'flex',flexDirection:'column',gap:8,minHeight:200,maxHeight:chatFeedMaxHeight,overflowY:'auto',padding:'4px 2px 6px'},
+        style:{
+          display:'flex',
+          flexDirection:'column',
+          gap:8,
+          minHeight:200,
+          maxHeight:chatFeedMaxHeight,
+          overflowY:'auto',
+          overscrollBehavior:'contain',
+          overscrollBehaviorY:'contain',
+          WebkitOverflowScrolling:'touch',
+          scrollbarGutter:'stable',
+          padding:'4px 2px 6px',
+        },
       },
         chatFeed.map(function(msg,i){
           const isUser=msg.role==='user';
@@ -11772,7 +11876,6 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           const isErr=msg.model==='error';
           const showActions=msgActions===i;
           const isEditing=editState&&editState.idx===i;
-          const docTypes={'document':'📄','image':'🖼','video':'🎬','audio':'🎵'};
           return React.createElement('div',{
             key:i,
             style:{display:'flex',flexDirection:'column',alignItems:isUser?'flex-end':'flex-start',animation:'cortex-ai-msg-in 0.48s cubic-bezier(0.16,1,0.3,1) both'},
@@ -11780,7 +11883,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             // AI label row
             !isUser&&React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginBottom:4,paddingLeft:2}},
               !isErr&&mDef&&React.createElement(OrbSVG,{color:isErr?DL.red:bColor,thinking:false,size:18}),
-              isErr&&React.createElement('span',{style:{width:16,height:16,borderRadius:'50%',background:`${DL.red}18`,border:`1px solid ${DL.red}44`,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:900,color:DL.red,flexShrink:0'}},'!'),
+              isErr&&React.createElement('span',{style:{width:16,height:16,borderRadius:'50%',background:`${DL.red}18`,border:`1px solid ${DL.red}44`,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:900,color:DL.red,flexShrink:0}},'!'),
               React.createElement('span',{style:{fontSize:9,fontWeight:900,color:isErr?DL.red:bColor,letterSpacing:0.7,textTransform:'uppercase'}},
                 isErr?'ERROR':msg.model==='cortex'?'CORTEX AI':(mDef?mDef.label:'AI'),
               ),
@@ -11788,6 +11891,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             // Bubble
             React.createElement('div',{
               onClick:function(){setMsgActions(showActions?null:i);if(isEditing)return;},
+              className:'cortex-motion-card cortex-motion-press',
               style:{
                 maxWidth:compactLayout?'100%':'87%',padding:compactLayout?'11px 13px':'12px 15px',lineHeight:1.65,fontSize:13,
                 borderRadius:isUser?'20px 20px 6px 20px':'6px 20px 20px 20px',
@@ -12041,6 +12145,64 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         }),
       ),
 
+      // Reference image
+      React.createElement('input',{ref:visualReferenceInputRef,type:'file',accept:'image/*',onChange:handleVisualReferenceSelect,style:{display:'none'}}),
+      React.createElement('div',{
+        className:'cortex-motion-card cortex-motion-press',
+        style:{
+          borderRadius:20,
+          padding:12,
+          background:'rgba(255,255,255,0.03)',
+          border:`1px solid ${DL.glassBorder}`,
+          display:'flex',
+          flexDirection:'column',
+          gap:10,
+        }
+      },
+        React.createElement('div',{style:{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:10}},
+          React.createElement('div',{style:{minWidth:0,flex:1}},
+            React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.sub,letterSpacing:0.5,textTransform:'uppercase'}},'Image Reference'),
+            React.createElement('div',{style:{fontSize:11,color:DL.mute,lineHeight:1.45,marginTop:3}},
+              imageModel==='featherless-vision'
+                ? 'Gemma Vision memakai gambar terlampir sebagai input analisis, bukan sebagai target generasi.'
+                : imageModel==='video'
+                  ? 'Referensi gambar dipakai sebagai acuan gaya, framing, dan subjek visual sebelum video digenerate.'
+                  : 'Referensi gambar dipakai sebagai visual conditioning untuk hasil yang lebih konsisten.'
+            ),
+          ),
+          React.createElement('div',{style:{display:'flex',gap:6,alignItems:'center',flexShrink:0}},
+            React.createElement('button',{
+              type:'button',
+              onClick:function(){visualReferenceInputRef.current&&visualReferenceInputRef.current.click();},
+              className:'cortex-motion-press',
+              style:{padding:'7px 11px',borderRadius:10,border:`1px solid ${DL.accent}33`,background:`${DL.accent}10`,color:DL.accent,fontSize:10,fontWeight:800,cursor:'pointer'},
+            },visualReference?'Change':'Upload'),
+            visualReference&&React.createElement('button',{
+              type:'button',
+              onClick:function(){setVisualReference(null);},
+              className:'cortex-motion-press',
+              style:{padding:'7px 11px',borderRadius:10,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer'},
+            },'Clear'),
+          ),
+        ),
+        visualReference
+          ? React.createElement('div',{style:{display:'flex',gap:12,alignItems:'center',padding:10,borderRadius:16,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.02)'}},
+              React.createElement('img',{src:visualReference.dataUrl,alt:visualReference.name,style:{width:88,height:88,objectFit:'cover',borderRadius:14,flexShrink:0,border:`1px solid ${DL.glassBorder}`}}),
+              React.createElement('div',{style:{minWidth:0,flex:1}},
+                React.createElement('div',{style:{fontSize:12,fontWeight:800,color:DL.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},visualReference.name),
+                React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:2}},`${Math.max(1,Math.round((visualReference.size||0)/1024))} KB · ${visualReference.mimeType || 'image/*'}`),
+                React.createElement('div',{style:{fontSize:10,color:DL.accent,marginTop:7,lineHeight:1.45}},
+                  imageModel==='featherless-vision'
+                    ? 'Mode ini membaca detail, komposisi, warna, dan objek pada gambar.'
+                    : 'Mode ini akan mencoba mengirim referensi sebagai konteks multimodal jika provider mendukung.'
+                ),
+              )
+            )
+          : React.createElement('div',{style:{padding:'10px 12px',borderRadius:14,border:`1px dashed ${DL.glassBorder}`,color:DL.mute,fontSize:10,lineHeight:1.5}},
+              'Belum ada referensi gambar. Upload satu gambar untuk mengunci gaya, komposisi, atau objek acuan.'
+            ),
+      ),
+
       // Prompt + Generate
       React.createElement('div',{
         style:{
@@ -12101,24 +12263,25 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             }),
           ),
         ),
-        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:0}},
-          React.createElement('span',{style:{fontSize:9,color:DL.mute,flex:1}},`${imagePrompt.length} karakter`),
-          React.createElement('button',{
-            onClick:runImageGen,disabled:imageBusy||!imagePrompt.trim(),
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:0}},
+            React.createElement('span',{style:{fontSize:9,color:DL.mute,flex:1}},`${imagePrompt.length} karakter`),
+            React.createElement('button',{
+            onClick:runImageGen,disabled:imageBusy||(!imagePrompt.trim()&&!visualReference),
+            className:'cortex-motion-press',
             style:{
               flex:'0 0 auto',padding:'12px 24px',borderRadius:14,border:'none',
               background:imageBusy?'rgba(255,255,255,0.06)':`linear-gradient(135deg,${activeImageModel.color},${DL.accent})`,
               color:imageBusy?DL.mute:'#fff',fontSize:13,fontWeight:800,
-              cursor:(imageBusy||!imagePrompt.trim())?'not-allowed':'pointer',
+              cursor:(imageBusy||(!imagePrompt.trim()&&!visualReference))?'not-allowed':'pointer',
               transition:'all 0.3s ease',
               boxShadow:imageBusy?'none':`0 8px 24px ${activeImageModel.color}44`,
-              animation:imageBusy?'cortex-ai-record-pulse 1s ease-in-out infinite':(imagePrompt.trim()?'cortex-ai-generate-pulse 3s ease-in-out infinite':'none'),
+              animation:imageBusy?'cortex-ai-record-pulse 1s ease-in-out infinite':((imagePrompt.trim()||visualReference)?'cortex-ai-generate-pulse 3s ease-in-out infinite':'none'),
               position:'relative',overflow:'hidden',
               display:'flex',alignItems:'center',gap:8,
             },
           },
             !imageBusy&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)',animation:'cortex-ai-shimmer-btn 3s ease-in-out infinite',pointerEvents:'none'}}),
-            imageBusy?'⏳ Generating...':(imageModel==='video'?React.createElement('span',null,'▶ Generate Video'):React.createElement('span',null,'✨ Generate Image')),
+            imageBusy?'⏳ Generating...':(imageModel==='video'?React.createElement('span',null,'Generate Video'):imageModel==='featherless-vision'?React.createElement('span',null,'Analisis Gambar'):React.createElement('span',null,'Generate Image')),
           ),
         ),
       ),
@@ -12128,6 +12291,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         imageResults.map(function(result,i){
           if(result.kind==='image')return React.createElement('div',{
             key:`${result.ts}-${i}`,
+            className:'cortex-motion-card cortex-motion-press',
             style:{borderRadius:22,overflow:'hidden',border:`1px solid ${DL.glassBorder}`,background:'rgba(0,0,0,0.3)',animation:'cortex-ai-result-iris 0.7s cubic-bezier(0.16,1,0.3,1) both'},
           },
             React.createElement('img',{src:result.src,alt:result.prompt,style:{width:'100%',display:'block'}}),
@@ -12149,10 +12313,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             const progressPct=Math.min(95,Math.round((elapsed/120000)*100));
             const isDone=op.done&&!op.error;
             const isErr=op.error;
-            const isGenerating=op.status==='generating'||(!op.done&&op.status);
+            const isGenerating=op.status==='generating'||op.status==='requesting'||(!op.done&&op.status);
             const videoSrc=op.videoDataUrl||op.videoUrl;
             return React.createElement('div',{
               key:`${result.ts}-${i}`,
+              className:'cortex-motion-card cortex-motion-press',
               style:{borderRadius:22,overflow:'hidden',border:`1px solid ${isDone?DL.teal:isErr?DL.red:DL.accent}40`,background:`linear-gradient(135deg,${isDone?DL.teal:isErr?DL.red:DL.accent}0a,rgba(0,0,0,0))`,animation:'cortex-ai-msg-in 0.5s ease both'},
             },
               // Header
@@ -12162,7 +12327,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
                 ),
                 React.createElement('div',{style:{flex:1,minWidth:0}},
                   React.createElement('div',{style:{fontSize:12,fontWeight:900,color:isDone?DL.teal:isErr?DL.red:DL.text}},
-                    isDone?'✓ Video Siap!':isErr?'✕ Gagal':isGenerating?'Generating Video...':'Video Queued'),
+                    isDone?'Video Siap':isErr?'Gagal':op.status==='requesting'?'Menyiapkan request video...':isGenerating?'Generating Video...':'Video Queued'),
                   React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:2}},
                     `${result.aspect||'16:9'} · ${result.duration||5}s`+(isGenerating?` · ${elapsedStr}`:'')),
                 ),
@@ -12171,9 +12336,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
               // Progress bar (while generating)
               isGenerating&&React.createElement('div',{style:{padding:'0 16px 12px'}},
                 React.createElement('div',{style:{height:4,borderRadius:4,background:'rgba(255,255,255,0.08)',overflow:'hidden',marginBottom:6}},
-                  React.createElement('div',{style:{height:'100%',width:`${progressPct}%`,borderRadius:4,background:`linear-gradient(90deg,${DL.accent},${DL.teal})`,transition:'width 2s ease',boxShadow:`0 0 10px ${DL.accent}88`}}),
+                  React.createElement('div',{style:{height:'100%',width:op.status==='requesting'?'32%':`${progressPct}%`,borderRadius:4,background:`linear-gradient(90deg,${DL.accent},${DL.teal})`,transition:'width 1.2s ease',boxShadow:`0 0 10px ${DL.accent}88`,animation:'cortex-ai-generate-pulse 1.8s ease-in-out infinite'}}),
                 ),
-                React.createElement('div',{style:{fontSize:9,color:DL.mute}},`Estimasi ~1-4 menit · Operation: ${(result.opName||'').slice(0,40)}${(result.opName||'').length>40?'...':''}`),
+                React.createElement('div',{style:{fontSize:9,color:DL.mute,lineHeight:1.5}},op.status==='requesting'
+                  ? 'Mengirim request video. Card ini tetap hidup sambil menunggu operation id.'
+                  : `Estimasi ~1-4 menit · Operation: ${(result.opName||'').slice(0,40)}${(result.opName||'').length>40?'...':''}`),
               ),
               // Video player (when done) — prefer auto-saved data URL over temporary signed URL
               isDone&&videoSrc&&React.createElement('div',{style:{padding:'0 12px 12px'}},
@@ -12188,19 +12355,24 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
                 'Video selesai dibuat. '+(op.videoUrl?'URI signed tersedia tapi tidak disimpan permanen. Download sekarang.':'URI tidak dapat diakses langsung dari browser.')),
               // Error
               isErr&&React.createElement('div',{style:{padding:'0 16px 14px',fontSize:11,color:DL.red}},op.error),
+              op.status==='requesting'&&React.createElement('div',{style:{padding:'0 16px 14px',fontSize:10,color:DL.sub,lineHeight:1.5}},
+                'Video request sudah terkirim. Progress card akan terus diperbarui sampai operation selesai.',
+              ),
               // Not yet started polling
               !op.status&&React.createElement('div',{style:{padding:'0 16px 12px',fontSize:10,color:DL.mute}},
                 React.createElement('button',{onClick:function(){startVideoPolling(result.opName);},style:{padding:'8px 14px',borderRadius:11,border:`1px solid ${DL.accent}44`,background:`${DL.accent}12`,color:DL.accent,fontSize:10,fontWeight:800,cursor:'pointer'}},
-                '▶ Mulai Tracking Progress'),
+                'Mulai Tracking Progress'),
               ),
             );
           }
-          if(result.kind==='vision')return React.createElement('div',{key:`${result.ts}-${i}`,style:{padding:14,borderRadius:18,border:`1px solid ${DL.accent}33`,background:'rgba(255,255,255,0.04)'}},
-            React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.accent,marginBottom:6,letterSpacing:0.5}},'◆ VISION ANALYSIS'),
-            React.createElement('div',{style:{fontSize:12,color:DL.text,lineHeight:1.65}},result.text),
+          if(result.kind==='vision')return React.createElement('div',{key:`${result.ts}-${i}`,className:'cortex-motion-card cortex-motion-press',style:{padding:14,borderRadius:18,border:`1px solid ${DL.accent}33`,background:'rgba(255,255,255,0.04)'}},
+            React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.accent,marginBottom:6,letterSpacing:0.5}},result.hasReference?'VISION REFERENCE ANALYSIS':'VISION ANALYSIS'),
+            React.createElement('div',{style:{fontSize:12,color:DL.text,lineHeight:1.65}},
+              React.createElement(MarkdownText,{text:result.text,compact:true}),
+            ),
           );
-          return React.createElement('div',{key:`${result.ts}-${i}`,style:{padding:12,borderRadius:16,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
-            React.createElement('div',{style:{fontSize:11,color:DL.red}},'⚠ '+result.text),
+          return React.createElement('div',{key:`${result.ts}-${i}`,className:'cortex-motion-card cortex-motion-press',style:{padding:12,borderRadius:16,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
+            React.createElement('div',{style:{fontSize:11,color:DL.red}},'Error: '+result.text),
           );
         }),
       ),
@@ -12229,7 +12401,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           React.createElement('div',{style:{textAlign:'left'}},
             React.createElement('div',{style:{fontSize:18,fontWeight:900,color:DL.text,lineHeight:1.1}},'Text to Speech'),
             React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:3}},'Gemini 2.5 Flash TTS · Kore Voice'),
-            React.createElement('div',{style:{fontSize:10,color:DL.teal,marginTop:1,fontWeight:700}},ttsHistory.length>0?`✓ ${ttsHistory.length} audio tersimpan`:ttsBusy?'🎙 Generating...':'WAV · 24kHz'),
+            React.createElement('div',{style:{fontSize:10,color:DL.teal,marginTop:1,fontWeight:700}},ttsHistory.length>0?`✓ ${ttsHistory.length} audio tersimpan`:ttsBusy?'Generating...':'WAV · 24kHz'),
           ),
         ),
         // Equalizer bars
@@ -12254,6 +12426,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           ),
           React.createElement('button',{
             onClick:runTTS,disabled:ttsBusy||!ttsText.trim(),
+            className:'cortex-motion-press',
             style:{
               padding:'12px 22px',borderRadius:14,border:'none',
               background:ttsBusy?'rgba(255,255,255,0.06)':`linear-gradient(135deg,${DL.teal},${DL.accent})`,
@@ -12289,7 +12462,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           ),
           React.createElement('div',{style:{flex:1}},
             React.createElement('div',{style:{fontSize:14,fontWeight:900,color:DL.text}},'Rekam Suara'),
-            React.createElement('div',{style:{fontSize:10,color:DL.mute}},recording?`⏺ Merekam... ${fmtTime(recordTime)}`:'Mikrofon · MP4 / WebM'),
+            React.createElement('div',{style:{fontSize:10,color:DL.mute}},recording?`Recording... ${fmtTime(recordTime)}`:'Mikrofon · MP4 / WebM'),
           ),
           // Auto-STT toggle
           React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6}},
@@ -12306,6 +12479,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         React.createElement('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',gap:10,marginBottom:12}},
           React.createElement('button',{
             onClick:recording?stopRecording:startRecording,
+            className:'cortex-motion-press',
             style:{width:72,height:72,borderRadius:'50%',border:`3px solid ${recording?DL.red:'rgba(239,68,68,0.4)'}`,background:recording?`${DL.red}22`:'rgba(239,68,68,0.1)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.2s',animation:recording?'cortex-ai-record-pulse 1.2s ease-in-out infinite':'none'}
           },
             recording
@@ -12334,16 +12508,16 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             React.createElement('button',{
               onClick:function(){downloadMedia(recordedAudio.url,'rekaman-'+recordedAudio.ts+'.'+(recordedAudio.mimeType.includes('mp4')?'mp4':'webm'));},
               style:{flex:1,padding:'9px',borderRadius:11,border:`1px solid ${DL.red}44`,background:`${DL.red}12`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer'}
-            },'⬇ Simpan'),
+            },'Simpan'),
             React.createElement('button',{
               onClick:function(){sendRecordingToSTT(null);},
               disabled:recordSTTBusy,
               style:{flex:1,padding:'9px',borderRadius:11,border:`1px solid ${DL.accent}44`,background:recordSTTBusy?'rgba(255,255,255,0.04)':`${DL.accent}12`,color:recordSTTBusy?DL.mute:DL.accent,fontSize:10,fontWeight:800,cursor:recordSTTBusy?'not-allowed':'pointer'}
-            },recordSTTBusy?'⏳ STT...':'✦ Ke STT'),
+            },recordSTTBusy?'STT...':'Ke STT'),
             React.createElement('button',{
               onClick:function(){URL.revokeObjectURL(recordedAudio.url);setRecordedAudio(null);},
               style:{flex:'0 0 auto',padding:'9px 12px',borderRadius:11,border:`1px solid ${DL.mute}33`,background:'rgba(255,255,255,0.03)',color:DL.mute,fontSize:10,fontWeight:800,cursor:'pointer'}
-            },'✕'),
+            },'×'),
           ),
         ),
       ),
@@ -12367,7 +12541,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           ),
           React.createElement('div',{style:{marginLeft:'auto',display:'flex',gap:6}},
             ['transcribe','summarize'].map(function(m){
-              return React.createElement('button',{key:m,onClick:function(){setSttMode(m);},
+              return React.createElement('button',{key:m,onClick:function(){setSttMode(m);},className:'cortex-motion-press',
                 style:{padding:'5px 11px',borderRadius:20,border:`1px solid ${sttMode===m?DL.accent:DL.glassBorder}`,background:sttMode===m?`${DL.accent}22`:'transparent',color:sttMode===m?DL.accent:DL.sub,fontSize:10,fontWeight:700,cursor:'pointer',transition:'all 0.2s'}},
                 m==='transcribe'?'Transkripsi':'Ringkas');
             }),
@@ -12378,31 +12552,32 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:DL.accent,strokeWidth:2,strokeLinecap:'round'},React.createElement('path',{d:'M9 18V5l12-2v13'}),React.createElement('circle',{cx:6,cy:18,r:3}),React.createElement('circle',{cx:18,cy:16,r:3})),
             React.createElement('span',{style:{flex:1,fontSize:11,color:DL.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},sttFile.name),
             React.createElement('span',{style:{fontSize:10,color:DL.mute,flexShrink:0}},`${(sttFile.size/1024).toFixed(0)} KB`),
-            React.createElement('button',{onClick:function(){setSttFile(null);},style:{background:'none',border:'none',color:DL.mute,cursor:'pointer',fontSize:14,lineHeight:1,padding:2}},'✕'),
+            React.createElement('button',{onClick:function(){setSttFile(null);},className:'cortex-motion-press',style:{background:'none',border:'none',color:DL.mute,cursor:'pointer',fontSize:14,lineHeight:1,padding:2}},'×'),
           )
-          :React.createElement('button',{onClick:function(){sttInputRef.current&&sttInputRef.current.click();},
+          :React.createElement('button',{onClick:function(){sttInputRef.current&&sttInputRef.current.click();},className:'cortex-motion-press',
             style:{width:'100%',padding:'14px',borderRadius:14,border:`2px dashed ${DL.accent}40`,background:'transparent',color:DL.accent,fontSize:12,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginBottom:10}},
             React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.2,strokeLinecap:'round'},React.createElement('path',{d:'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4'}),React.createElement('polyline',{points:'17 8 12 3 7 8'}),React.createElement('line',{x1:12,y1:3,x2:12,y2:15})),
             'Upload File Audio',
           ),
         React.createElement('button',{
           onClick:runSTT,disabled:!sttFile||sttBusy,
+          className:'cortex-motion-press',
           style:{width:'100%',padding:'12px',borderRadius:14,border:'none',background:(!sttFile||sttBusy)?'rgba(255,255,255,0.06)':`linear-gradient(135deg,${DL.accent},${DL.accentB})`,color:(!sttFile||sttBusy)?DL.mute:'#fff',fontSize:13,fontWeight:800,cursor:(!sttFile||sttBusy)?'not-allowed':'pointer',transition:'all 0.3s',display:'flex',alignItems:'center',justifyContent:'center',gap:7,position:'relative',overflow:'hidden'},
         },
           !sttBusy&&sttFile&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)',animation:'cortex-ai-shimmer-btn 2.5s ease-in-out infinite',pointerEvents:'none'}}),
-          sttBusy?'🔄 Memproses...':(sttMode==='summarize'?'✦ Ringkas Audio':'✦ Transkripsi Audio'),
+          sttBusy?'Memproses...':(sttMode==='summarize'?'Ringkas Audio':'Transkripsi Audio'),
         ),
       ),
 
       // STT history
       sttHistory.length>0&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:8}},
         React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 2px 2px'}},
-          React.createElement('span',{style:{fontSize:11,fontWeight:800,color:DL.accent}},`📝 ${sttHistory.length} / 10 Transkripsi`),
-          React.createElement('button',{onClick:function(){setSttHistory([]);},style:{fontSize:10,color:DL.mute,background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}},'Hapus semua'),
+          React.createElement('span',{style:{fontSize:11,fontWeight:800,color:DL.accent}},`STT ${sttHistory.length} / 10`),
+          React.createElement('button',{onClick:function(){setSttHistory([]);},className:'cortex-motion-press',style:{fontSize:10,color:DL.mute,background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}},'Hapus semua'),
         ),
         sttHistory.map(function(item,idx){
           if(item.error)return React.createElement('div',{key:idx,style:{padding:12,borderRadius:14,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
-            React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'⚠ Error: '+item.fileName),
+            React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'Error: '+item.fileName),
             React.createElement('div',{style:{fontSize:10,color:DL.sub,marginTop:3}},item.error),
           );
           return React.createElement('div',{key:idx,style:{borderRadius:16,border:`1px solid ${DL.accent}28`,background:'rgba(255,255,255,0.03)',overflow:'hidden',animation:'cortex-ai-result-iris 0.5s ease both'}},
@@ -12412,11 +12587,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
                 React.createElement('div',{style:{fontSize:10,color:DL.sub,marginTop:1}},item.fileName),
               ),
               React.createElement('div',{style:{display:'flex',gap:6}},
-                React.createElement('button',{onClick:function(){try{navigator.clipboard.writeText(item.text);}catch(e){}},style:{padding:'5px 10px',borderRadius:9,border:`1px solid ${DL.accent}33`,background:`${DL.accent}15`,color:DL.accent,fontSize:9,fontWeight:800,cursor:'pointer'}},'Copy'),
-                React.createElement('button',{onClick:function(){setSttHistory(prev=>prev.filter((_,i)=>i!==idx));},style:{padding:'5px 8px',borderRadius:9,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:9,fontWeight:800,cursor:'pointer'}},'✕'),
+                React.createElement('button',{onClick:function(){try{navigator.clipboard.writeText(item.text);}catch(e){}},className:'cortex-motion-press',style:{padding:'5px 10px',borderRadius:9,border:`1px solid ${DL.accent}33`,background:`${DL.accent}15`,color:DL.accent,fontSize:9,fontWeight:800,cursor:'pointer'}},'Copy'),
+                React.createElement('button',{onClick:function(){setSttHistory(prev=>prev.filter((_,i)=>i!==idx));},className:'cortex-motion-press',style:{padding:'5px 8px',borderRadius:9,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:9,fontWeight:800,cursor:'pointer'}},'×'),
               ),
             ),
-            React.createElement('div',{style:{padding:'10px 14px 14px',fontSize:12,color:DL.text,maxHeight:200,overflowY:'auto'}},React.createElement(MarkdownText,{text:item.text,compact:true})),
+            React.createElement('div',{style:{padding:'10px 14px 14px',fontSize:12,color:DL.text,maxHeight:200,overflowY:'auto',overscrollBehavior:'contain',overscrollBehaviorY:'contain',WebkitOverflowScrolling:'touch',scrollbarGutter:'stable'}},React.createElement(MarkdownText,{text:item.text,compact:true})),
           );
         }),
       ),
@@ -12424,12 +12599,12 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       // Audio history list
       ttsHistory.length>0&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10}},
         React.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 2px 2px'}},
-          React.createElement('span',{style:{fontSize:11,fontWeight:800,color:DL.teal}},`🎙 ${ttsHistory.length} / 20 Audio`),
+          React.createElement('span',{style:{fontSize:11,fontWeight:800,color:DL.teal}},`Audio ${ttsHistory.length} / 20`),
           React.createElement('button',{onClick:function(){setTtsHistory([]);},style:{fontSize:10,color:DL.mute,background:'none',border:'none',cursor:'pointer',padding:'2px 6px'}},'Hapus semua'),
         ),
         ttsHistory.map(function(item,idx){
           if(item.error)return React.createElement('div',{key:idx,style:{padding:12,borderRadius:16,border:`1px solid ${DL.red}44`,background:`${DL.red}0a`}},
-            React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'⚠ TTS Error'),
+            React.createElement('div',{style:{fontSize:11,color:DL.red,fontWeight:700}},'Error TTS'),
             React.createElement('div',{style:{fontSize:10,color:DL.sub,marginTop:3}},item.error),
           );
           return React.createElement('div',{key:idx,style:{borderRadius:18,overflow:'hidden',border:`1px solid ${DL.teal}33`,background:'rgba(6,214,160,0.04)',animation:'cortex-ai-result-iris 0.5s ease both'}},
@@ -12442,7 +12617,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
                 React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.teal,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},item.label||'Audio TTS'),
                 React.createElement('div',{style:{fontSize:9,color:DL.mute,marginTop:1}},'WAV · 24kHz · Kore'),
               ),
-              React.createElement('button',{onClick:function(){setTtsHistory(prev=>prev.filter((_,i)=>i!==idx));},style:{padding:'5px 8px',borderRadius:8,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer',flexShrink:0}},'✕'),
+              React.createElement('button',{onClick:function(){setTtsHistory(prev=>prev.filter((_,i)=>i!==idx));},className:'cortex-motion-press',style:{padding:'5px 8px',borderRadius:8,border:`1px solid ${DL.red}33`,background:`${DL.red}0a`,color:DL.red,fontSize:10,fontWeight:800,cursor:'pointer',flexShrink:0}},'×'),
             ),
             // Audio player
             React.createElement('div',{style:{padding:'0 12px 6px'}},
