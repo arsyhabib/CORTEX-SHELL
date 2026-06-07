@@ -11690,18 +11690,15 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             const first=samples[0];
             if(first)videoUrl=(first.video&&first.video.uri)||(first.uri)||first;
           }catch(e){}
-          let errMsg=null;
+          var errMsg=null;
           if(p.error){
-            const raw=p.error.message||p.error.code||String(p.error);
-            // Friendly messages for common API errors
-            if(p.error.code===403||(p.error.status&&p.error.status==='PERMISSION_DENIED')){
-              errMsg='⚠️ Gemini API belum diaktifkan di Google Cloud Console project ini. Buka: console.cloud.google.com/apis/api/generativelanguage.googleapis.com';
-            }else if(p.error.code===429||(p.error.status&&p.error.status==='RESOURCE_EXHAUSTED')){
-              errMsg='⚠️ Kuota Gemini API habis. Tunggu beberapa saat atau upgrade plan.';
-            }else if(p.error.code===400){
-              errMsg=`⚠️ Request tidak valid: ${p.error.message||'periksa parameter'}`;
+            var em=p.error.message||'';
+            if(p.error.code===403||em.indexOf('PERMISSION_DENIED')>=0||em.indexOf('has not been used')>=0){
+              errMsg='Gemini API belum diaktifkan di Google Cloud Console. Buka console.cloud.google.com/apis/api/generativelanguage.googleapis.com';
+            }else if(p.error.code===429||em.indexOf('RESOURCE_EXHAUSTED')>=0){
+              errMsg='Kuota Gemini API habis. Tunggu beberapa saat.';
             }else{
-              errMsg=String(raw).slice(0,200)+(String(raw).length>200?'…':'');
+              errMsg=em.slice(0,200)+(em.length>200?'…':'');
             }
           }
           // ── Auto-download video blob for permanent local playback ─────────
