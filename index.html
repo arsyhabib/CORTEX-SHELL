@@ -10689,286 +10689,170 @@ function PageAIWorkspace({ onNavigate }) {
     });
   }
 
+/* ═══ RENDERING: Gemini App-like enhanced UI ═══ */
+  var tabItems = [
+    { id:'assistant', icon:'💬', label:'Chat' },
+    { id:'visual', icon:'🖼️', label:'Image' },
+    { id:'audio', icon:'🔊', label:'Audio' },
+    { id:'connect', icon:'🔌', label:'Connect' },
+  ];
+
   return React.createElement(B2PageShell, {
     label:'P20-AIWorkspace',
     title:'AI Workspace',
     subtitle:'Gemini + DeepSeek + Featherless + OpenAI',
-    onBack:()=>onNavigate(19),
-    right:React.createElement(B1Badge, { color:proxyBase ? DL.teal : directMode ? DL.accent : DL.gold }, proxyBase ? 'Proxy path' : directMode ? 'Direct mode' : 'Secret-safe'),
+    onBack:function(){ onNavigate(19); },
+    right:React.createElement(B1Badge, { color:proxyBase ? DL.teal : directMode ? DL.accent : DL.gold }, proxyBase ? 'Proxy' : directMode ? 'Direct' : '🔒 Safe'),
   },
-    React.createElement(B3Hero, {
-      kicker:'Production AI orchestration',
-      title:'Multimodal hub yang siap jadi workflow final',
-      subtitle:'Workspace ini sekarang dipetakan untuk Gemini sebagai hub multimodal, DeepSeek sebagai reasoning lane cepat, Featherless sebagai lane multimodal kecil, dan OpenAI untuk chat cepat plus image low-output.',
-      color:DL.accent,
-    }),
-
-    React.createElement(B2Segmented, {
-      value:surface,
-      options:[
-        { value:'assistant', label:'Assistant' },
-        { value:'visual', label:'Visual' },
-        { value:'audio', label:'Audio' },
-        { value:'connect', label:'Connect' },
-      ],
-      onChange:setSurface,
-    }),
-
-    React.createElement(B2Callout, { tone:'caution', title:'Critical provider guardrail' },
-      'Mode private sekarang mendukung dua jalur: proxy lokal atau direct browser mode dengan credential yang disimpan di browser Anda sendiri. Untuk penggunaan pribadi, direct mode bisa dipakai supaya prompt, image, video, dan TTS langsung jalan di GitHub Pages setelah key diisi. Gemini tetap dipakai untuk image/video/TTS, sementara OpenAI menambah lane chat cepat dan image low-output.'),
-
-    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(146px,1fr))', gap:12, marginTop:14, marginBottom:14 }},
-      statusCards.map(SurfaceCard)
-    ),
-
-    surface === 'assistant' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      assistantBubbles.map((m, i) => React.createElement('div', {
-        key:i,
-        style:{
-          marginBottom:i < assistantBubbles.length - 1 ? 12 : 0,
-          display:'flex', justifyContent:m.who === 'Learner' ? 'flex-end' : 'flex-start',
-        }
-      },
-        React.createElement('div', { style:{
-          maxWidth:'88%', padding:'11px 13px', borderRadius:16,
-          background:m.who === 'Learner' ? DL.gradA : m.tone === 'system' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)',
-          border:m.who === 'Learner' ? 'none' : `1px solid ${DL.glassBorder}`,
-          color:m.who === 'Learner' ? '#fff' : DL.sub,
-          fontSize:12, lineHeight:1.55,
-          boxShadow:m.who === 'Learner' ? `0 8px 20px ${DL.shadowColor}` : 'none',
-        }},
-          React.createElement('div', { style:{ fontSize:9, fontWeight:900, opacity:0.7, marginBottom:3 }}, m.who),
-          m.text,
+    /* ═══ ENHANCED HERO ═══ */
+    React.createElement(B1Card, { glow:true, pad:20, style:{ marginBottom:14, position:'relative', overflow:'hidden', minHeight:90 } },
+      React.createElement('div', { style:{ position:'relative', zIndex:1 } },
+        React.createElement(B2Kicker, { color:DL.accent }, 'Production AI orchestration'),
+        React.createElement('div', { style:{ fontSize:24, fontWeight:900, lineHeight:1.2, marginBottom:6, letterSpacing:-0.5, background:'linear-gradient(135deg, #a855f7, #6366f1, #10b981)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' } }, 'CORTEX AI'),
+        React.createElement('div', { style:{ fontSize:12, color:DL.sub, lineHeight:1.5 } }, 'Chat, Image, Video & Audio — all behind a secret-safe proxy.'),
+        React.createElement('div', { style:{ display:'flex', gap:8, marginTop:10, flexWrap:'wrap' } },
+          React.createElement(B1Badge, { color:geminiReady || directGeminiReady ? DL.teal : DL.gold }, 'Gemini ' + (geminiReady || directGeminiReady ? '✓' : '·')),
+          React.createElement(B1Badge, { color:deepseekReady || directDeepseekReady ? DL.accent : DL.gold }, 'DeepSeek ' + (deepseekReady || directDeepseekReady ? '✓' : '·')),
+          React.createElement(B1Badge, { color:featherlessReady || directFeatherlessReady ? DL.green : DL.gold }, 'Featherless ' + (featherlessReady || directFeatherlessReady ? '✓' : '·')),
+          React.createElement(B1Badge, { color:openaiReady || directOpenAIReady ? DL.accentB : DL.gold }, 'OpenAI ' + (openaiReady || directOpenAIReady ? '✓' : '·')),
+          React.createElement(B1Badge, { color:DL.green }, '🔒 Secret-safe'),
         )
-      )),
-    ),
-
-    surface === 'assistant' && React.createElement(B1Card, { pad:13, style:{ marginBottom:14 }},
-      React.createElement('div', { style:{ display:'grid', gap:10 }},
-        React.createElement(B3Row, {
-          title:'Primary tutor route',
-          sub:'Gemini 2.5 Flash menjadi tutor multimodal utama untuk chat, foto, dan video.',
-          right:React.createElement(B1Badge, { color:DL.teal }, 'Text core'),
-        }),
-        React.createElement(B3Row, {
-          title:'Reasoning lane',
-          sub:'DeepSeek V4 Flash dipisah sebagai evaluator cepat untuk jawaban, rubrik, dan structured JSON.',
-          right:React.createElement(B1Badge, { color:DL.accentB }, 'Reasoning'),
-        }),
-        React.createElement(B3Row, {
-          title:'Compact multimodal lane',
-          sub:'Featherless Basic diposisikan untuk tiga model kecil agar tetap ekonomis dan cepat.',
-          right:React.createElement(B1Badge, { color:DL.gold }, 'Basic plan'),
-        }),
-        React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginTop:2 }},
-          React.createElement(B1Button, {
-            label:probeState.status === 'running' ? 'Probing...' : 'Probe Gemini',
-            onClick:function(){ runProbe('gemini'); },
-            style:{ minWidth:146 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe DeepSeek',
-            variant:'secondary',
-            onClick:function(){ runProbe('deepseek'); },
-            style:{ minWidth:146 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe Featherless',
-            variant:'secondary',
-            onClick:function(){ runProbe('featherless'); },
-            style:{ minWidth:158 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe OpenAI',
-            variant:'secondary',
-            onClick:function(){ runProbe('openai'); },
-            style:{ minWidth:138 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe image',
-            variant:'secondary',
-            onClick:function(){ runProbe('image'); },
-            style:{ minWidth:132 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe OpenAI image',
-            variant:'secondary',
-            onClick:function(){ runProbe('openaiImage'); },
-            style:{ minWidth:166 },
-          }),
-          React.createElement(B1Button, {
-            label:'Probe TTS',
-            variant:'secondary',
-            onClick:function(){ runProbe('tts'); },
-            style:{ minWidth:126 },
-          }),
-          React.createElement(B1Button, {
-            label:'Refresh catalog',
-            variant:'secondary',
-            onClick:refreshRuntime,
-            style:{ minWidth:146 },
-          }),
-          React.createElement(B1Button, {
-            label:'Provider settings',
-            variant:'secondary',
-            onClick:function(){ onNavigate(21); },
-            style:{ minWidth:150 },
-          }),
-        ),
-        React.createElement(B2Callout, {
-          tone:probeState.status === 'error' ? 'danger' : probeState.status === 'success' ? 'info' : 'evidence',
-          title:probeState.provider || 'Live probe',
-        }, probeState.message),
-      ),
-    ),
-
-    surface === 'assistant' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
-      React.createElement(B1Section, { title:'Try it now', action:composerBusy ? composerBusy : 'Live prompt' }),
-      React.createElement('textarea', {
-        value:chatPrompt,
-        onChange:e => setChatPrompt(e.target.value),
-        placeholder:'Tulis prompt chat, image, video, TTS, atau reasoning di sini...',
-        rows:4,
-        style:{
-          width:'100%',
-          resize:'vertical',
-          padding:'12px 14px',
-          borderRadius:16,
-          border:`1px solid ${DL.glassBorder}`,
-          background:'rgba(255,255,255,0.05)',
-          color:DL.text,
-          outline:'none',
-          fontSize:13,
-          lineHeight:1.55,
-          marginBottom:12,
-        }
-      }),
-      React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:12 }},
-        React.createElement(B1Button, {
-          label:composerBusy === 'chat' ? 'Sending...' : 'Chat Gemini',
-          onClick:function(){ runComposerAction('chat'); },
-          style:{ minWidth:140 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'openai' ? 'Sending...' : 'Chat OpenAI',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('openai'); },
-          style:{ minWidth:136 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'deepseek' ? 'Thinking...' : 'DeepSeek',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('deepseek'); },
-          style:{ minWidth:128 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'image' ? 'Creating...' : 'Generate image',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('image'); },
-          style:{ minWidth:146 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'openaiImage' ? 'Creating...' : 'Generate image (OpenAI)',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('openaiImage'); },
-          style:{ minWidth:190 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'video' ? 'Creating...' : 'Generate video',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('video'); },
-          style:{ minWidth:146 },
-        }),
-        React.createElement(B1Button, {
-          label:composerBusy === 'tts' ? 'Creating...' : 'Generate TTS',
-          variant:'secondary',
-          onClick:function(){ runComposerAction('tts'); },
-          style:{ minWidth:132 },
-        }),
-      ),
-      React.createElement(B2Callout, { tone:composerStatus.includes('gagal') || composerStatus.includes('belum') ? 'caution' : 'info', title:'Composer status' }, composerStatus),
-      composerPreview && composerPreview.kind === 'image' && React.createElement('img', {
-        src:composerPreview.src,
-        alt:'Generated image preview',
-        style:{ width:'100%', borderRadius:18, border:`1px solid ${DL.glassBorder}`, marginTop:12, display:'block' },
-      }),
-      composerPreview && composerPreview.kind === 'audio' && React.createElement('audio', {
-        controls:true,
-        src:composerPreview.src,
-        style:{ width:'100%', marginTop:12 },
-      }),
-      composerPreview && composerPreview.kind === 'video' && React.createElement(B2Callout, { tone:'evidence', title:'Video generation' }, composerPreview.text),
-      React.createElement('div', { style:{ marginTop:12, display:'grid', gap:10 }},
-        chatFeed.slice(-6).map((msg, i) => React.createElement('div', {
-          key:`msg-${i}`,
-          style:{
-            padding:'11px 13px',
-            borderRadius:16,
-            background:msg.role === 'assistant' ? 'rgba(255,255,255,0.06)' : DL.gradA,
-            border:msg.role === 'assistant' ? `1px solid ${DL.glassBorder}` : 'none',
-            color:msg.role === 'assistant' ? DL.sub : '#fff',
-            lineHeight:1.55,
-          }
-        },
-          React.createElement('div', { style:{ fontSize:9, fontWeight:900, opacity:0.7, marginBottom:3 }}, msg.title || (msg.role === 'assistant' ? 'Assistant' : 'You')),
-          msg.text,
-        ))
       )
     ),
 
-    surface === 'visual' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
+    /* ═══ GEMINI-STYLE TAB BAR ═══ */
+    React.createElement('div', { style:{ display:'flex', gap:4, marginBottom:14, padding:4, borderRadius:18, background:'rgba(255,255,255,0.04)', border:'1px solid ' + DL.glassBorder } },
+      tabItems.map(function(t) {
+        var isActive = surface === t.id;
+        return React.createElement('button', { key:t.id, onClick:function(){ setSurface(t.id); }, style:{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6, padding:'10px 8px', borderRadius:14, border:'none', background:isActive ? DL.gradA : 'transparent', color:isActive ? '#fff' : DL.sub, fontSize:12, fontWeight:isActive ? 700 : 500, cursor:'pointer', transition:'all 0.3s cubic-bezier(0.34,1.56,0.64,1)', transform:isActive ? 'scale(1.02)' : 'scale(1)', boxShadow:isActive ? '0 4px 16px ' + DL.shadowColor : 'none', userSelect:'none' } }, t.icon, t.label);
+      })
+    ),
+
+    /* ═══ STATUS CARDS ═══ */
+    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(146px,1fr))', gap:12, marginBottom:14 } },
+      statusCards.map(SurfaceCard)
+    ),
+
+    /* ═══ ASSISTANT BUBBLES ═══ */
+    surface === 'assistant' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 } },
+      assistantBubbles.map(function(m, i) {
+        return React.createElement('div', { key:i, style:{ marginBottom:i < assistantBubbles.length - 1 ? 12 : 0, display:'flex', justifyContent:m.who === 'Learner' ? 'flex-end' : 'flex-start' } },
+          React.createElement('div', { style:{ maxWidth:'88%', padding:'11px 13px', borderRadius:16, background:m.who === 'Learner' ? DL.gradA : m.tone === 'system' ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)', border:m.who === 'Learner' ? 'none' : '1px solid ' + DL.glassBorder, color:m.who === 'Learner' ? '#fff' : DL.sub, fontSize:12, lineHeight:1.55, boxShadow:m.who === 'Learner' ? '0 8px 20px ' + DL.shadowColor : 'none', animation:'stagger-in 0.4s cubic-bezier(0.34,1.56,0.64,1) backwards', animationDelay:(i * 0.08) + 's' } },
+            React.createElement('div', { style:{ fontSize:9, fontWeight:900, opacity:0.7, marginBottom:3 } }, m.who),
+            m.text
+          )
+        );
+      })
+    ),
+
+    /* ═══ PROVIDER PROBE SECTION ═══ */
+    surface === 'assistant' && React.createElement(B1Card, { pad:13, style:{ marginBottom:14 } },
+      React.createElement('div', { style:{ display:'grid', gap:10 } },
+        React.createElement(B3Row, { title:'Primary tutor route', sub:'Gemini 2.5 Flash menjadi tutor multimodal utama untuk chat, foto, dan video.', right:React.createElement(B1Badge, { color:DL.teal }, 'Text core') }),
+        React.createElement(B3Row, { title:'Reasoning lane', sub:'DeepSeek V4 Flash dipisah sebagai evaluator cepat.', right:React.createElement(B1Badge, { color:DL.accentB }, 'Reasoning') }),
+        React.createElement(B3Row, { title:'Compact multimodal lane', sub:'Featherless Basic untuk tiga model kecil ekonomis.', right:React.createElement(B1Badge, { color:DL.gold }, 'Basic') }),
+        React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginTop:2 } },
+          React.createElement(B1Button, { label:probeState.status === 'running' ? 'Probing...' : 'Probe Gemini', onClick:function(){ runProbe('gemini'); }, style:{ minWidth:146 } }),
+          React.createElement(B1Button, { label:'Probe DeepSeek', variant:'secondary', onClick:function(){ runProbe('deepseek'); }, style:{ minWidth:146 } }),
+          React.createElement(B1Button, { label:'Probe Featherless', variant:'secondary', onClick:function(){ runProbe('featherless'); }, style:{ minWidth:158 } }),
+          React.createElement(B1Button, { label:'Probe OpenAI', variant:'secondary', onClick:function(){ runProbe('openai'); }, style:{ minWidth:138 } }),
+          React.createElement(B1Button, { label:'Probe image', variant:'secondary', onClick:function(){ runProbe('image'); }, style:{ minWidth:132 } }),
+          React.createElement(B1Button, { label:'Probe TTS', variant:'secondary', onClick:function(){ runProbe('tts'); }, style:{ minWidth:126 } }),
+          React.createElement(B1Button, { label:'Provider settings', variant:'secondary', onClick:function(){ onNavigate(21); }, style:{ minWidth:150 } }),
+        ),
+        React.createElement(B2Callout, { tone:probeState.status === 'error' ? 'danger' : probeState.status === 'success' ? 'info' : 'evidence', title:probeState.provider || 'Live probe' }, probeState.message),
+      ),
+    ),
+
+    /* ═══ COMPOSER SECTION (TRY IT NOW) ═══ */
+    surface === 'assistant' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 } },
+      React.createElement(B1Section, { title:'Try it now', action:composerBusy || 'Live prompt' }),
+      React.createElement('textarea', { value:chatPrompt, onChange:function(e){ setChatPrompt(e.target.value); }, placeholder:'Tulis prompt chat, image, video, TTS, atau reasoning di sini...', rows:4, style:{ width:'100%', resize:'vertical', padding:'12px 14px', borderRadius:16, border:'1px solid ' + DL.glassBorder, background:'rgba(255,255,255,0.05)', color:DL.text, outline:'none', fontSize:13, lineHeight:1.55, marginBottom:12 } }),
+      React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:12 } },
+        React.createElement(B1Button, { label:composerBusy === 'chat' ? 'Sending...' : '💬 Chat Gemini', onClick:function(){ runComposerAction('chat'); }, style:{ minWidth:150 } }),
+        React.createElement(B1Button, { label:composerBusy === 'openai' ? 'Sending...' : '🤖 Chat OpenAI', variant:'secondary', onClick:function(){ runComposerAction('openai'); }, style:{ minWidth:140 } }),
+        React.createElement(B1Button, { label:composerBusy === 'deepseek' ? 'Thinking...' : '🧠 DeepSeek', variant:'secondary', onClick:function(){ runComposerAction('deepseek'); }, style:{ minWidth:130 } }),
+        React.createElement(B1Button, { label:composerBusy === 'image' ? 'Creating...' : '🎨 Image', variant:'secondary', onClick:function(){ runComposerAction('image'); }, style:{ minWidth:120 } }),
+        React.createElement(B1Button, { label:composerBusy === 'video' ? 'Creating...' : '🎬 Video', variant:'secondary', onClick:function(){ runComposerAction('video'); }, style:{ minWidth:120 } }),
+        React.createElement(B1Button, { label:composerBusy === 'tts' ? 'Creating...' : '🔊 TTS', variant:'secondary', onClick:function(){ runComposerAction('tts'); }, style:{ minWidth:110 } }),
+      ),
+      React.createElement(B2Callout, { tone:composerStatus && (composerStatus.includes('gagal') || composerStatus.includes('belum')) ? 'caution' : 'info', title:'Composer status' }, composerStatus),
+      /* ═══ MEDIA PREVIEWS WITH DOWNLOAD ═══ */
+      composerPreview && composerPreview.kind === 'image' && React.createElement('div', { style:{ position:'relative', marginTop:12 } },
+        React.createElement('img', { src:composerPreview.src, alt:'Generated image', style:{ width:'100%', borderRadius:18, border:'1px solid ' + DL.glassBorder, display:'block' } }),
+        React.createElement('button', { onClick:function(){ var a=document.createElement('a'); a.href=composerPreview.src; a.download='cortex-image-'+Date.now()+'.png'; a.click(); }, style:{ position:'absolute', bottom:10, right:10, width:36, height:36, borderRadius:12, background:'rgba(0,0,0,0.6)', border:'1px solid rgba(255,255,255,0.25)', color:'#fff', cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(8px)' }, title:'Download image' }, '⬇')
+      ),
+      composerPreview && composerPreview.kind === 'audio' && React.createElement('div', { style:{ marginTop:12, borderRadius:16, overflow:'hidden', border:'1px solid ' + DL.glassBorder, background:'rgba(255,255,255,0.03)', padding:8 } },
+        React.createElement('audio', { controls:true, src:composerPreview.src, style:{ width:'100%' } }),
+        React.createElement('div', { style:{ textAlign:'right', padding:'4px 4px 0' } },
+          React.createElement(B1Button, { label:'⬇ Download MP3', variant:'ghost', onClick:function(){ var a=document.createElement('a'); a.href=composerPreview.src; a.download='cortex-audio-'+Date.now()+'.mp3'; a.click(); }, style:{ fontSize:10 } })
+        )
+      ),
+      composerPreview && composerPreview.kind === 'video' && React.createElement(B2Callout, { tone:'evidence', title:'Video generation' }, composerPreview.text),
+      /* ═══ CHAT FEED ═══ */
+      React.createElement('div', { style:{ marginTop:12, display:'grid', gap:10 } },
+        chatFeed.slice(-6).map(function(msg, i) {
+          return React.createElement('div', { key:'msg-'+i, style:{ padding:'11px 13px', borderRadius:16, background:msg.role === 'assistant' ? 'rgba(255,255,255,0.06)' : DL.gradA, border:msg.role === 'assistant' ? '1px solid ' + DL.glassBorder : 'none', color:msg.role === 'assistant' ? DL.sub : '#fff', lineHeight:1.55, animation:'stagger-in 0.35s cubic-bezier(0.34,1.56,0.64,1) backwards', animationDelay:(i * 0.05) + 's' } },
+            React.createElement('div', { style:{ fontSize:9, fontWeight:900, opacity:0.7, marginBottom:3 } }, msg.title || (msg.role === 'assistant' ? 'Assistant' : 'You')),
+            msg.text
+          );
+        })
+      )
+    ),
+
+    /* ═══ VISUAL TAB ═══ */
+    surface === 'visual' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 } },
       React.createElement(B1Section, { title:'Visual generation lanes', style:{ marginBottom:10 } }),
       modelFamilies.visual.map(ModelRow),
-      React.createElement(B2Callout, { tone:'info', title:'Recommended output path' },
-        'Nano Banana tetap menjadi lane utama untuk image generation berfitur penuh. GPT Image 2 dipakai sebagai lane OpenAI low-output yang murah dan cepat. Video generation dipetakan ke Veo fast. Semua output akhir tetap sebaiknya dikonversi ke manifest visual supaya shell bisa menjaga rasio, placeholder, dan fallback dengan konsisten.')
+      React.createElement(B2Callout, { tone:'info', title:'Recommended output path' }, 'Nano Banana tetap menjadi lane utama untuk image generation berfitur penuh. GPT Image 2 dipakai sebagai lane OpenAI low-output yang murah dan cepat.')
     ),
 
-    surface === 'audio' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
+    /* ═══ AUDIO TAB ═══ */
+    surface === 'audio' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 } },
       React.createElement(B1Section, { title:'Audio and speech lanes', style:{ marginBottom:10 } }),
       modelFamilies.audio.map(ModelRow),
-      React.createElement(B3Row, {
-        title:'Speech output',
-        sub:'Gemini TTS siap untuk spoken recap, oral drilling, atau narasi materi singkat.',
-        right:React.createElement(B1Badge, { color:DL.teal }, 'Ready'),
-      }),
-      modelFamilies.video && modelFamilies.video.length > 0 && React.createElement(B3Row, {
-        title:'Video companion lane',
-        sub:modelFamilies.video[0].route,
-        right:React.createElement(B1Badge, { color:DL.accent }, 'Task-based'),
-      }),
+      React.createElement(B3Row, { title:'Speech output', sub:'Gemini TTS siap untuk spoken recap, oral drilling, atau narasi materi singkat.', right:React.createElement(B1Badge, { color:DL.teal }, 'Ready') }),
     ),
 
-    surface === 'connect' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
+    /* ═══ CONNECT TAB ═══ */
+    surface === 'connect' && React.createElement(B1Card, { pad:14, style:{ marginBottom:14 } },
       React.createElement(B1Section, { title:'Connection architecture', style:{ marginBottom:10 } }),
       [
-        { title:'Private shell', sub:'Browser-only keys tetap berada di localStorage Anda. Bundle publik tidak menyimpan secret.', badge:'Private', color:DL.green },
-        { title:'Proxy route', sub:proxyBase ? `Detected at ${proxyBase}` : 'Proxy optional. Direct mode bisa dipakai tanpa backend.', badge:proxyBase ? 'Detected' : 'Optional', color:proxyBase ? DL.teal : DL.gold },
-        { title:'Gemini status', sub:geminiReady || directGeminiReady ? 'Chat, image, video, dan TTS lane siap.' : 'Key Gemini belum diisi.', badge:geminiReady || directGeminiReady ? 'Ready' : 'Missing', color:geminiReady || directGeminiReady ? DL.teal : DL.red },
-        { title:'DeepSeek status', sub:deepseekReady || directDeepseekReady ? 'DeepSeek V4 Flash siap.' : 'Key DeepSeek belum diisi.', badge:deepseekReady || directDeepseekReady ? 'Ready' : 'Missing', color:deepseekReady || directDeepseekReady ? DL.accent : DL.red },
-        { title:'Featherless status', sub:featherlessReady || directFeatherlessReady ? 'Tiga lane multimodal Basic siap.' : 'Key Featherless belum diisi.', badge:featherlessReady || directFeatherlessReady ? 'Ready' : 'Missing', color:featherlessReady || directFeatherlessReady ? DL.green : DL.red },
-        { title:'OpenAI status', sub:openaiReady || directOpenAIReady ? 'GPT-4.1 nano dan GPT Image 2 low siap.' : 'Key OpenAI belum diisi.', badge:openaiReady || directOpenAIReady ? 'Ready' : 'Missing', color:openaiReady || directOpenAIReady ? DL.accentB : DL.red },
+        { title:'Private shell', sub:'Browser-only keys tetap di localStorage Anda.', badge:'Private', color:DL.green },
+        { title:'Proxy route', sub:proxyBase ? 'Detected at ' + proxyBase : 'Proxy optional.', badge:proxyBase ? 'Detected' : 'Optional', color:proxyBase ? DL.teal : DL.gold },
+        { title:'Gemini status', sub:geminiReady || directGeminiReady ? 'Chat, image, video, TTS siap.' : 'Key belum diisi.', badge:geminiReady || directGeminiReady ? 'Ready' : 'Missing', color:geminiReady || directGeminiReady ? DL.teal : DL.red },
+        { title:'DeepSeek status', sub:deepseekReady || directDeepseekReady ? 'DeepSeek V4 Flash siap.' : 'Key belum diisi.', badge:deepseekReady || directDeepseekReady ? 'Ready' : 'Missing', color:deepseekReady || directDeepseekReady ? DL.accent : DL.red },
+        { title:'Featherless status', sub:featherlessReady || directFeatherlessReady ? '3 lane multimodal Basic siap.' : 'Key belum diisi.', badge:featherlessReady || directFeatherlessReady ? 'Ready' : 'Missing', color:featherlessReady || directFeatherlessReady ? DL.green : DL.red },
+        { title:'OpenAI status', sub:openaiReady || directOpenAIReady ? 'GPT-4.1 nano + Image 2 siap.' : 'Key belum diisi.', badge:openaiReady || directOpenAIReady ? 'Ready' : 'Missing', color:openaiReady || directOpenAIReady ? DL.accentB : DL.red },
         { title:'Runtime status', sub:runtimeInfo.message, badge:runtimeInfo.status, color:runtimeInfo.status === 'connected' ? DL.teal : runtimeInfo.status === 'error' ? DL.red : DL.accent },
       ].map(MiniProviderRow),
-      React.createElement(B2Callout, { tone:'info', title:'Local template' },
-        'Gunakan ai_workspace.local.example.js sebagai template, atau isi key langsung di Provider Settings. Proxy multi-provider tetap tersedia, tetapi mode direct browser sudah bisa dipakai untuk testing pribadi di GitHub Pages.')
+      React.createElement(B2Callout, { tone:'info', title:'Local template' }, 'Gunakan ai_workspace.local.example.js sebagai template, atau isi key langsung di Provider Settings.')
     ),
 
-    React.createElement(B1Card, { pad:14, style:{ marginBottom:14 }},
+    /* ═══ MODEL CATALOG SNAPSHOT ═══ */
+    React.createElement(B1Card, { pad:14, style:{ marginBottom:14 } },
       React.createElement(B1Section, { title:'Model catalog snapshot', style:{ marginBottom:10 } }),
-      React.createElement('div', { style:{ display:'grid', gap:10 }},
+      React.createElement('div', { style:{ display:'grid', gap:10 } },
         React.createElement('div', null,
-          React.createElement('div', { style:{ color:DL.text, fontSize:12, fontWeight:900, marginBottom:6 }}, 'Core orchestration shortlist'),
+          React.createElement('div', { style:{ color:DL.text, fontSize:12, fontWeight:900, marginBottom:6 } }, 'Core orchestration shortlist'),
           modelFamilies.text.map(ModelRow)
         ),
-        surface !== 'visual' && React.createElement('div', null,
-          React.createElement('div', { style:{ color:DL.text, fontSize:12, fontWeight:900, marginBottom:6 }}, 'Media lanes'),
+        React.createElement('div', null,
+          React.createElement('div', { style:{ color:DL.text, fontSize:12, fontWeight:900, marginBottom:6 } }, 'Media lanes'),
           modelFamilies.visual.slice(0, 2).map(ModelRow)
         ),
-        modelFamilies.providers && modelFamilies.providers.featherless && React.createElement(B2Callout, { tone:'evidence', title:'Plan note' },
-          modelFamilies.providers.featherless.note)
-        ,
-        modelFamilies.providers && modelFamilies.providers.openai && React.createElement(B2Callout, { tone:'info', title:'OpenAI note' },
-          modelFamilies.providers.openai.note)
+        modelFamilies.providers && modelFamilies.providers.featherless && React.createElement(B2Callout, { tone:'evidence', title:'Plan note' }, modelFamilies.providers.featherless.note),
+        modelFamilies.providers && modelFamilies.providers.openai && React.createElement(B2Callout, { tone:'info', title:'OpenAI note' }, modelFamilies.providers.openai.note)
+      )
+    ),
+
+    /* ═══ STATUS FOOTER ═══ */
+    React.createElement('div', { style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 14px', borderRadius:14, background:'rgba(255,255,255,0.03)', border:'1px solid ' + DL.glassBorder, marginTop:4, gap:8, flexWrap:'wrap' } },
+      React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:8 } },
+        React.createElement('span', { style:{ width:7, height:7, borderRadius:'50%', background:proxyBase ? DL.green : DL.gold, boxShadow:proxyBase ? '0 0 8px ' + DL.green : 'none', animation:proxyBase ? 'pulse-glow 2s ease-in-out infinite' : 'none' } }),
+        React.createElement('span', { style:{ fontSize:10, color:DL.sub, fontWeight:600 } }, proxyBase ? '🟢 Proxy Online' : directAnyReady ? '🟡 Direct Mode' : '⚫ Offline'),
+        React.createElement('span', { style:{ color:DL.mute, fontSize:10 } }, '·'),
+        React.createElement('span', { style:{ fontSize:10, color:DL.mute, fontWeight:500 } }, 'Gemini + DeepSeek + Featherless + OpenAI')
       )
     )
   );
