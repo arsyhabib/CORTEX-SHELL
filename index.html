@@ -1288,19 +1288,18 @@
     .cortex-chat-bubble {
       position: relative;
       transform-origin: center;
-      animation: buttery-pop 0.72s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.26s ease, border-color 0.24s ease, background 0.24s ease;
-      will-change: transform;
+      transform: none !important;
+      will-change: auto !important;
+      transition: box-shadow 0.26s ease, border-color 0.24s ease, background 0.24s ease !important;
     }
 
-    .cortex-chat-bubble:active {
-      animation: none !important;
-      transform: translateY(0) scale(1) !important;
-    }
-
+    .cortex-chat-bubble:active,
+    .cortex-chat-bubble:focus,
+    .cortex-chat-bubble:hover,
     .cortex-touch-active .cortex-chat-bubble {
       animation: none !important;
       transform: none !important;
+      transition: none !important;
     }
 
     .cortex-fab-launch-button:active {
