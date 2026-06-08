@@ -8048,10 +8048,7 @@
 
       const fabMenu = fabOpen && React.createElement('div', {
         style: {
-          position: 'absolute',
-          ...fabMenuPos,
-          ...fabMenuVert,
-          width: compact ? 280 : 304,
+          width: '100%',
           height: fabActiveHub ? (compact ? 468 : 520) : (compact ? 352 : 390),
           maxHeight: fabActiveHub ? 'min(84svh, 640px)' : (compact ? 'min(70svh, 380px)' : 'min(74svh, 410px)'),
           padding: 12,
@@ -8331,9 +8328,21 @@
       if (keyboardOpen) return null;
 
       return React.createElement('div', { style: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 2147483646 } },
-        React.createElement('div', { style: { position: 'absolute', pointerEvents: 'auto', ...fabButtonPos } },
+        React.createElement('div', {
+          style: {
+            position: 'absolute',
+            pointerEvents: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: fabMenuSide.anchorRight ? 'flex-end' : 'flex-start',
+            ...fabButtonPos,
+            width: fabOpen ? (compact ? 280 : 304) : 'auto',
+          }
+        },
+          fabOpen && fabMenuSide.anchorBottom && fabMenu,
+          fabOpen && React.createElement('div', { style: { height: 8 } }),
           fabButton,
-          fabMenu
+          fabOpen && !fabMenuSide.anchorBottom && fabMenu
         )
       );
     }
