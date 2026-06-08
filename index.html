@@ -12062,7 +12062,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // Letting the outer scroll container shrink to its content gives the
     // inner flex chain a real height context, so the input bar can be
     // pinned to the bottom reliably.
-    scrollStyle:{ overflow:'visible', flex:'1 1 auto', minHeight:0, height:'auto', paddingBottom:0, paddingTop:0, paddingLeft:'var(--cortex-page-shell-pad-x, 18px)', paddingRight:'var(--cortex-page-shell-pad-x, 18px)' },
+    scrollStyle:{ overflow:'hidden', flex:'1 1 0%', minHeight:0, paddingBottom:0, paddingTop:0, paddingLeft:'var(--cortex-page-shell-pad-x, 18px)', paddingRight:'var(--cortex-page-shell-pad-x, 18px)', display:'flex', flexDirection:'column' },
     right:React.createElement('div',{style:{display:'flex',alignItems:'center',gap:3,flexWrap:'nowrap',justifyContent:'flex-end'}},
       React.createElement('div',{style:{display:'none'}},
         React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
@@ -12119,6 +12119,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',
         minWidth:0,overflow:'hidden',
         position:'relative',
+        flexShrink:0,
       }},
         // Model button (left anchor)
         React.createElement('button',{
@@ -12253,8 +12254,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // ════════════════════════════════════════════════════════════════════════
     // CHAT SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:compactLayout?12:16,alignItems:'stretch',width:'100%',height:'100%',minHeight:0,'--cortex-ai-chat-zoom':chatZoom}},
-      React.createElement('div',{style:{flex:compactLayout?'1 1 380px':'1 1 0',minWidth:0,minHeight:0,height:'100%',display:'flex',flexDirection:'column',gap:compactLayout?10:12,paddingTop:compactLayout?8:12}},
+    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:compactLayout?12:16,alignItems:'stretch',width:'100%',flex:'1 1 0%',minHeight:0,overflow:'hidden','--cortex-ai-chat-zoom':chatZoom}},
+      React.createElement('div',{style:{flex:'1 1 0%',minWidth:0,minHeight:0,overflow:'hidden',display:'flex',flexDirection:'column',gap:compactLayout?10:12,paddingTop:compactLayout?8:12}},
 
       // ── Chat Feed ────────────────────────────────────────────────────────
       React.createElement('div',{
@@ -12264,12 +12265,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           display:'flex',
           flexDirection:'column',
           gap:8,
-          // Desktop normal: grow to fill remaining space so input bar pins to bottom.
-          // Compact/mobile: keep bounded maxHeight to prevent oversized feed on small screens.
-          flex:compactLayout?'1 1 auto':'1 1 0',
-          minHeight:compactLayout?200:'clamp(220px, 28vh, 420px)',
-          maxHeight:compactLayout?chatFeedMaxHeight:'none',
-          height:compactLayout?'auto':'100%',
+          flex:'1 1 0%',
+          minHeight:0,
           overflowY:'auto',
           overscrollBehavior:'contain',
           overscrollBehaviorY:'contain',
@@ -12422,7 +12419,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           // column when the chat feed is short.
           flexShrink:0,
           marginTop:'auto',
-          marginBottom:compactLayout?0:6,
+          marginBottom:0,
           borderRadius:16,
           border:dragOver?('1.5px dashed '+DL.accent):('1px solid '+(isThinking?activeChatModel.color+'55':DL.glassBorder)),
           background:dragOver?'rgba(168,85,247,0.08)':'rgba(10,10,26,0.92)',
