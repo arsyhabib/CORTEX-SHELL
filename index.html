@@ -13130,58 +13130,59 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // ════════════════════════════════════════════════════════════════════════
     // CONNECT SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='connect'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10,width:'100%'}},
-      // Provider status horizontal scrollable row
-      React.createElement('div',{
-        className:'hide-scrollbar',
-        style:{
-          display:'flex',
-          flexDirection:'row',
-          gap:10,
-          overflowX:'auto',
-          padding:'4px 0 8px',
-          WebkitOverflowScrolling:'touch',
-          scrollbarWidth:'none',
-        },
-      },
-        [
-          {title:'Gemini',sub:geminiReady?'Chat · Image · Video · TTS':'API key belum diisi',ready:geminiReady,color:DL.teal,icon:'✶'},
-          {title:'OpenAI',sub:openaiReady?'GPT-4.1 nano · GPT Image 2':'API key belum diisi',ready:openaiReady,color:DL.green,icon:'⬡'},
-          {title:'DeepSeek',sub:deepseekReady?'V4 Flash reasoning':'API key belum diisi',ready:deepseekReady,color:DL.accentB,icon:'◈'},
-          {title:'Featherless',sub:featherlessReady?'3 model multimodal':'API key belum diisi',ready:featherlessReady,color:DL.accent,icon:'◇'},
-        ].map(function(card,i){
-          return React.createElement('div',{key:card.title,
-            style:{
-              padding:14,borderRadius:20,position:'relative',overflow:'hidden',flexShrink:0,
-              minWidth:140,
-              border:`1px solid ${card.ready?card.color+'44':DL.glassBorder}`,
-              background:card.ready?`${card.color}0c`:'rgba(255,255,255,0.02)',
-              transition:'all 0.3s ease',
-              animation:card.ready?'cortex-ai-connect-glow 3s ease-in-out infinite':'none',
-            }},
-            // Ping ring
-            card.ready&&React.createElement('div',{style:{position:'absolute',top:12,right:12,width:8,height:8}},
+    surface==='connect'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:6,width:'100%'}},
+      [
+        {title:'Gemini',sub:geminiReady?'Chat · Image · Video · TTS':'API key belum diisi',ready:geminiReady,color:DL.teal},
+        {title:'OpenAI',sub:openaiReady?'GPT-4.1 nano · GPT Image 2':'API key belum diisi',ready:openaiReady,color:DL.green},
+        {title:'DeepSeek',sub:deepseekReady?'V4 Flash reasoning':'API key belum diisi',ready:deepseekReady,color:DL.accentB},
+        {title:'Featherless',sub:featherlessReady?'3 model multimodal':'API key belum diisi',ready:featherlessReady,color:DL.accent},
+      ].map(function(card){
+        return React.createElement('div',{key:card.title,
+          style:{
+            display:'flex',alignItems:'center',gap:10,
+            padding:'10px 12px',borderRadius:14,
+            border:'1px solid '+(card.ready?card.color+'44':DL.glassBorder),
+            background:card.ready?(card.color+'0c'):'rgba(255,255,255,0.02)',
+            width:'100%',boxSizing:'border-box',position:'relative',
+            transition:'background 0.2s,border-color 0.2s',
+          }},
+          React.createElement(OrbSVG,{color:card.ready?card.color:'#555',thinking:false,size:26}),
+          React.createElement('div',{style:{flex:1,minWidth:0}},
+            React.createElement('div',{style:{fontSize:12,fontWeight:900,color:card.ready?card.color:DL.text,lineHeight:1.2}},card.title),
+            React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},card.sub),
+          ),
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,flexShrink:0}},
+            card.ready&&React.createElement('div',{style:{position:'relative',width:7,height:7}},
               React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:card.color}}),
               React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:'50%',background:card.color,animation:'cortex-ai-status-ping 2s ease-out infinite'}}),
             ),
-            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:7}},
-              React.createElement(OrbSVG,{color:card.ready?card.color:'#555',thinking:false,size:28}),
-              React.createElement('span',{style:{fontSize:12,fontWeight:900,color:card.ready?card.color:DL.text}},card.title),
-            ),
-            React.createElement('div',{style:{fontSize:9,color:DL.mute,lineHeight:1.4,marginBottom:6}},card.sub),
-            React.createElement(B1Badge,{color:card.ready?card.color:DL.gold},card.ready?'● Ready':'○ Pending'),
-          );
-        }),
-        // Settings shortcut as flex item in the row
-        React.createElement('button',{
-          onClick:()=>onNavigate(21),
-          style:{flexShrink:0,minWidth:120,padding:'14px',borderRadius:20,border:`1.5px solid ${DL.accent}44`,background:`${DL.accent}0e`,color:DL.accent,fontSize:12,fontWeight:800,cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:8,transition:'all 0.25s ease',position:'relative',overflow:'hidden'},
+            React.createElement(B1Badge,{color:card.ready?card.color:DL.gold},card.ready?'Ready':'Pending'),
+          ),
+        );
+      }),
+      React.createElement('button',{
+        onClick:()=>onNavigate(21),
+        className:'cortex-motion-press',
+        style:{
+          display:'flex',alignItems:'center',gap:10,
+          padding:'10px 12px',borderRadius:14,width:'100%',
+          border:'1px solid '+DL.accent+'44',background:DL.accent+'0e',
+          color:DL.accent,fontSize:12,fontWeight:800,cursor:'pointer',
+          boxSizing:'border-box',transition:'background 0.2s',
         },
-          React.createElement('svg',{width:20,height:20,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},React.createElement('circle',{cx:12,cy:12,r:3}),React.createElement('path',{d:'M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83'})),
-          'Provider Settings',
+      },
+        React.createElement('div',{style:{width:26,height:26,borderRadius:8,background:DL.accent+'1a',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}},
+          React.createElement('svg',{width:14,height:14,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round'},
+            React.createElement('circle',{cx:12,cy:12,r:3}),
+            React.createElement('path',{d:'M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83'}),
+          ),
+        ),
+        React.createElement('span',{style:{flex:1,textAlign:'left'}},'Provider Settings'),
+        React.createElement('svg',{width:12,height:12,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round',style:{opacity:0.5}},
+          React.createElement('polyline',{points:'9 18 15 12 9 6'}),
         ),
       ),
-  ),
+    ),
     // ════════════════════════════════════════════════════════════════════════
     // AIW COMPACT FOOTER
     // ════════════════════════════════════════════════════════════════════════
