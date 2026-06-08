@@ -981,6 +981,8 @@
 }
 .cortex-sidebar-shell {
   min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 .cortex-sidebar-drawer-backdrop {
   position: fixed;
@@ -2180,7 +2182,7 @@
   }
 }
 
-@media (max-width: 1279px) {
+@media (max-width: 1023px) {
   .cortex-sidebar-shell {
     display: none !important;
   }
@@ -14020,39 +14022,82 @@ function getCortexViewportProfile() {
   const vv = typeof window !== 'undefined' ? window.visualViewport : null;
   const width = Math.max(1, Math.round((vv && vv.width) || window.innerWidth || 0));
   const height = Math.max(1, Math.round((vv && vv.height) || window.innerHeight || 0));
-  const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+  const mq = (q) => !!(window.matchMedia && window.matchMedia(q).matches);
+  const coarse = mq('(pointer: coarse)');
+  const hoverFine = mq('(hover: hover) and (pointer: fine)');
+  const isPwa = mq('(display-mode: standalone)');
+  const pixelRatio = Math.round((window.devicePixelRatio || 1) * 10) / 10;
   const orientation = width >= height ? 'landscape' : 'portrait';
   const aspect = width / Math.max(1, height);
-  let mode = 'mobile';
-  if (width >= 1180) mode = 'desktop';
-  else if (width >= 760 || (coarse && Math.min(width, height) >= 700)) mode = 'tablet';
+  const minDim = Math.min(width, height);
 
-  const compactHeight = height <= 720 || (orientation === 'landscape' && height <= 520);
-  const compactWidth = width <= 430;
+  // Desktop: fine pointer + adequate width, OR very wide screen (unlikely to be tablet)
+  let mode = 'mobile';
+  if ((hoverFine && width >= 1024) || width >= 1440) mode = 'desktop';
+  else if (width >= 1024 && !coarse) mode = 'desktop';
+  else if (width >= 768 || (coarse && minDim >= 600 && width >= 700)) mode = 'tablet';
+
+  // Sidebar docking: desktop always docks; wide landscape tablet may dock
+  const sidebarShouldDock = mode === 'desktop' || (mode === 'tablet' && !coarse && width >= 1024);
+  const sidebarDockedWidth = 292;
+
+  // Effective content width when sidebar is docked
+  const contentWidth = sidebarShouldDock ? Math.max(320, width - sidebarDockedWidth) : width;
+
+  const compactHeight = height <= 680 || (orientation === 'landscape' && height <= 480);
+  const compactWidth = width <= 390;
   const density = compactHeight ? 'compact' : 'regular';
-  const padX = mode === 'desktop' ? 24 : compactWidth ? 16 : 18;
-  const padTop = mode === 'desktop' ? (density === 'compact' ? 18 : 22) : (density === 'compact' ? 12 : 16);
-  const padBottomValue = mode === 'desktop'
-    ? 96
+
+  // Horizontal padding: proportional to content width on desktop, fixed on mobile
+  const padX = mode === 'desktop'
+    ? Math.max(20, Math.min(36, Math.round(contentWidth * 0.026)))
     : mode === 'tablet'
-      ? Math.max(72, Math.min(Math.round(height * 0.1), 92))
-      : Math.max(60, Math.min(Math.round(height * 0.085), 78));
-  const bottomClearance = `calc(${padBottomValue}px + env(safe-area-inset-bottom))`;
+      ? (compactWidth ? 16 : 20)
+      : (compactWidth ? 14 : 18);
+
+  // Vertical top padding
+  const padTop = mode === 'desktop'
+    ? (density === 'compact' ? 14 : 18)
+    : mode === 'tablet'
+      ? (density === 'compact' ? 10 : 14)
+      : (density === 'compact' ? 8 : 12);
+
+  // Bottom clearance: desktop has no nav bar so just breathing room; mobile/tablet need nav clearance
+  const navClearance = mode === 'desktop'
+    ? 24
+    : mode === 'tablet' && sidebarShouldDock
+      ? 28
+      : mode === 'tablet'
+        ? Math.max(62, Math.min(Math.round(height * 0.09), 84))
+        : Math.max(58, Math.min(Math.round(height * 0.085), 74));
+
+  const bottomClearance = `calc(${navClearance}px + env(safe-area-inset-bottom))`;
+
+  // FAB clearance: only relevant when FAB is visible (mobile/undocked tablet)
+  const fabClearance = sidebarShouldDock
+    ? bottomClearance
+    : `calc(${Math.max(navClearance, mode === 'mobile' ? 70 : 62)}px + env(safe-area-inset-bottom))`;
 
   return {
     width,
     height,
     aspect,
     coarse,
+    hoverFine,
+    isPwa,
+    pixelRatio,
     orientation,
     mode,
     density,
     compactHeight,
     compactWidth,
+    sidebarShouldDock,
+    sidebarDockedWidth,
+    contentWidth,
     pagePadX: padX,
     pagePadTop: padTop,
     pagePadBottom: bottomClearance,
-    mobileFabClearance: bottomClearance,
+    mobileFabClearance: fabClearance,
   };
 }
 
@@ -15211,24 +15256,10 @@ function CortexLibraryShell() {
   const compactLayout = viewport.density === 'compact';
   const mobileFabDocked = mode !== 'desktop';
   const coarsePointer = viewport.coarse;
-  const [sidebarDocked, setSidebarDocked] = React.useState(typeof window !== 'undefined' &&
-    !coarsePointer && window.innerWidth >= 1280);
+  const [sidebarDocked, setSidebarDocked] = React.useState(viewport.sidebarShouldDock);
   React.useEffect(() => {
-    let timer;
-    const onResize = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        setSidebarDocked(typeof window !== 'undefined' && !viewport.coarse && window.innerWidth >= 1280);
-      }, 150);
-    };
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
-    };
-  }, []);
+    setSidebarDocked(viewport.sidebarShouldDock);
+  }, [viewport.sidebarShouldDock]);
   const params = new URLSearchParams(window.location.search);
   const hasSeenWelcome = typeof window !== 'undefined' && localStorage.getItem('cortex.welcomeSeen') === '1';
   const initialPage = Number(params.get('page') || (hasSeenWelcome ? 0 : 1));
@@ -15944,11 +15975,12 @@ function CortexLibraryShell() {
       fontFamily:'"SF Pro Display", "Inter", -apple-system, sans-serif',
       display:'flex',
       flexDirection:sidebarDocked ? 'row' : 'column',
-      position:'relative',
       '--cortex-page-shell-pad-x': `${viewport.pagePadX}px`,
       '--cortex-page-shell-pad-top': `${viewport.pagePadTop}px`,
       '--cortex-page-shell-pad-bottom': viewport.pagePadBottom,
       '--cortex-mobile-fab-clearance': viewport.mobileFabClearance,
+      '--cortex-content-width': `${viewport.contentWidth}px`,
+      '--cortex-sidebar-width': sidebarDocked ? `${viewport.sidebarDockedWidth}px` : '0px',
     }},
     React.createElement(CortexInteractiveWallpaper, { wallpaper, exhibition:isWelcomePage }),
     React.createElement('div', { className:'cortex-library-ambient-orbs', style:{ position:'absolute', inset:0, pointerEvents:'none', filter:coarsePointer ? 'none' : 'blur(24px)', opacity:isWelcomePage ? (coarsePointer ? 0.26 : 0.48) : (coarsePointer ? 0.08 : 0.18) }},
