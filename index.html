@@ -7849,6 +7849,8 @@
     }
 
     function CortexPagesHubFab({ onNavigate, onSurfaceChange, mode, surfaceId, theme, page, lectureDomains = [], selectedLectureId, onSelectLecture, examSets = [], selectedExamSetId, onSelectExamSet }) {
+      const viewport = useCortexViewportProfile();
+      const keyboardOpen = viewport.height < viewport.layoutHeight - 80;
       const compact = mode !== 'desktop';
       const allowFabDrag = mode === 'desktop';
       const [fabOpen, setFabOpen] = React.useState(false);
@@ -7856,6 +7858,22 @@
       const [fabGroup, setFabGroup] = React.useState('Search');
       const [fabActiveHub, setFabActiveHub] = React.useState(null);
       const fabDragRef = React.useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+
+      React.useEffect(() => {
+        if (!fabPos) return;
+        setFabPos(prev => {
+          if (!prev) return null;
+          const maxX = window.innerWidth - 64;
+          const maxY = window.innerHeight - 64;
+          const nextX = Math.max(16, Math.min(prev.x, maxX));
+          const nextY = Math.max(16, Math.min(prev.y, maxY));
+          if (nextX === prev.x && nextY === prev.y) return prev;
+          return { x: nextX, y: nextY };
+        });
+      }, [viewport.width, viewport.height]);
+
+      if (keyboardOpen) return null;
+
       const currentTheme = theme || cortexResolveTheme('neural');
       const FAB_GROUPS = [
         { id: 'Search', surfaces: [6, 12, 13, 14], label: 'Search / Gallery / 3D / Glossary' },
@@ -9138,14 +9156,13 @@
       ];
       const total = slides.length;
       const s = slides[slideIdx];
-      const stickyPager = ReactDOM.createPortal(
-        React.createElement('div', {
+      const stickyPager = React.createElement('div', {
           style: {
-            position: 'fixed',
+            position: 'absolute',
             left: '50%',
             bottom: 'calc(12px + env(safe-area-inset-bottom))',
             transform: 'translateX(-50%)',
-            zIndex: 2147483647,
+            zIndex: 10,
             pointerEvents: 'none',
           }
         },
@@ -9157,7 +9174,7 @@
               gap: 8,
               padding: '7px',
               borderRadius: 999,
-              background: `linear-gradient(145deg, rgba(10,10,26,0.72), rgba(18,16,42,0.86))`,
+              background: `linear-gradient(145deg, var(--cortex-theme-bg-alt, rgba(10,10,26,0.72)), rgba(18,16,42,0.86))`,
               border: `1px solid ${DL.glassBorder}`,
               boxShadow: `0 18px 32px ${DL.shadowColor}, inset 0 1px 0 rgba(255,255,255,0.10)`,
               backdropFilter: 'blur(18px) saturate(160%)',
@@ -9213,13 +9230,11 @@
               }
             }, slideIdx < total - 1 ? '⏭️' : '✓'),
           )
-        ),
-        document.body
-      );
+        );
 
       return React.createElement('div', {
         'data-screen-label': 'P3-Learning',
-        style: { display: 'flex', flexDirection: 'column', height: '100%' }
+        style: { display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }
       },
         /* Topbar */
         React.createElement(B1Topbar, {
@@ -16093,9 +16108,14 @@
 
         let frame = null;
         let cx = 0, cy = 0;
+        let resetInterval = null;
 
         const onPointerMove = (e) => {
           if (frame) cancelAnimationFrame(frame);
+          if (resetInterval) {
+            cancelAnimationFrame(resetInterval);
+            resetInterval = null;
+          }
           frame = requestAnimationFrame(() => {
             const nx = (e.clientX / window.innerWidth) * 2 - 1;
             const ny = (e.clientY / window.innerHeight) * 2 - 1;
@@ -16107,10 +16127,32 @@
           });
         };
 
+        const onPointerLeave = () => {
+          if (frame) cancelAnimationFrame(frame);
+          if (resetInterval) cancelAnimationFrame(resetInterval);
+
+          const decay = () => {
+            cx = cx * 0.85;
+            cy = cy * 0.85;
+            cortexSetMotionVars(cx * 0.35, cy * 0.35, 0);
+            if (Math.abs(cx) > 0.002 || Math.abs(cy) > 0.002) {
+              resetInterval = requestAnimationFrame(decay);
+            } else {
+              cortexSetMotionVars(0, 0, 0);
+              cx = 0;
+              cy = 0;
+            }
+          };
+          resetInterval = requestAnimationFrame(decay);
+        };
+
         window.addEventListener('pointermove', onPointerMove, { passive: true });
+        window.addEventListener('pointerleave', onPointerLeave, { passive: true });
         return () => {
           if (frame) cancelAnimationFrame(frame);
+          if (resetInterval) cancelAnimationFrame(resetInterval);
           window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('pointerleave', onPointerLeave);
         };
       }, [status]);
 
@@ -16385,7 +16427,7 @@
       else if (width >= 768 || (coarse && minDim >= 600 && width >= 700)) mode = 'tablet';
 
       // Sidebar docking: desktop always docks; wide landscape tablet may dock
-      const sidebarShouldDock = mode === 'desktop' || (mode === 'tablet' && !coarse && width >= 1024);
+      const sidebarShouldDock = mode === 'desktop' || (width >= 1024 && orientation === 'landscape');
       const sidebarDockedWidth = 292;
 
       // Effective content width when sidebar is docked
@@ -16594,6 +16636,8 @@
     }
 
     function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, surfaceId, onSurfaceChange, showGlobalFab = false, contentIndex, contentIndexStatus, visualManifest, visualManifestStatus, onSelectLecture }) {
+      const viewport = useCortexViewportProfile();
+      const keyboardOpen = viewport.height < viewport.layoutHeight - 80;
       const currentThemeId = themeId || 'neural';
       const currentTheme = theme || cortexResolveTheme(currentThemeId);
       const compact = mode !== 'desktop';
@@ -16613,6 +16657,19 @@
       const [fabGroup, setFabGroup] = React.useState('Search');
       const [fabActiveHub, setFabActiveHub] = React.useState(null);
       const fabDragRef = React.useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+
+      React.useEffect(() => {
+        if (!fabPos) return;
+        setFabPos(prev => {
+          if (!prev) return null;
+          const maxX = window.innerWidth - 64;
+          const maxY = window.innerHeight - 64;
+          const nextX = Math.max(16, Math.min(prev.x, maxX));
+          const nextY = Math.max(16, Math.min(prev.y, maxY));
+          if (nextX === prev.x && nextY === prev.y) return prev;
+          return { x: nextX, y: nextY };
+        });
+      }, [viewport.width, viewport.height]);
       const getFabBasePosition = React.useCallback(() => ({
         x: Math.max(16, window.innerWidth - (compact ? 158 : 176)),
         y: Math.max(16, window.innerHeight - (compact ? 98 : 110)),
@@ -17113,7 +17170,7 @@
               ),
             ),
 
-            showGlobalFab && React.createElement('div', {
+            showGlobalFab && !keyboardOpen && React.createElement('div', {
               style: {
                 position: 'fixed',
                 zIndex: 60,
@@ -17708,6 +17765,21 @@
       const [textSelection, setTextSelection] = React.useState(null);
       const selectionRangeRef = React.useRef(null);
       const sidebarFabDragRef = React.useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
+
+      const keyboardOpen = viewport.height < viewport.layoutHeight - 80;
+
+      React.useEffect(() => {
+        if (!sidebarFabPos) return;
+        setSidebarFabPos(prev => {
+          if (!prev) return null;
+          const maxX = window.innerWidth - 64;
+          const maxY = window.innerHeight - 64;
+          const nextX = Math.max(16, Math.min(prev.x, maxX));
+          const nextY = Math.max(16, Math.min(prev.y, maxY));
+          if (nextX === prev.x && nextY === prev.y) return prev;
+          return { x: nextX, y: nextY };
+        });
+      }, [viewport.width, viewport.height]);
 
       const current = page === 0
         ? { id: 0, label: 'Main Studio', icon: 'Core', component: 'PageBatch0Kernel' }
@@ -18347,7 +18419,9 @@
         className: 'cortex-library-root',
         style: {
           position: 'fixed',
-          top: 0, left: 0, right: 0, bottom: 0,
+          top: 0, left: 0,
+          width: viewport.width,
+          height: viewport.height,
           background: theme.colors.bg,
           color: theme.colors.text,
           overflow: 'hidden',
@@ -18356,8 +18430,8 @@
           flexDirection: sidebarDocked ? 'row' : 'column',
           '--cortex-page-shell-pad-x': `${viewport.pagePadX}px`,
           '--cortex-page-shell-pad-top': `${viewport.pagePadTop}px`,
-          '--cortex-page-shell-pad-bottom': viewport.pagePadBottom,
-          '--cortex-mobile-fab-clearance': viewport.mobileFabClearance,
+          '--cortex-page-shell-pad-bottom': keyboardOpen ? '0px' : viewport.pagePadBottom,
+          '--cortex-mobile-fab-clearance': keyboardOpen ? '0px' : viewport.mobileFabClearance,
           '--cortex-content-width': `${viewport.contentWidth}px`,
           '--cortex-sidebar-width': sidebarDocked ? `${viewport.sidebarDockedWidth}px` : '0px',
         }
@@ -18455,7 +18529,7 @@
           selectedExamSetId,
           onSelectExamSet: (id) => { setSelectedExamSetId(id); setSelectedLectureId(''); setSelectedLecture(null); },
         }),
-        React.createElement(CortexSidebarFab, {
+        !keyboardOpen && React.createElement(CortexSidebarFab, {
           open: sidebarDocked ? sidebarFabVisible : sidebarOpen,
           onClick: () => {
             if (sidebarFabDragRef.current.moved) {
@@ -18521,10 +18595,10 @@
                 flexDirection: mode === 'mobile' ? 'column' : 'row',
                 alignItems: mode === 'mobile' ? 'stretch' : 'center',
                 padding: mode === 'mobile'
-                  ? 'max(10px,env(safe-area-inset-top)) 12px 12px'
+                  ? 'max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) 12px max(12px,env(safe-area-inset-left))'
                   : compactLayout
-                    ? 'max(10px,env(safe-area-inset-top)) 14px 10px'
-                    : 'max(14px,env(safe-area-inset-top)) 22px 14px',
+                    ? 'max(10px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left))'
+                    : 'max(14px,env(safe-area-inset-top)) max(22px,env(safe-area-inset-right)) 14px max(22px,env(safe-area-inset-left))',
                 gap: mode === 'mobile' ? 10 : compactLayout ? 6 : 0,
                 borderBottom: `1px solid ${theme.colors.glassBorder}`,
                 background: 'var(--cortex-theme-bg-alt, rgba(10,10,26,0.46))',
@@ -18615,7 +18689,7 @@
               className: ['cortex-library-content', `cortex-page-enter-${navDirection}`].join(' '),
               style: {
                 flex: 1, minHeight: 0, overflow: 'hidden',
-                padding: mode === 'desktop' ? 24 : compactLayout ? 12 : 18,
+                padding: mode === 'desktop' ? 24 : mode === 'mobile' ? 0 : compactLayout ? 12 : 18,
               }
             },
               React.createElement('div', {
@@ -18625,7 +18699,7 @@
                   margin: '0 auto', overflow: 'hidden',
                   borderRadius: mode === 'mobile' ? 0 : compactLayout ? 22 : 28,
                   border: mode === 'mobile' ? 'none' : `1px solid ${theme.colors.glassBorder}`,
-                  background: isWelcomePage ? 'rgba(10,10,26,0.38)' : 'rgba(10,10,26,0.58)',
+                  background: isWelcomePage ? `${theme.colors.bg}60` : `${theme.colors.bg}94`,
                   boxShadow: mode === 'mobile' ? 'none' : coarsePointer ? `0 8px 22px ${theme.colors.shadowColor}` : (compactLayout ? `0 10px 28px ${theme.colors.shadowColor}` : `0 14px 42px ${theme.colors.shadowColor}, inset 0 1px 0 ${theme.colors.glassHighlight}`),
                   backdropFilter: coarsePointer ? 'blur(6px) saturate(112%)' : (isWelcomePage ? 'blur(12px) saturate(150%)' : compactLayout ? 'blur(12px) saturate(140%)' : 'blur(16px) saturate(150%)'),
                   WebkitBackdropFilter: coarsePointer ? 'blur(6px) saturate(112%)' : (isWelcomePage ? 'blur(12px) saturate(150%)' : compactLayout ? 'blur(12px) saturate(140%)' : 'blur(16px) saturate(150%)'),
