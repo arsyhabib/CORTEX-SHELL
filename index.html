@@ -12056,6 +12056,13 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     subtitle:'Multimodal · Chat · Visual · Audio',
     onBack:()=>onNavigate(19),
     scrollPadBottom:'calc(24px + env(safe-area-inset-bottom))',
+    // Disable B2PageShell's internal scroll container for AI Workspace.
+    // Each surface (chat/visual/audio) implements its own scroll strategy
+    // (chat feed scrolls internally, visual/audio have their own layout).
+    // Letting the outer scroll container shrink to its content gives the
+    // inner flex chain a real height context, so the input bar can be
+    // pinned to the bottom reliably.
+    scrollStyle:{ overflow:'visible', flex:'1 1 auto', minHeight:0, height:'auto', paddingBottom:0, paddingTop:0, paddingLeft:'var(--cortex-page-shell-pad-x, 18px)', paddingRight:'var(--cortex-page-shell-pad-x, 18px)' },
     right:React.createElement('div',{style:{display:'flex',alignItems:'center',gap:3,flexWrap:'nowrap',justifyContent:'flex-end'}},
       React.createElement('div',{style:{display:'none'}},
         React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
@@ -12246,8 +12253,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // ════════════════════════════════════════════════════════════════════════
     // CHAT SURFACE
     // ════════════════════════════════════════════════════════════════════════
-    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:compactLayout?12:16,alignItems:'stretch',width:'100%','--cortex-ai-chat-zoom':chatZoom}},
-      React.createElement('div',{style:{flex:'1 1 380px',minWidth:0,display:'flex',flexDirection:'column',gap:compactLayout?10:12,paddingTop:compactLayout?8:12}},
+    surface==='assistant'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:compactLayout?12:16,alignItems:'stretch',width:'100%',height:'100%',minHeight:0,'--cortex-ai-chat-zoom':chatZoom}},
+      React.createElement('div',{style:{flex:compactLayout?'1 1 380px':'1 1 0',minWidth:0,minHeight:0,height:'100%',display:'flex',flexDirection:'column',gap:compactLayout?10:12,paddingTop:compactLayout?8:12}},
 
       // ── Chat Feed ────────────────────────────────────────────────────────
       React.createElement('div',{
@@ -12257,8 +12264,12 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           display:'flex',
           flexDirection:'column',
           gap:8,
-          minHeight:200,
-          maxHeight:chatFeedMaxHeight,
+          // Desktop normal: grow to fill remaining space so input bar pins to bottom.
+          // Compact/mobile: keep bounded maxHeight to prevent oversized feed on small screens.
+          flex:compactLayout?'1 1 auto':'1 1 0',
+          minHeight:compactLayout?200:'clamp(220px, 28vh, 420px)',
+          maxHeight:compactLayout?chatFeedMaxHeight:'none',
+          height:compactLayout?'auto':'100%',
           overflowY:'auto',
           overscrollBehavior:'contain',
           overscrollBehaviorY:'contain',
@@ -12405,10 +12416,18 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           if(file)processDroppedFile(file);
         },
         style:{
+          // Pin to the bottom of the chat flex column (outer wrapper has
+          // height:100% / minHeight:0). flexShrink:0 keeps it from
+          // collapsing, and marginTop:auto pushes it to the end of the
+          // column when the chat feed is short.
+          flexShrink:0,
+          marginTop:'auto',
+          marginBottom:compactLayout?0:6,
           borderRadius:16,
           border:dragOver?('1.5px dashed '+DL.accent):('1px solid '+(isThinking?activeChatModel.color+'55':DL.glassBorder)),
-          background:dragOver?'rgba(168,85,247,0.08)':'rgba(10,10,26,0.6)',
+          background:dragOver?'rgba(168,85,247,0.08)':'rgba(10,10,26,0.92)',
           backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',
+          boxShadow:'0 -8px 24px rgba(0,0,0,0.35)',
           overflow:'hidden',
           transition:'border-color 0.25s ease',
         }
