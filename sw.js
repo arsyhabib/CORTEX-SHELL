@@ -32,6 +32,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
+  // Network-First for navigation (index.html) to keep code fresh when online
   if (event.request.mode === 'navigate') {
     event.respondWith((async () => {
       try {
@@ -48,12 +49,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Stale-While-Revalidate for other static assets/JSON resources
   event.respondWith((async () => {
-    const cached = await caches.match(event.request);
-    if (cached) return cached;
-    const response = await fetch(event.request);
     const cache = await caches.open(CACHE_NAME);
-    cache.put(event.request, response.clone()).catch(() => {});
-    return response;
+    const cached = await cache.match(event.request);
+
+    const fetchPromise = (async () => {
+      try {
+        const response = await fetch(event.request);
+        if (response && response.status === 200) {
+          cache.put(event.request, response.clone()).catch(() => {});
+        }
+        return response;
+      } catch (err) {
+        if (cached) return cached;
+        throw err;
+      }
+    })();
+
+    return cached || fetchPromise;
   })());
 });

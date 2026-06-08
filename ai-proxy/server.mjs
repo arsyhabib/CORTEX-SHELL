@@ -58,6 +58,15 @@ const PROVIDER_CONFIG = {
       imageQuality: "low",
     },
   },
+  minimax: {
+    label: "MiniMax",
+    configured: Boolean(process.env.MINIMAX_API_KEY),
+    apiKey: process.env.MINIMAX_API_KEY || "",
+    baseUrl: "https://api.minimax.chat/v1",
+    models: {
+      chat: "minimax-3",
+    },
+  },
 };
 
 const CURATED_CATALOG = {
@@ -103,6 +112,13 @@ const CURATED_CATALOG = {
       note: "Vision/video understanding ultra ringan untuk klasifikasi atau summarization cepat.",
       provider: "Featherless",
       route: "/providers/featherless/chat/completions",
+    },
+    {
+      id: PROVIDER_CONFIG.minimax.models.chat,
+      label: "MiniMax 3",
+      note: "Text generation cepat dengan reasoning yang solid. OpenAI-compatible.",
+      provider: "MiniMax",
+      route: "/providers/minimax/chat/completions",
     },
   ],
   visual: [
@@ -186,6 +202,11 @@ const CURATED_CATALOG = {
       defaultImageQuality: PROVIDER_CONFIG.openai.models.imageQuality,
       note: "OpenAI dipakai untuk chat cepat dan image low-output.",
     },
+    minimax: {
+      label: PROVIDER_CONFIG.minimax.label,
+      defaultChatModel: PROVIDER_CONFIG.minimax.models.chat,
+      note: "MiniMax 3 sebagai lane text generation cepat dengan reasoning solid.",
+    },
   },
   notes: [
     "Semua live call berjalan lewat local secure proxy.",
@@ -263,6 +284,24 @@ const server = createServer(async (req, res) => {
       const data = await fetchJson(`${PROVIDER_CONFIG.openai.baseUrl}/chat/completions`, {
         method: "POST",
         headers: authHeaders(PROVIDER_CONFIG.openai.apiKey),
+        body: JSON.stringify(payload),
+      });
+      writeJson(res, 200, data);
+      return;
+    }
+    if (req.method === "POST" && url.pathname === "/providers/minimax/chat/completions") {
+      assertConfigured("minimax");
+      const body = await readJsonBody(req);
+      const payload = {
+        model: body.model || PROVIDER_CONFIG.minimax.models.chat,
+        messages: body.messages || [{ role: "user", content: body.prompt || "Say hello." }],
+        temperature: body.temperature ?? 0.2,
+        max_tokens: body.max_tokens ?? 512,
+        stream: false,
+      };
+      const data = await fetchJson(`${PROVIDER_CONFIG.minimax.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: authHeaders(PROVIDER_CONFIG.minimax.apiKey),
         body: JSON.stringify(payload),
       });
       writeJson(res, 200, data);
@@ -413,26 +452,30 @@ function buildHealthPayload() {
     ok: true,
     proxyBaseUrl: `http://${HOST}:${PORT}`,
     repoRoot,
-      providers: {
-        gemini: {
-          configured: PROVIDER_CONFIG.gemini.configured,
-          models: PROVIDER_CONFIG.gemini.models,
-        },
+    providers: {
+      gemini: {
+        configured: PROVIDER_CONFIG.gemini.configured,
+        models: PROVIDER_CONFIG.gemini.models,
+      },
       deepseek: {
         configured: PROVIDER_CONFIG.deepseek.configured,
         models: PROVIDER_CONFIG.deepseek.models,
       },
-        featherless: {
-          configured: PROVIDER_CONFIG.featherless.configured,
-          models: PROVIDER_CONFIG.featherless.models,
-        },
-        openai: {
-          configured: PROVIDER_CONFIG.openai.configured,
-          models: PROVIDER_CONFIG.openai.models,
-        },
+      featherless: {
+        configured: PROVIDER_CONFIG.featherless.configured,
+        models: PROVIDER_CONFIG.featherless.models,
       },
-    };
-  }
+      openai: {
+        configured: PROVIDER_CONFIG.openai.configured,
+        models: PROVIDER_CONFIG.openai.models,
+      },
+      minimax: {
+        configured: PROVIDER_CONFIG.minimax.configured,
+        models: PROVIDER_CONFIG.minimax.models,
+      },
+    },
+  };
+}
 
 function writeJson(res, statusCode, payload) {
   res.writeHead(statusCode, {

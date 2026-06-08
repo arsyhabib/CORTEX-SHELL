@@ -22,5 +22,8 @@ window.__CORTEX_AI_LOCAL_CONFIG__ = {
       imageModel: "gpt-image-2",
       imageQuality: "low",
     },
+    minimax: {
+      defaultModel: "minimax-3",
+    },
   },
 };
