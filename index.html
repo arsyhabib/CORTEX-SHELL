@@ -7840,9 +7840,11 @@
         React.createElement('div', {
           style: {
             display: 'grid',
+            gridTemplateColumns: '100%',
             gap: 8,
             paddingRight: 4,
             paddingBottom: 8,
+            width: '100%',
           }
         }, children)
       );
@@ -7850,7 +7852,9 @@
 
     function CortexPagesHubFab({ onNavigate, onSurfaceChange, mode, surfaceId, theme, page, lectureDomains = [], selectedLectureId, onSelectLecture, examSets = [], selectedExamSetId, onSelectExamSet }) {
       const viewport = useCortexViewportProfile();
-      const keyboardOpen = viewport.height < viewport.layoutHeight - 80;
+      const isInputFocused = typeof document !== 'undefined' && document.activeElement && 
+        (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable);
+      const keyboardOpen = (viewport.height < viewport.layoutHeight - 120) && !!isInputFocused;
       const compact = mode !== 'desktop';
       const allowFabDrag = mode === 'desktop';
       const [fabOpen, setFabOpen] = React.useState(false);
@@ -7871,8 +7875,6 @@
           return { x: nextX, y: nextY };
         });
       }, [viewport.width, viewport.height]);
-
-      if (keyboardOpen) return null;
 
       const currentTheme = theme || cortexResolveTheme('neural');
       const FAB_GROUPS = [
@@ -7954,6 +7956,7 @@
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
+        width: '100%',
       } : {
         flex: '1 1 auto',
         minHeight: 0,
@@ -7964,6 +7967,7 @@
         gap: 8,
         paddingRight: 4,
         paddingBottom: 8,
+        width: '100%',
         WebkitOverflowScrolling: 'touch',
         touchAction: 'pan-y',
       };
@@ -8047,7 +8051,7 @@
           position: 'absolute',
           ...fabMenuPos,
           ...fabMenuVert,
-          width: compact ? 252 : 304,
+          width: compact ? 280 : 304,
           height: fabActiveHub ? (compact ? 468 : 520) : (compact ? 352 : 390),
           maxHeight: fabActiveHub ? 'min(84svh, 640px)' : (compact ? 'min(70svh, 380px)' : 'min(74svh, 410px)'),
           padding: 12,
@@ -8323,6 +8327,8 @@
           )
         )
       );
+
+      if (keyboardOpen) return null;
 
       return React.createElement('div', { style: { position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 2147483646 } },
         React.createElement('div', { style: { position: 'absolute', pointerEvents: 'auto', ...fabButtonPos } },
@@ -16637,7 +16643,9 @@
 
     function PageBatch0Kernel({ onNavigate, mode, themeId, onThemeChange, theme, surfaceId, onSurfaceChange, showGlobalFab = false, contentIndex, contentIndexStatus, visualManifest, visualManifestStatus, onSelectLecture }) {
       const viewport = useCortexViewportProfile();
-      const keyboardOpen = viewport.height < viewport.layoutHeight - 80;
+      const isInputFocused = typeof document !== 'undefined' && document.activeElement && 
+        (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable);
+      const keyboardOpen = (viewport.height < viewport.layoutHeight - 120) && !!isInputFocused;
       const currentThemeId = themeId || 'neural';
       const currentTheme = theme || cortexResolveTheme(currentThemeId);
       const compact = mode !== 'desktop';
@@ -17766,7 +17774,9 @@
       const selectionRangeRef = React.useRef(null);
       const sidebarFabDragRef = React.useRef({ active: false, moved: false, sx: 0, sy: 0, ox: 0, oy: 0 });
 
-      const keyboardOpen = viewport.height < viewport.layoutHeight - 80;
+      const isInputFocused = typeof document !== 'undefined' && document.activeElement && 
+        (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable);
+      const keyboardOpen = (viewport.height < viewport.layoutHeight - 120) && !!isInputFocused;
 
       React.useEffect(() => {
         if (!sidebarFabPos) return;
