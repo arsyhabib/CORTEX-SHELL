@@ -10568,12 +10568,13 @@ function cortexReadAIWorkspaceRuntime() {
   const fallback = {
     transportMode:'auto',
     provider:'CORTEX Secure Router',
-    providerLabel:'Gemini + DeepSeek + OpenAI via local secure proxy',
+    providerLabel:'Gemini + DeepSeek + Featherless + OpenAI via local secure proxy',
     proxyUrl:'',
     mode:'production',
     apiKeys:{
       gemini:'',
       deepseek:'',
+      featherless:'',
       openai:'',
     },
     providers:{
@@ -10582,12 +10583,14 @@ function cortexReadAIWorkspaceRuntime() {
         imageModel:'gemini-2.0-flash-preview-image-generation',
         videoModel:'veo-3-lite-generate-001',
         ttsModel:'gemini-2.5-flash-preview-tts',
-        gemmaFastModel:'gemma-3-4b-it',
-        gemmaBalancedModel:'gemma-3-12b-it',
-        gemmaVisionModel:'gemma-3-27b-it',
       },
       deepseek:{
         defaultModel:'deepseek-v4-flash',
+      },
+      featherless:{
+        fastVisionModel:'unsloth/gemma-3-4b-it',
+        balancedVisionModel:'unsloth/gemma-3-12b-it',
+        videoReasoningModel:'Kaushika04/Qwen2-VL-2B-Instruct-LoRA-FT_video_finetuned',
       },
       openai:{
         chatModel:'gpt-4.1-nano',
@@ -11187,14 +11190,15 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   },[proxyBase,runtime.transportMode]);
   const runtimeKeys=runtime.apiKeys||{};
   const directGeminiReady=!!runtimeKeys.gemini, directDeepseekReady=!!runtimeKeys.deepseek;
-  const directOpenAIReady=!!runtimeKeys.openai;
-  const directAnyReady=directGeminiReady||directDeepseekReady||directOpenAIReady;
+  const directFeatherlessReady=!!runtimeKeys.featherless, directOpenAIReady=!!runtimeKeys.openai;
+  const directAnyReady=directGeminiReady||directDeepseekReady||directFeatherlessReady||directOpenAIReady;
 
   function providerKey(p){return String(((runtime.apiKeys||{})[p])||'').trim();}
   function providerModel(p,slot){
     const e=(runtime.providers||{})[p]||{};
-    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'gemini-2.0-flash-preview-image-generation';if(slot==='video')return e.videoModel||'veo-3-lite-generate-001';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';if(slot==='gemma-fast')return e.gemmaFastModel||'gemma-3-4b-it';if(slot==='gemma-balanced')return e.gemmaBalancedModel||'gemma-3-12b-it';if(slot==='gemma-vision')return e.gemmaVisionModel||'gemma-3-27b-it';}
+    if(p==='gemini'){if(slot==='chat')return e.chatModel||'gemini-2.5-flash';if(slot==='image')return e.imageModel||'gemini-2.0-flash-preview-image-generation';if(slot==='video')return e.videoModel||'veo-3-lite-generate-001';if(slot==='tts')return e.ttsModel||'gemini-2.5-flash-preview-tts';}
     if(p==='deepseek')return e.defaultModel||'deepseek-v4-flash';
+    if(p==='featherless'){if(slot==='balanced')return e.balancedVisionModel||'unsloth/gemma-3-12b-it';return e.fastVisionModel||'unsloth/gemma-3-4b-it';}
     if(p==='openai'){if(slot==='image')return e.imageModel||'gpt-image-2';return e.chatModel||'gpt-4.1-nano';}
     return '';
   }
@@ -11203,6 +11207,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   function geminiImagePredictUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predict?key=${encodeURIComponent(providerKey('gemini'))}`; }
   function geminiVideoGenerateUrl(m){return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(m)}:predictLongRunning?key=${encodeURIComponent(providerKey('gemini'))}`;}
   function deepseekChatUrl(){return'https://api.deepseek.com/chat/completions';}
+  function featherlessChatUrl(){return'https://api.featherless.ai/v1/chat/completions';}
   function openaiChatUrl(){return'https://api.openai.com/v1/chat/completions';}
   function openaiImageUrl(){return'https://api.openai.com/v1/images/generations';}
   function openaiTtsUrl(){return'https://api.openai.com/v1/audio/speech';}
@@ -11229,6 +11234,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
   const ph=runtimeInfo.health&&runtimeInfo.health.providers?runtimeInfo.health.providers:{};
   const geminiReady=!!(ph.gemini&&ph.gemini.configured)||directGeminiReady;
   const deepseekReady=!!(ph.deepseek&&ph.deepseek.configured)||directDeepseekReady;
+  const featherlessReady=!!(ph.featherless&&ph.featherless.configured)||directFeatherlessReady;
   const openaiReady=!!(ph.openai&&ph.openai.configured)||directOpenAIReady;
   const chatFeedMaxHeight = layoutProfile && layoutProfile.height
     ? Math.max(
@@ -11356,15 +11362,15 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     {id:'gemini',label:'Gemini 2.5 Flash',shortLabel:'Gemini',provider:'Google',color:'#06d6a0',ready:geminiReady},
     {id:'openai',label:'GPT-4.1 nano',shortLabel:'GPT-4.1',provider:'OpenAI',color:'#22c55e',ready:openaiReady},
     {id:'deepseek',label:'DeepSeek V4 Flash',shortLabel:'DeepSeek',provider:'DeepSeek',color:'#6366f1',ready:deepseekReady},
-    {id:'gemma-4b',label:'Gemma 3 4B',shortLabel:'Gemma 4B',provider:'Google',color:'#a855f7',ready:geminiReady},
-    {id:'gemma-12b',label:'Gemma 3 12B',shortLabel:'Gemma 12B',provider:'Google',color:'#c084fc',ready:geminiReady},
+    {id:'featherless',label:'Gemma 3 4B',shortLabel:'Gemma 4B',provider:'Featherless',color:'#a855f7',ready:featherlessReady},
+    {id:'featherless-12b',label:'Gemma 3 12B',shortLabel:'Gemma 12B',provider:'Featherless',color:'#c084fc',ready:featherlessReady},
   ];
   const imageModels=[
     {id:'gemini',label:'Gemini 3.1 Flash',sub:'Gemini Image',color:'#06d6a0',bgGrad:'linear-gradient(135deg,#06d6a0,#0ea5e9)'},
     {id:'openai-img1',label:'GPT Image 1',sub:'OpenAI gpt-image-1',color:'#22c55e',bgGrad:'linear-gradient(135deg,#22c55e,#16a34a)'},
     {id:'openai-img2',label:'GPT Image 2',sub:'OpenAI gpt-image-2',color:'#34d399',bgGrad:'linear-gradient(135deg,#34d399,#059669)'},
     {id:'video',label:'Video Gen',sub:'Veo / Sora',color:'#a855f7',bgGrad:'linear-gradient(135deg,#a855f7,#6366f1)'},
-    {id:'gemma-vision',label:'Gemma Vision',sub:'Visual Q&A · Gemini API',color:'#c084fc',bgGrad:'linear-gradient(135deg,#c084fc,#a855f7)',ready:geminiReady},
+    {id:'featherless-vision',label:'Gemma Vision',sub:'Visual Q&A',color:'#c084fc',bgGrad:'linear-gradient(135deg,#c084fc,#a855f7)'},
   ];
   const videoModels=[
     {id:'veo',label:'Veo 2.0 Fast',sub:'Gemini API · Google',color:'#06d6a0'},
@@ -11478,8 +11484,8 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         gemini:`Kamu adalah Gemini, AI buatan Google, di CORTEX AI Workspace. ${FMT}`,
         openai:`Kamu adalah GPT-4.1 Nano, AI buatan OpenAI, di CORTEX AI Workspace. ${FMT}`,
         deepseek:`Kamu adalah DeepSeek AI, di CORTEX AI Workspace. ${FMT}`,
-        'gemma-4b':`Kamu adalah Gemma 3 4B, model open-source Google via Gemini API, di CORTEX AI Workspace. ${FMT}`,
-        'gemma-12b':`Kamu adalah Gemma 3 12B, model open-source Google via Gemini API, di CORTEX AI Workspace. ${FMT}`,
+        featherless:`Kamu adalah Gemma 3 4B (bukan Gemini), model open-source Google via Featherless AI, di CORTEX AI Workspace. ${FMT}`,
+        'featherless-12b':`Kamu adalah Gemma 3 12B (bukan Gemini), model open-source Google via Featherless AI, di CORTEX AI Workspace. ${FMT}`,
       };
       const sysTxt=sysPrompts[chatModel]||'';
       function withSysMsg(msgs,aiRole){return sysTxt?[{role:'user',content:sysTxt},{role:aiRole,content:'Siap, saya mengerti.'}, ...msgs]:msgs;}
@@ -11511,20 +11517,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         text=extractText(p)||'DeepSeek tidak mengembalikan respons.';
       }
       else{
-        // Gemma 3 4B / 12B via Gemini API
-        const gm=chatModel==='gemma-12b'?providerModel('gemini','gemma-balanced'):providerModel('gemini','gemma-fast');
-        const gmSys=sysPrompts[chatModel]||'';
-        // Gemma doesn't support systemInstruction — prepend as user/model turns in contents
-        const baseContents=toGeminiContents(history,finalPrompt,null);
-        const gmContents=gmSys?[{role:'user',parts:[{text:gmSys}]},{role:'model',parts:[{text:'Siap, saya mengerti.'}]},...baseContents]:baseContents;
-        const proxyMsgs=toMsgsWithImage(history,finalPrompt,'assistant',null);
-        const p=await cortexRequest({
-          provider:'gemini',route:'/providers/gemini/chat',signal,
-          body:{model:gm,messages:gmSys?[{role:'user',content:gmSys},{role:'assistant',content:'Siap.'},...proxyMsgs]:proxyMsgs,generationConfig:{temperature:0.7}},
-          directRoute:geminiGenerateUrl(gm),
-          directBody:{model:gm,contents:gmContents,generationConfig:{temperature:0.7}},
-        });
-        text=extractText(p)||'Gemma tidak mengembalikan respons.';
+        const fm=chatModel==='featherless-12b'?providerModel('featherless','balanced'):providerModel('featherless','fast');
+        const fMsgs=toMsgsWithImage(history,finalPrompt,'assistant',attached&&!hasBinaryDoc?attached:null);
+        const fSys=sysPrompts[chatModel]||'';
+        const p=await cortexRequest({provider:'featherless',route:'/providers/featherless/chat/completions',signal,body:{model:fm,messages:fSys?[{role:'system',content:fSys},...fMsgs]:fMsgs,temperature:0.7,max_tokens:8192},directRoute:featherlessChatUrl()});
+        text=extractText(p)||'Featherless tidak mengembalikan respons.';
       }
       setChatFeed(prev=>[...prev,{role:'assistant',model:chatModel,text}]);
     }catch(err){if(err&&err.name==='AbortError')return;setChatFeed(prev=>[...prev,{role:'assistant',model:'error',text:err&&err.message?err.message:'Terjadi kesalahan.'}]);}
@@ -11635,18 +11632,20 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         const data=extractGeneratedImageData(p);
         if(data)setImageResults(prev=>[{kind:'image',src:data.src,prompt:oPrompt,ts:Date.now()},...prev].slice(0,10));
       }
-      else if(imageModel==='gemma-vision'){
+      else if(imageModel==='featherless-vision'){
         const visionPrompt=reference
           ? `${promptText}\n\nAnalisis gambar referensi yang dilampirkan. Jelaskan komposisi, subjek, warna, pencahayaan, dan detail penting secara terstruktur.`
           : promptText;
-        const gvModel=providerModel('gemini','gemma-vision');
-        const gvContents=buildGeminiReferenceContents(visionPrompt,reference);
         const p=await cortexRequest({
-          provider:'gemini',
-          route:'/providers/gemini/chat',
-          body:{model:gvModel,messages:[{role:'user',content:visionPrompt}],generationConfig:{temperature:0.7,maxOutputTokens:1024}},
-          directRoute:geminiGenerateUrl(gvModel),
-          directBody:{model:gvModel,contents:gvContents,generationConfig:{temperature:0.7,maxOutputTokens:1024}},
+          provider:'featherless',
+          route:'/providers/featherless/chat/completions',
+          body:{
+            model:providerModel('featherless','balanced'),
+            messages:buildOpenAiVisionMessages(visionPrompt,reference),
+            temperature:0.7,
+            max_tokens:1024,
+          },
+          directRoute:featherlessChatUrl(),
         });
         setImageResults(prev=>[{kind:'vision',text:extractText(p)||'No response.',ts:Date.now(),hasReference:Boolean(reference)},...prev].slice(0,10));
       }
@@ -11879,6 +11878,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       gemini:{prov:'gemini',route:'/providers/gemini/chat',body:{model:providerModel('gemini','chat'),messages:[{role:'user',content:'Balas persis: GEMINI SIAP'}],generationConfig:{temperature:0}},dr:geminiGenerateUrl(providerModel('gemini','chat')),label:'Gemini'},
       openai:{prov:'openai',route:'/providers/openai/chat/completions',body:{model:providerModel('openai','chat'),messages:[{role:'user',content:'Balas persis: OPENAI SIAP'}],temperature:0},dr:openaiChatUrl(),label:'OpenAI'},
       deepseek:{prov:'deepseek',route:'/providers/deepseek/chat/completions',body:{model:((runtime.providers||{}).deepseek||{}).defaultModel||'deepseek-v4-flash',temperature:0,max_tokens:24,messages:[{role:'user',content:'Balas persis: DEEPSEEK SIAP'}]},dr:deepseekChatUrl(),label:'DeepSeek'},
+      featherless:{prov:'featherless',route:'/providers/featherless/chat/completions',body:{model:(((runtime.providers||{}).featherless)||{}).fastVisionModel||'unsloth/gemma-3-4b-it',temperature:0,max_tokens:24,messages:[{role:'user',content:'Balas persis: FEATHERLESS SIAP'}]},dr:featherlessChatUrl(),label:'Featherless'},
       tts:{prov:'gemini',route:'/providers/gemini/tts',body:{model:providerModel('gemini','tts'),text:'CORTEX siap.',voiceName:'Kore'},dr:geminiGenerateUrl(providerModel('gemini','tts')),label:'Gemini TTS'},
       image:{prov:'gemini',route:'/providers/gemini/image',body:{model:providerModel('gemini','image'),prompt:'A glowing orb.'},dr:geminiGenerateUrl(providerModel('gemini','image')),label:'Gemini Image'},
     };
@@ -12598,7 +12598,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           React.createElement('div',{style:{minWidth:0,flex:1}},
             React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.sub,letterSpacing:0.5,textTransform:'uppercase'}},'Image Reference'),
             React.createElement('div',{style:{fontSize:11,color:DL.mute,lineHeight:1.45,marginTop:3}},
-              imageModel==='gemma-vision'
+              imageModel==='featherless-vision'
                 ? 'Gemma Vision memakai gambar terlampir sebagai input analisis, bukan sebagai target generasi.'
                 : imageModel==='video'
                   ? 'Referensi gambar dipakai sebagai acuan gaya, framing, dan subjek visual sebelum video digenerate.'
@@ -12630,7 +12630,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
                 React.createElement('div',{style:{fontSize:12,fontWeight:800,color:DL.text,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}},visualReference.name),
                 React.createElement('div',{style:{fontSize:10,color:DL.mute,marginTop:2}},`${Math.max(1,Math.round((visualReference.size||0)/1024))} KB · ${visualReference.mimeType || 'image/*'}`),
                 React.createElement('div',{style:{fontSize:10,color:DL.accent,marginTop:7,lineHeight:1.45}},
-                  imageModel==='gemma-vision'
+                  imageModel==='featherless-vision'
                     ? 'Mode ini membaca detail, komposisi, warna, dan objek pada gambar.'
                     : 'Mode ini akan mencoba mengirim referensi sebagai konteks multimodal jika provider mendukung.'
                 ),
@@ -12652,7 +12652,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
       },
         React.createElement('textarea',{
           value:imagePrompt,onChange:e=>setImagePrompt(e.target.value),
-          placeholder:imageModel==='video'?'Deskripsikan video: gerakan, suasana, gaya sinematik...':imageModel==='gemma-vision'?'Prompt yang ingin dianalisis secara visual...':'Deskripsikan gambar: komposisi, cahaya, warna, mood...',
+          placeholder:imageModel==='video'?'Deskripsikan video: gerakan, suasana, gaya sinematik...':imageModel==='featherless-vision'?'Prompt yang ingin dianalisis secara visual...':'Deskripsikan gambar: komposisi, cahaya, warna, mood...',
           rows:4,
           style:{width:'100%',resize:'vertical',padding:'12px 14px',borderRadius:14,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.04)',color:DL.text,outline:'none',fontSize:13,lineHeight:1.55,fontFamily:'inherit',marginBottom:12},
         }),
@@ -12731,7 +12731,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
             },
           },
             !imageBusy&&React.createElement('span',{style:{position:'absolute',top:0,left:'-100%',width:'50%',height:'100%',background:'linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)',animation:'cortex-ai-shimmer-btn 3s ease-in-out infinite',pointerEvents:'none'}}),
-            imageBusy?'Generating...':(imageModel==='video'?React.createElement('span',null,'Generate Video'):imageModel==='gemma-vision'?React.createElement('span',null,'Analisis Gambar'):React.createElement('span',null,'Generate Image')),
+            imageBusy?'Generating...':(imageModel==='video'?React.createElement('span',null,'Generate Video'):imageModel==='featherless-vision'?React.createElement('span',null,'Analisis Gambar'):React.createElement('span',null,'Generate Image')),
           ),
         ),
       ),
@@ -13144,9 +13144,10 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     // ════════════════════════════════════════════════════════════════════════
     surface==='connect'&&React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:6,width:'100%'}},
       [
-        {title:'Gemini',sub:geminiReady?'Chat · Image · Video · TTS · Gemma':'API key belum diisi',ready:geminiReady,color:DL.teal},
+        {title:'Gemini',sub:geminiReady?'Chat · Image · Video · TTS':'API key belum diisi',ready:geminiReady,color:DL.teal},
         {title:'OpenAI',sub:openaiReady?'GPT-4.1 nano · GPT Image 2':'API key belum diisi',ready:openaiReady,color:DL.green},
         {title:'DeepSeek',sub:deepseekReady?'V4 Flash reasoning':'API key belum diisi',ready:deepseekReady,color:DL.accentB},
+        {title:'Featherless',sub:featherlessReady?'Gemma 3 4B · 12B · Vision':'API key belum diisi',ready:featherlessReady,color:DL.accent},
       ].map(function(card){
         return React.createElement('div',{key:card.title,
           style:{
@@ -13202,7 +13203,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         React.createElement('span',{style:{width:5,height:5,borderRadius:'50%',background:connColor,flexShrink:0}}),
         React.createElement('span',null,proxyBase?'Proxy':directMode?'Direct':'Secret-safe'),
         React.createElement('span',{style:{opacity:0.4}},'·'),
-        React.createElement('span',null,`${[geminiReady,deepseekReady,openaiReady].filter(Boolean).length}/3 active`),
+        React.createElement('span',null,`${[geminiReady,deepseekReady,featherlessReady,openaiReady].filter(Boolean).length}/4 active`),
       ),
       React.createElement('div',{style:{display:'flex',alignItems:'center',gap:4}},
         React.createElement('span',{style:{opacity:0.5}},`Chat · Image · Video · TTS`),
@@ -13272,7 +13273,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
         React.createElement('div',{style:{padding:12,borderRadius:18,border:`1px solid ${DL.glassBorder}`,background:'rgba(255,255,255,0.02)'}},
           React.createElement('div',{style:{fontSize:10,fontWeight:800,color:DL.sub,marginBottom:8,letterSpacing:0.4,textTransform:'uppercase'}},'Live Probe'),
           React.createElement('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:probeState.status!=='idle'?10:0}},
-            ['gemini','openai','deepseek'].map(function(k){
+            ['gemini','openai','deepseek','featherless'].map(function(k){
               return React.createElement(B1Button,{key:k,label:k,variant:'secondary',onClick:function(){runProbe(k);},style:{fontSize:10,padding:'6px 11px',minWidth:0}});
             }),
             React.createElement(B1Button,{label:'↻',variant:'secondary',onClick:refreshRuntime,style:{fontSize:10,padding:'6px 11px',minWidth:0}}),
@@ -13309,11 +13310,12 @@ Object.assign(window, {
 
 function PageProviderAdvancedSettings({ onNavigate }) {
   const initialRuntime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
-  const [providerEnabled, setProviderEnabled] = React.useState(Boolean(initialRuntime.proxyUrl || initialRuntime.apiKeys && (initialRuntime.apiKeys.gemini || initialRuntime.apiKeys.deepseek || initialRuntime.apiKeys.openai)));
+  const [providerEnabled, setProviderEnabled] = React.useState(Boolean(initialRuntime.proxyUrl || initialRuntime.apiKeys && (initialRuntime.apiKeys.gemini || initialRuntime.apiKeys.deepseek || initialRuntime.apiKeys.featherless || initialRuntime.apiKeys.openai)));
   const [transportMode, setTransportMode] = React.useState(initialRuntime.transportMode || (initialRuntime.proxyUrl ? 'proxy' : 'direct'));
   const [proxyUrl, setProxyUrl] = React.useState(initialRuntime.proxyUrl || '');
   const [geminiKey, setGeminiKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.gemini) || '');
   const [deepseekKey, setDeepseekKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.deepseek) || '');
+  const [featherlessKey, setFeatherlessKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.featherless) || '');
   const [openaiKey, setOpenaiKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.openai) || '');
   const [hapticEnabled, setHapticEnabled] = React.useState(true);
   const [intensity, setIntensity] = React.useState('balanced');
@@ -13345,6 +13347,7 @@ function PageProviderAdvancedSettings({ onNavigate }) {
       apiKeys:{
         gemini:geminiKey.trim(),
         deepseek:deepseekKey.trim(),
+        featherless:featherlessKey.trim(),
         openai:openaiKey.trim(),
       },
       providers: initialRuntime.providers,
@@ -13407,6 +13410,13 @@ function PageProviderAdvancedSettings({ onNavigate }) {
           style:{ width:'100%', padding:'11px 13px', borderRadius:14, border:`1px solid ${DL.glassBorder}`, background:'rgba(255,255,255,0.05)', color:DL.text, fontSize:13 },
         }),
         React.createElement('input', {
+          value:featherlessKey,
+          onChange:e => setFeatherlessKey(e.target.value),
+          placeholder:'Featherless API key',
+          type:'password',
+          style:{ width:'100%', padding:'11px 13px', borderRadius:14, border:`1px solid ${DL.glassBorder}`, background:'rgba(255,255,255,0.05)', color:DL.text, fontSize:13 },
+        }),
+        React.createElement('input', {
           value:openaiKey,
           onChange:e => setOpenaiKey(e.target.value),
           placeholder:'OpenAI API key',
@@ -13426,6 +13436,7 @@ function PageProviderAdvancedSettings({ onNavigate }) {
               setProxyUrl(example.proxyUrl || '');
               setGeminiKey((example.apiKeys && example.apiKeys.gemini) || '');
               setDeepseekKey((example.apiKeys && example.apiKeys.deepseek) || '');
+              setFeatherlessKey((example.apiKeys && example.apiKeys.featherless) || '');
               setOpenaiKey((example.apiKeys && example.apiKeys.openai) || '');
               setRuntimeSaveState('Contoh runtime dimuat. Isi key Anda sendiri lalu simpan.');
             } catch (error) {}
@@ -13472,7 +13483,7 @@ function PageProviderAdvancedSettings({ onNavigate }) {
         }),
       ),
       React.createElement(B2Callout, { tone:'info', title:'Routing rule' },
-        'Gemini chat, image, TTS, file upload, video generation, dan Gemma (3 4B/12B/27B) berjalan lewat route /providers/gemini/* atau langsung ke endpoint Gemini API jika Direct mode aktif. DeepSeek memakai /providers/deepseek/chat/completions. OpenAI chat memakai /providers/openai/chat/completions dan OpenAI image memakai /providers/openai/image.'),
+        'Gemini chat, image, TTS, file upload, dan video generation berjalan lewat route /providers/gemini/* atau langsung ke endpoint Gemini jika Direct mode aktif. DeepSeek memakai /providers/deepseek/chat/completions. Featherless compact multimodal memakai /providers/featherless/chat/completions. OpenAI chat memakai /providers/openai/chat/completions dan OpenAI image memakai /providers/openai/image.'),
       React.createElement(B2Callout, { tone:runtimeSaveState.includes('Tersimpan') ? 'info' : 'caution', title:'Runtime save' }, runtimeSaveState)
     ),
 
