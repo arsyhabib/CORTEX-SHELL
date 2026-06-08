@@ -1387,6 +1387,16 @@
   overflow: hidden;
   flex: 1 1 0%;
 }
+/* iOS Safari auto-zooms any input/textarea with font-size < 16px.
+   Force 16px minimum to prevent layout-disrupting zoom on focus. */
+.cortex-library-root textarea,
+.cortex-library-root input[type="text"],
+.cortex-library-root input[type="search"],
+.cortex-library-root input[type="password"],
+.cortex-library-root input[type="email"],
+.cortex-library-root input[type="number"] {
+  font-size: 16px !important;
+}
 .cortex-page-glyph {
   position: absolute;
   left: 12px;
