@@ -2126,6 +2126,21 @@
     scroll-padding-bottom: var(--cortex-mobile-fab-clearance);
     overflow-x: clip !important;
   }
+  /* AI Workspace chat: cancel forced bottom padding so the input bar
+     can pin to the bottom via flex layout instead of being pushed off-screen */
+  [data-screen-label="P20-AIWorkspace"] > .cortex-page-scroll.cortex-ai-chat-active {
+    padding-bottom: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  /* Keep all AI Workspace chat buttons compact on mobile — the global
+     44px min-height rule inflates session chips, toolbar icons, and
+     action buttons, stealing vertical space from the chat feed */
+  [data-screen-label="P20-AIWorkspace"] .cortex-ai-chat-inputbar button,
+  [data-screen-label="P20-AIWorkspace"] .cortex-ai-chat-active button {
+    min-height: unset;
+  }
   .cortex-responsive-grid,
   [data-screen-label] [style*="grid-template-columns: 1fr 1fr"],
   [data-screen-label] [style*="grid-template-columns: repeat(3"],
@@ -8153,7 +8168,7 @@ Object.assign(window, { PageSidebar, PageSearch, PageSettings, PageMotionShowcas
    Additive helpers for reading, clinical content, image cards, and media states.
    Depends on Batch 1 atoms: DL, B1Card, B1Badge, B1Topbar, B1Button. */
 
-function B2PageShell({ label, title, subtitle, onBack, right, children, footer, scrollPadBottom, scrollStyle }) {
+function B2PageShell({ label, title, subtitle, onBack, right, children, footer, scrollPadBottom, scrollStyle, scrollClassName }) {
   const bottomPadding = scrollPadBottom || 'var(--cortex-page-shell-pad-bottom, calc(96px + env(safe-area-inset-bottom)))';
   return React.createElement('div', {
     'data-screen-label': label,
@@ -8170,7 +8185,7 @@ function B2PageShell({ label, title, subtitle, onBack, right, children, footer, 
       right,
     }),
     React.createElement('div', {
-      className:'hide-scrollbar cortex-motion-page cortex-page-scroll',
+      className:'hide-scrollbar cortex-motion-page cortex-page-scroll'+(scrollClassName?' '+scrollClassName:''),
       style:{
         flex:1,
         minHeight:0,
@@ -12055,14 +12070,15 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
     title:'AI Workspace',
     subtitle:'Multimodal · Chat · Visual · Audio',
     onBack:()=>onNavigate(19),
-    scrollPadBottom:'calc(24px + env(safe-area-inset-bottom))',
-    // Disable B2PageShell's internal scroll container for AI Workspace.
-    // Each surface (chat/visual/audio) implements its own scroll strategy
-    // (chat feed scrolls internally, visual/audio have their own layout).
-    // Letting the outer scroll container shrink to its content gives the
-    // inner flex chain a real height context, so the input bar can be
-    // pinned to the bottom reliably.
-    scrollStyle:{ overflow:'hidden', flex:'1 1 0%', minHeight:0, paddingBottom:0, paddingTop:0, paddingLeft:'var(--cortex-page-shell-pad-x, 18px)', paddingRight:'var(--cortex-page-shell-pad-x, 18px)', display:'flex', flexDirection:'column' },
+    scrollPadBottom:surface==='assistant'?'0':'calc(24px + env(safe-area-inset-bottom))',
+    // Chat surface: add class so mobile CSS overrides can cancel forced bottom padding
+    scrollClassName:surface==='assistant'?'cortex-ai-chat-active':'',
+    // Chat surface: overflow hidden + flex so the input bar pins at the
+    // bottom while the chat feed scrolls internally.
+    // Other surfaces: normal overflowY auto so content can scroll freely.
+    scrollStyle: surface==='assistant'
+      ? { overflow:'hidden', flex:'1 1 0%', minHeight:0, paddingBottom:0, paddingTop:0, paddingLeft:'var(--cortex-page-shell-pad-x, 18px)', paddingRight:'var(--cortex-page-shell-pad-x, 18px)', display:'flex', flexDirection:'column' }
+      : { flex:'1 1 auto', minHeight:0, paddingTop:0, paddingLeft:'var(--cortex-page-shell-pad-x, 18px)', paddingRight:'var(--cortex-page-shell-pad-x, 18px)' },
     right:React.createElement('div',{style:{display:'flex',alignItems:'center',gap:3,flexWrap:'nowrap',justifyContent:'flex-end'}},
       React.createElement('div',{style:{display:'none'}},
         React.createElement('div',{style:{position:'relative',width:10,height:10,flexShrink:0}},
@@ -12405,6 +12421,7 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
 
       // ── Input Bar ────────────────────────────────────────────────────────────
       React.createElement('div',{
+        className:'cortex-ai-chat-inputbar',
         onDragOver:function(e){e.preventDefault();e.stopPropagation();setDragOver(true);},
         onDragLeave:function(e){e.preventDefault();setDragOver(false);},
         onDrop:function(e){
@@ -12451,11 +12468,11 @@ function PageAIWorkspace({ onNavigate, layoutMode, layoutProfile, layoutDensity,
           onChange:e=>setChatPrompt(e.target.value),
           onKeyDown:e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();runChat();}},
           placeholder:'Tanya '+activeChatModel.label+'...',
-          rows:3,
+          rows:compactLayout?2:3,
           style:{
-            width:'100%',resize:'none',padding:'10px 12px',
+            width:'100%',resize:'none',padding:compactLayout?'8px 10px':'10px 12px',
             border:'none',background:'transparent',
-            color:DL.text,outline:'none',fontSize:13,lineHeight:1.55,fontFamily:'inherit',
+            color:DL.text,outline:'none',fontSize:compactLayout?12:13,lineHeight:1.55,fontFamily:'inherit',
             display:'block',boxSizing:'border-box',
           },
         }),
