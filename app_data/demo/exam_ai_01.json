@@ -1,0 +1,48 @@
+{
+  "exam_id": "bank_soal_ai_01",
+  "title": "AI Practice Bank: Neuro-Transmitter & Sinapsis",
+  "questions": [
+    {
+      "number": 1,
+      "stem": "Neurotransmitter apa yang berperan sebagai inhibitor utama di sistem saraf pusat untuk menurunkan eksitabilitas neuronal?",
+      "options": [
+        "Glutamat",
+        "GABA (Gamma-Aminobutyric Acid)",
+        "Asetilkolin",
+        "Dopamin"
+      ],
+      "answer_index": 1,
+      "explanation": "GABA adalah neurotransmitter inhibitor utama di otak, bekerja dengan cara meningkatkan konduktansi klorida untuk hiperpolarisasi membran sel.",
+      "confidence": "Eksitasi/Inhibisi",
+      "answer_evidence": "Bab Neurokimia Dasar"
+    },
+    {
+      "number": 2,
+      "stem": "Pada transmisi sinapsis kimiawi, masuknya ion apakah yang memicu eksositosis vesikel neurotransmitter di terminal presinapsis?",
+      "options": [
+        "Natrium (Na+)",
+        "Kalium (K+)",
+        "Kalsium (Ca2+)",
+        "Klorida (Cl-)"
+      ],
+      "answer_index": 2,
+      "explanation": "Depolarisasi membran presinapsis membuka kanal kalsium gerbang-voltase, memungkinkan masuknya Ca2+ yang memicu penggabungan vesikel ke membran aktif.",
+      "confidence": "Sinapsis Kimia",
+      "answer_evidence": "Elektrofisiologi Sel"
+    },
+    {
+      "number": 3,
+      "stem": "Penyakit Alzheimer ditandai dengan penurunan neurotransmitter tertentu di otak. Neurotransmitter manakah yang paling berkaitan dengan jalur kognisi ini?",
+      "options": [
+        "Asetilkolin",
+        "Serotonin",
+        "Norepinefrin",
+        "Glutamat"
+      ],
+      "answer_index": 0,
+      "explanation": "Degenerasi proyeksi kolinergik (asetilkolin) dari nukleus basalis Meynert adalah patofisiologi utama penyakit Alzheimer yang memengaruhi memori.",
+      "confidence": "Klinis",
+      "answer_evidence": "Neuropatologi Alzheimer"
+    }
+  ]
+}

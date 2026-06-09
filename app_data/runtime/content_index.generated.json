@@ -5,7 +5,7 @@
       "id": "6e",
       "title": "Neurology / Batch 1 6E.",
       "summary": "Sample domain for CORTEX-SHELL template.",
-      "moduleCount": 2,
+      "moduleCount": 1,
       "modules": [
         {
           "id": "shell_demo_01",
@@ -24,7 +24,24 @@
     }
   ],
   "lectureModuleCount": 1,
-  "examSets": [],
-  "examSetCount": 0,
-  "examQuestionCount": 0
+  "examSets": [
+    {
+      "id": "set_asli_01",
+      "title": "Ujian Akhir Blok (Asli)",
+      "type": "asli",
+      "questionCount": 2,
+      "sourceFile": "app_data/demo/exam_asli_01.json",
+      "source_label": "Univ Neurologi Asli"
+    },
+    {
+      "id": "bank_soal_ai_01",
+      "title": "Bank Soal AI Generated",
+      "type": "ai_generated",
+      "questionCount": 3,
+      "sourceFile": "app_data/demo/exam_ai_01.json",
+      "source_label": "Cortex AI Generated"
+    }
+  ],
+  "examSetCount": 2,
+  "examQuestionCount": 5
 }

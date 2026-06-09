@@ -10355,6 +10355,50 @@
     }
 
     function B2ReadingBlock({ children, lead }) {
+      const content = React.useMemo(() => {
+        if (typeof children !== 'string') return children;
+        const glossary = window.__cortexActiveGlossary;
+        const showPopup = window.__cortexShowGlossaryPopup;
+        if (!glossary || !glossary.length || !showPopup) return children;
+        
+        const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const sortedTerms = [...glossary]
+          .filter(g => g && g.term)
+          .sort((a, b) => b.term.length - a.term.length);
+        
+        if (!sortedTerms.length) return children;
+        
+        const pattern = '\\b(' + sortedTerms.map(g => escapeRegExp(g.term)).join('|') + ')\\b';
+        const regex = new RegExp(pattern, 'gi');
+        
+        const parts = children.split(regex);
+        if (parts.length <= 1) return children;
+        
+        return parts.map((part, index) => {
+          if (index % 2 === 1) {
+            const matchedTerm = sortedTerms.find(g => g.term.toLowerCase() === part.toLowerCase());
+            if (matchedTerm) {
+              return React.createElement('span', {
+                key: index,
+                className: 'cortex-glossary-highlight',
+                onClick: (e) => {
+                  e.stopPropagation();
+                  showPopup(matchedTerm.term, matchedTerm.meaning || matchedTerm.def || 'Definisi tidak tersedia.');
+                },
+                style: {
+                  color: 'var(--cortex-theme-accent1, #a855f7)',
+                  borderBottom: '1px dotted var(--cortex-theme-accent1, #a855f7)',
+                  cursor: 'pointer',
+                  fontWeight: 650,
+                  transition: 'opacity 0.2s',
+                }
+              }, part);
+            }
+          }
+          return part;
+        });
+      }, [children]);
+
       return React.createElement('p', {
         style: {
           fontSize: lead ? 15 : 14,
@@ -10364,7 +10408,7 @@
           fontWeight: lead ? 500 : 400,
           textWrap: 'pretty',
         }
-      }, children);
+      }, content);
     }
 
     function B2StatPill({ label, value, color }) {
@@ -12687,16 +12731,16 @@
       );
     }
 
-    function B3Choice({ label, text, selected, correct, onClick }) {
-      const color = correct ? DL.green : selected ? DL.accent : DL.mute;
+    function B3Choice({ label, text, selected, correct, wrong, onClick }) {
+      const color = correct ? DL.green : wrong ? DL.red : selected ? DL.accent : DL.mute;
       return React.createElement(B1Card, {
         pad: 12,
         onClick,
         className: 'cortex-motion-card cortex-motion-press',
         style: {
           marginBottom: 8,
-          background: selected ? `${DL.accent}22` : correct ? `${DL.green}14` : DL.glass,
-          borderColor: selected ? `${DL.accent}60` : correct ? `${DL.green}44` : DL.glassBorder,
+          background: wrong ? `${DL.red}22` : selected ? `${DL.accent}22` : correct ? `${DL.green}14` : DL.glass,
+          borderColor: wrong ? `${DL.red}60` : selected ? `${DL.accent}60` : correct ? `${DL.green}44` : DL.glassBorder,
         }
       },
         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '30px 1fr', gap: 10, alignItems: 'center' } },
@@ -12708,7 +12752,7 @@
               color, fontSize: 12, fontWeight: 900,
             }
           }, label),
-          React.createElement('div', { style: { fontSize: 13, lineHeight: 1.45, color: selected || correct ? DL.text : DL.sub, fontWeight: selected ? 750 : 500 } }, text),
+          React.createElement('div', { style: { fontSize: 13, lineHeight: 1.45, color: selected || correct || wrong ? DL.text : DL.sub, fontWeight: selected ? 750 : 500 } }, text),
         )
       );
     }
@@ -12854,71 +12898,314 @@
 
     function PageQuiz({ onNavigate, examSet }) {
       const questions = React.useMemo(() => cortexGetExamQuestions(examSet), [examSet]);
+      const isSimulationMode = React.useMemo(() => {
+        return !!(examSet && (examSet.type === 'ai_generated' || examSet.id.includes('ai')));
+      }, [examSet]);
+
       const [questionIndex, setQuestionIndex] = React.useState(0);
-      const [selected, setSelected] = React.useState(null);
-      const [showExplain, setShowExplain] = React.useState(true);
+      
+      // Study mode state
+      const [studyAnswers, setStudyAnswers] = React.useState({});
+      
+      // Simulation mode state
+      const [simulationAnswers, setSimulationAnswers] = React.useState({});
+      const [flagged, setFlagged] = React.useState({});
+      const [timeLeft, setTimeLeft] = React.useState(0);
+      const [isSubmitted, setIsSubmitted] = React.useState(false);
+      const [gridOpen, setGridOpen] = React.useState(true);
+
+      // Reset states on examSet change
       React.useEffect(() => {
         setQuestionIndex(0);
-        setSelected(null);
-      }, [examSet && examSet.id]);
+        setStudyAnswers({});
+        setSimulationAnswers({});
+        setFlagged({});
+        setIsSubmitted(false);
+        setGridOpen(true);
+        if (isSimulationMode && questions.length) {
+          setTimeLeft(questions.length * 60);
+        } else {
+          setTimeLeft(0);
+        }
+      }, [examSet && examSet.id, questions.length, isSimulationMode]);
+
+      // Timer effect
+      React.useEffect(() => {
+        if (!isSimulationMode || isSubmitted || timeLeft <= 0) return;
+        const timer = setInterval(() => {
+          setTimeLeft(prev => {
+            if (prev <= 1) {
+              clearInterval(timer);
+              setIsSubmitted(true);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+        return () => clearInterval(timer);
+      }, [isSimulationMode, isSubmitted, timeLeft]);
+
       const currentQuestion = questions[questionIndex] || null;
-      const choices = (currentQuestion && Array.isArray(currentQuestion.options) ? currentQuestion.options : []).map((text, idx) => ({
-        id: String.fromCharCode(65 + idx),
-        text,
-        correct: idx === Number(currentQuestion.answer_index),
-      }));
+
+      // Handle Option Selection
+      const handleOptionClick = (choiceId) => {
+        if (isSimulationMode) {
+          if (isSubmitted) return;
+          setSimulationAnswers(prev => ({ ...prev, [questionIndex]: choiceId }));
+        } else {
+          // Study Mode: Lock after selection
+          if (studyAnswers[questionIndex] !== undefined) return;
+          setStudyAnswers(prev => ({ ...prev, [questionIndex]: choiceId }));
+        }
+      };
+
+      const choices = (currentQuestion && Array.isArray(currentQuestion.options) ? currentQuestion.options : []).map((text, idx) => {
+        const choiceId = String.fromCharCode(65 + idx);
+        const currentAnswerId = currentQuestion && Number.isFinite(Number(currentQuestion.answer_index))
+          ? String.fromCharCode(65 + Number(currentQuestion.answer_index))
+          : null;
+
+        let selected = false;
+        let correct = false;
+        let wrong = false;
+
+        if (isSimulationMode) {
+          selected = simulationAnswers[questionIndex] === choiceId;
+          if (isSubmitted) {
+            correct = choiceId === currentAnswerId;
+            wrong = selected && choiceId !== currentAnswerId;
+          }
+        } else {
+          const answeredId = studyAnswers[questionIndex];
+          selected = answeredId === choiceId;
+          if (answeredId !== undefined) {
+            correct = choiceId === currentAnswerId;
+            wrong = selected && choiceId !== currentAnswerId;
+          }
+        }
+
+        return {
+          id: choiceId,
+          text,
+          selected,
+          correct,
+          wrong,
+        };
+      });
+
       const currentAnswerId = currentQuestion && Number.isFinite(Number(currentQuestion.answer_index))
         ? String.fromCharCode(65 + Number(currentQuestion.answer_index))
         : null;
 
+      const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+      };
+
+      const showExplain = isSimulationMode ? isSubmitted : (studyAnswers[questionIndex] !== undefined);
+
+      // Score Calculation
+      const totalQuestions = questions.length;
+      const correctCount = React.useMemo(() => {
+        if (!isSimulationMode) return 0;
+        return questions.reduce((acc, q, idx) => {
+          const ans = simulationAnswers[idx];
+          const correctAns = String.fromCharCode(65 + Number(q.answer_index));
+          return acc + (ans === correctAns ? 1 : 0);
+        }, 0);
+      }, [isSimulationMode, questions, simulationAnswers]);
+      const scorePct = totalQuestions ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
       return React.createElement(B2PageShell, {
         label: 'Quiz',
         title: examSet && examSet.title ? examSet.title : 'Quiz',
-        subtitle: 'Question set review',
+        subtitle: isSimulationMode
+          ? (isSubmitted ? 'Hasil Simulasi' : 'Mode Simulasi Ujian')
+          : 'Mode Belajar (Set Soal Asli)',
         onBack: () => onNavigate(16),
-        right: React.createElement(B1Badge, { color: DL.gold }, currentQuestion ? `Q ${questionIndex + 1}/${questions.length}` : '0 questions'),
+        right: isSimulationMode && !isSubmitted
+          ? React.createElement(B1Badge, { color: timeLeft < 30 ? DL.red : DL.gold }, `⏱️ ${formatTime(timeLeft)}`)
+          : React.createElement(B1Badge, { color: DL.gold }, currentQuestion ? `Q ${questionIndex + 1}/${totalQuestions}` : '0 questions'),
       },
+        // Scorecard display if submitted
+        isSimulationMode && isSubmitted && React.createElement(B1Card, {
+          pad: 18,
+          style: {
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15))',
+            border: `1px solid ${DL.accent}44`,
+            borderRadius: 20,
+            marginBottom: 16,
+            textAlign: 'center',
+          }
+        },
+          React.createElement('div', { style: { fontSize: 14, fontWeight: 800, color: DL.accent, textTransform: 'uppercase', letterSpacing: 1 } }, 'Hasil Simulasi Ujian'),
+          React.createElement('div', { style: { fontSize: 44, fontWeight: 950, color: scorePct >= 70 ? DL.green : scorePct >= 50 ? DL.gold : DL.red, margin: '10px 0' } }, `${scorePct}%`),
+          React.createElement('div', { style: { fontSize: 13, color: DL.text, fontWeight: 600 } }, `Benar: ${correctCount} dari ${totalQuestions} Soal`),
+          React.createElement('div', { style: { fontSize: 11, color: DL.sub, marginTop: 4, marginBottom: 14 } },
+            scorePct >= 70 ? 'Luar biasa! Anda siap menghadapi ujian asli.' : 'Butuh latihan lagi. Silakan review jawaban Anda di bawah.'
+          ),
+          React.createElement('div', { style: { display: 'flex', gap: 10 } },
+            React.createElement(B1Button, {
+              label: 'Ulangi Ujian',
+              full: true,
+              onClick: () => {
+                setIsSubmitted(false);
+                setSimulationAnswers({});
+                setFlagged({});
+                setQuestionIndex(0);
+                setTimeLeft(totalQuestions * 60);
+              }
+            }),
+            React.createElement(B1Button, {
+              label: 'Ulas Jawaban',
+              variant: 'ghost',
+              full: true,
+              onClick: () => {
+                // Just keep showing review mode
+              }
+            })
+          )
+        ),
+
         React.createElement(B3Hero, {
-          kicker: 'Question set workspace',
+          kicker: isSimulationMode ? 'Simulasi AI Generated' : 'Real University Exam',
           title: currentQuestion ? `Soal ${currentQuestion.number || questionIndex + 1}` : 'No question loaded',
-          subtitle: examSet && examSet.source_label
-            ? `Active set: ${examSet.source_label}. This page now opens the reconstructed exam set directly.`
-            : 'This page opens the reconstructed exam set directly and keeps the explanation tied to the active question.',
+          subtitle: isSimulationMode
+            ? 'Timer berjalan mundur 1 menit per soal secara total. Tandai ragu-ragu dan periksa hasil di akhir.'
+            : 'Jawaban dan penjelasan langsung dimunculkan sesaat setelah Anda menjawab.',
           color: DL.gold,
           right: React.createElement('div', { style: { width: 52 } },
-            React.createElement(B1Progress, { value: questions.length ? ((questionIndex + 1) / questions.length) * 100 : 0, h: 6, color: 'linear-gradient(135deg,#fbbf24,#a855f7)' })
+            React.createElement(B1Progress, { value: totalQuestions ? ((questionIndex + 1) / totalQuestions) * 100 : 0, h: 6, color: 'linear-gradient(135deg,#fbbf24,#a855f7)' })
           ),
         }),
 
+        // Question Map Grid
+        totalQuestions > 0 && React.createElement(B1Card, {
+          pad: 12,
+          style: { marginBottom: 14, background: 'rgba(255, 255, 255, 0.03)', borderColor: DL.glassBorder }
+        },
+          React.createElement('div', {
+            onClick: () => setGridOpen(!gridOpen),
+            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }
+          },
+            React.createElement('div', { style: { fontSize: 12, fontWeight: 800, color: DL.text } }, '🗺️ Peta Navigasi Soal'),
+            React.createElement('div', { style: { fontSize: 11, color: DL.sub } }, gridOpen ? 'Tutup ▲' : 'Buka ▼')
+          ),
+          gridOpen && React.createElement('div', {
+            style: {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(5, 1fr)',
+              gap: 8,
+              marginTop: 10
+            }
+          },
+            questions.map((q, idx) => {
+              const isCurrent = idx === questionIndex;
+              const isAnswered = isSimulationMode
+                ? simulationAnswers[idx] !== undefined
+                : studyAnswers[idx] !== undefined;
+              const isFlagged = isSimulationMode && flagged[idx];
+              
+              let bg = 'rgba(255, 255, 255, 0.05)';
+              let borderCol = DL.glassBorder;
+              let textColor = DL.sub;
+              
+              if (isCurrent) {
+                borderCol = DL.accent;
+                textColor = DL.accent;
+              }
+              if (isFlagged) {
+                bg = `${DL.gold}33`;
+                borderCol = DL.gold;
+                textColor = DL.gold;
+              } else if (isAnswered) {
+                bg = `${DL.teal}22`;
+                borderCol = `${DL.teal}55`;
+                textColor = DL.teal;
+              }
+              
+              return React.createElement('button', {
+                key: idx,
+                onClick: () => setQuestionIndex(idx),
+                style: {
+                  height: 38,
+                  borderRadius: 12,
+                  background: bg,
+                  border: `1px solid ${borderCol}`,
+                  color: textColor,
+                  fontWeight: isCurrent ? '800' : '600',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: isCurrent ? `0 0 8px ${DL.accent}44` : 'none',
+                  transition: 'all 0.2s',
+                }
+              }, idx + 1);
+            })
+          )
+        ),
+
         React.createElement(B1Card, { pad: 16, style: { marginBottom: 14 } },
           React.createElement(B1Badge, { color: DL.teal, style: { marginBottom: 10 } }, 'Clinical reasoning'),
-          React.createElement('div', { style: { fontSize: 16, lineHeight: 1.45, color: DL.text, fontWeight: 800 } },
+          React.createElement('div', { style: { fontSize: 15, lineHeight: 1.48, color: DL.text, fontWeight: 800 } },
             currentQuestion ? currentQuestion.stem : 'Choose a question set from the sidebar to begin review.'),
           React.createElement('div', { style: { marginTop: 12 } },
             choices.map(c => React.createElement(B3Choice, {
               key: c.id,
               label: c.id,
               text: c.text,
-              selected: selected === c.id,
-              correct: showExplain && c.id === currentAnswerId,
-              onClick: () => setSelected(c.id),
+              selected: c.selected,
+              correct: c.correct,
+              wrong: c.wrong,
+              onClick: () => handleOptionClick(c.id),
             }))
           ),
         ),
 
-        showExplain && currentQuestion && React.createElement(B2Callout, { tone: 'pearl', title: 'Explanation' },
-          currentQuestion.explanation || 'The explanation for this item can be expanded in a later pass if the source package gains more supporting detail.'),
+        showExplain && currentQuestion && React.createElement(B2Callout, { tone: 'pearl', title: 'Penjelasan Jawaban' },
+          currentQuestion.explanation || 'Penjelasan untuk soal ini belum tersedia.'),
+
+        // Navigation controls
+        isSimulationMode && !isSubmitted ? React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 } },
+          React.createElement(B1Button, {
+            label: flagged[questionIndex] ? '★ Ragu-ragu (Aktif)' : '☆ Tandai Ragu-ragu',
+            variant: flagged[questionIndex] ? 'primary' : 'ghost',
+            full: true,
+            onClick: () => setFlagged(prev => ({ ...prev, [questionIndex]: !prev[questionIndex] }))
+          }),
+          React.createElement(B1Button, {
+            label: 'Selesaikan Ujian',
+            full: true,
+            onClick: () => {
+              if (confirm('Apakah Anda yakin ingin menyelesaikan ujian ini?')) {
+                setIsSubmitted(true);
+              }
+            }
+          })
+        ) : null,
 
         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 } },
-          React.createElement(B1Button, { label: showExplain ? 'Hide rationale' : 'Show rationale', variant: 'ghost', full: true, onClick: () => setShowExplain(!showExplain) }),
-          React.createElement(B1Button, { label: 'Next question', full: true, onClick: () => setQuestionIndex((value) => questions.length ? (value + 1) % questions.length : 0) }),
+          React.createElement(B1Button, {
+            label: 'Sebelumnya',
+            variant: 'ghost',
+            full: true,
+            onClick: () => setQuestionIndex(prev => (prev > 0 ? prev - 1 : totalQuestions - 1))
+          }),
+          React.createElement(B1Button, {
+            label: 'Berikutnya',
+            full: true,
+            onClick: () => setQuestionIndex(prev => (prev < totalQuestions - 1 ? prev + 1 : 0))
+          }),
         ),
 
         React.createElement(B3Row, {
-          title: 'Question provenance',
+          title: 'Metainfo Soal',
           sub: currentQuestion && currentQuestion.answer_evidence
             ? currentQuestion.answer_evidence
-            : 'Each question can carry linked evidence, confidence, and lecture cross-reference metadata.',
+            : 'Soal ini memiliki bukti klinis pendukung dan tingkat keyakinan terintegrasi.',
           active: true,
           color: DL.gold,
           right: React.createElement(B2PressHint, { active: true, label: currentQuestion && currentQuestion.confidence ? currentQuestion.confidence : 'Review' }),
@@ -17774,6 +18061,30 @@
       const [selectedExamSet, setSelectedExamSet] = React.useState(null);
       const isContentViewing = !!(selectedLecture || selectedExamSet);
       const [selectedVisual, setSelectedVisual] = React.useState(null);
+      const [activeGlossaryPopup, setActiveGlossaryPopup] = React.useState(null);
+
+      React.useEffect(() => {
+        window.__cortexShowGlossaryPopup = (term, meaning) => {
+          setActiveGlossaryPopup({ term, meaning });
+        };
+        return () => {
+          window.__cortexShowGlossaryPopup = null;
+        };
+      }, []);
+
+      React.useEffect(() => {
+        if (!selectedLecture) {
+          window.__cortexActiveGlossary = null;
+          return;
+        }
+        const list = Array.isArray(selectedLecture.glossary)
+          ? selectedLecture.glossary
+          : Array.isArray(selectedLecture.modules && selectedLecture.modules[0] && selectedLecture.modules[0].glossary)
+            ? selectedLecture.modules[0].glossary
+            : [];
+        window.__cortexActiveGlossary = list;
+      }, [selectedLecture]);
+
       const [sidebarOpen, setSidebarOpen] = React.useState(false);
       const [sidebarPinnedHidden, setSidebarPinnedHidden] = React.useState(false);
       const [sidebarFabPos, setSidebarFabPos] = React.useState(null);
@@ -18726,6 +19037,45 @@
                 React.createElement(ThemeProvider, { themeId: theme.id },
                   React.createElement('div', { className: 'cortex-library-stage-inner', style: { height: '100%', overflow: 'hidden', position: 'relative' } }, renderPage())
                 )
+              )
+            )
+          ),
+          activeGlossaryPopup && React.createElement('div', {
+            onClick: () => setActiveGlossaryPopup(null),
+            style: {
+              position: 'fixed', inset: 0, zIndex: 99999,
+              background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 20, backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)',
+              animation: 'cortex-fade-in 0.25s ease-out'
+            }
+          },
+            React.createElement(B1Card, {
+              glow: true,
+              onClick: e => e.stopPropagation(),
+              style: {
+                width: '100%', maxWidth: 360,
+                background: 'rgba(10,12,32,0.94)',
+                border: `1px solid ${DL.glassBorder}`,
+                boxShadow: `0 24px 60px ${DL.shadowColor}`,
+                borderRadius: 20, padding: 22,
+                animation: 'cortex-ai-msg-in 0.35s cubic-bezier(0.16,1,0.3,1) both'
+              }
+            },
+              React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 } },
+                React.createElement(B2Kicker, { color: DL.accent }, 'Definisi Istilah'),
+                React.createElement('button', {
+                  onClick: () => setActiveGlossaryPopup(null),
+                  style: { background: 'none', border: 'none', color: DL.sub, fontSize: 22, cursor: 'pointer', outline: 'none' }
+                }, '×')
+              ),
+              React.createElement('div', { style: { fontSize: 17, fontWeight: 900, color: DL.text, marginBottom: 8 } }, activeGlossaryPopup.term),
+              React.createElement('div', { style: { fontSize: 12.5, lineHeight: 1.65, color: DL.sub, textWrap: 'pretty' } }, activeGlossaryPopup.meaning),
+              React.createElement('div', { style: { display: 'flex', justifyContent: 'flex-end', marginTop: 18 } },
+                React.createElement(B1Button, {
+                  label: 'Tutup',
+                  onClick: () => setActiveGlossaryPopup(null),
+                  style: { padding: '8px 16px', borderRadius: 10 }
+                })
               )
             )
           )

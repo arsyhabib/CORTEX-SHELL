@@ -1,0 +1,34 @@
+{
+  "exam_id": "set_asli_01",
+  "title": "Ujian Blok Neurology (Asli)",
+  "questions": [
+    {
+      "number": 1,
+      "stem": "Seorang pasien laki-laki usia 45 tahun mengeluhkan kelemahan mendadak pada lengan kanan dan kesulitan memproduksi kata-kata (bicara tidak lancar, namun memahami perintah). Di area manakah kemungkinan lesi terjadi?",
+      "options": [
+        "Area Broca (Lobus Frontalis Kiri)",
+        "Area Wernicke (Lobus Temporalis Kiri)",
+        "Gyrus Precentralis Kiri",
+        "Lobus Occipitalis Kiri"
+      ],
+      "answer_index": 0,
+      "explanation": "Lesi pada Area Broca menyebabkan afasia motorik (non-fluent aphasia), di mana pasien memahami pembicaraan tetapi mengalami kesulitan memproduksi kata-kata secara verbal.",
+      "confidence": "High-Yield",
+      "answer_evidence": "Neurologi Klinis — Bab Afasia"
+    },
+    {
+      "number": 2,
+      "stem": "Pasien dengan keluhan gangguan keseimbangan dan koordinasi gerakan motorik halus (disdiadokokinesia) kemungkinan besar mengalami gangguan pada struktur otak mana?",
+      "options": [
+        "Cerebrum",
+        "Cerebellum",
+        "Basal Ganglia",
+        "Medulla Oblongata"
+      ],
+      "answer_index": 1,
+      "explanation": "Cerebellum (otak kecil) bertanggung jawab untuk mengatur keseimbangan, koordinasi motorik, dan penghalusan gerakan motorik.",
+      "confidence": "Kunci",
+      "answer_evidence": "Fisiologi Motorik"
+    }
+  ]
+}
