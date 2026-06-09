@@ -8929,19 +8929,37 @@
                 borderRadius: 36,
                 overflow: 'hidden',
                 boxShadow: '0 22px 40px rgba(0,0,0,0.38)',
+                background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(99, 102, 241, 0.22))',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }
             },
-              React.createElement('img', {
-                src: './assets/pwa/cortex-icon.svg',
-                alt: '',
-                'aria-hidden': 'true',
-                style: {
-                  display: 'block',
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                }
-              })
+              React.createElement('svg', {
+                width: 64,
+                height: 64,
+                viewBox: '0 0 24 24',
+                fill: 'none',
+                stroke: 'url(#cortex-logo-grad)',
+                strokeWidth: 1.5,
+                strokeLinecap: 'round',
+                strokeLinejoin: 'round',
+                style: { filter: 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.6))' }
+              },
+                React.createElement('defs', null,
+                  React.createElement('linearGradient', { id: 'cortex-logo-grad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' },
+                    React.createElement('stop', { offset: '0%', stopColor: '#fbbf24' }),
+                    React.createElement('stop', { offset: '50%', stopColor: '#a855f7' }),
+                    React.createElement('stop', { offset: '100%', stopColor: '#6366f1' })
+                  )
+                ),
+                React.createElement('path', { d: 'M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2z' }),
+                React.createElement('path', { d: 'M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2z' }),
+                React.createElement('path', { d: 'M12 12h.01' }),
+                React.createElement('path', { d: 'M12 7h.01' }),
+                React.createElement('path', { d: 'M12 17h.01' })
+              )
             )
           ),
           React.createElement('div', {
@@ -9053,12 +9071,50 @@
        PAGE 2 — HOME / LIGHTWEIGHT DASHBOARD
        Clean medical learning dashboard
        ═══════════════════════════════════════════ */
-    function PageHome({ onNavigate }) {
-      const courses = [
-        { id: 1, icon: '🧬', title: 'Anatomi Manusia', sub: 'Ch.12 — Sistem Saraf Pusat', progress: 72, lessons: 24, badge: 'Lanjutkan' },
-        { id: 2, icon: '🫀', title: 'Kardiologi Klinis', sub: 'Ch.5 — Aritmia & EKG', progress: 30, lessons: 20, badge: null },
-        { id: 3, icon: '🧪', title: 'Farmakologi Dasar', sub: 'Ch.8 — Farmakokinetik', progress: 55, lessons: 16, badge: null },
-      ];
+    function PageHome({ onNavigate, contentIndex, onSelectLecture, onSelectExamSet }) {
+      const [userName, setUserName] = React.useState(() => {
+        try {
+          return localStorage.getItem('cortex.userName') || 'Dr. Raka';
+        } catch (e) {
+          return 'Dr. Raka';
+        }
+      });
+
+      // Synchronize name if updated in localStorage
+      React.useEffect(() => {
+        const handleStorage = () => {
+          try {
+            setUserName(localStorage.getItem('cortex.userName') || 'Dr. Raka');
+          } catch(e) {}
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+      }, []);
+
+      const allModules = React.useMemo(() => {
+        if (!contentIndex || !Array.isArray(contentIndex.lectureDomains)) return [];
+        const list = [];
+        contentIndex.lectureDomains.forEach(domain => {
+          if (Array.isArray(domain.modules)) {
+            domain.modules.forEach(m => {
+              list.push({
+                ...m,
+                domainTitle: domain.title,
+                progress: 0,
+              });
+            });
+          }
+        });
+        return list;
+      }, [contentIndex]);
+
+      const firstModule = allModules[0] || null;
+
+      // Handle Quick Actions clicks
+      const handleActionClick = (targetPageId) => {
+        onNavigate(targetPageId);
+      };
+
       return React.createElement('div', {
         'data-screen-label': 'P2-Home',
         style: { display: 'flex', flexDirection: 'column', height: '100%' }
@@ -9076,19 +9132,19 @@
           title: null,
           right: React.createElement('div', { style: { display: 'flex', gap: 8 } },
             React.createElement('span', { onClick: () => onNavigate(6), style: { fontSize: 18, cursor: 'pointer', opacity: 0.6 } }, '🔍'),
-            React.createElement('span', { onClick: () => onNavigate(5), style: { fontSize: 18, cursor: 'pointer', opacity: 0.6 } }, '☰'),
+            React.createElement('span', { onClick: () => onNavigate(7), style: { fontSize: 18, cursor: 'pointer', opacity: 0.6 } }, '⚙️'),
           ),
         }),
         /* Scrollable content */
         React.createElement('div', { style: { flex: 1, overflowY: 'auto', padding: '0 18px 20px' }, className: 'hide-scrollbar' },
           /* Greeting */
           React.createElement('div', { style: { marginBottom: 18, animation: 'slide-down 0.5s ease backwards' } },
-            React.createElement('div', { style: { fontSize: 22, fontWeight: 700, color: DL.text } }, 'Halo, Dr. Raka'),
+            React.createElement('div', { style: { fontSize: 22, fontWeight: 700, color: DL.text } }, `Halo, ${userName}`),
             React.createElement('div', { style: { fontSize: 13, color: DL.sub, marginTop: 2 } }, 'Lanjutkan perjalanan belajarmu'),
           ),
           /* Stats row */
           React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 18 } },
-            [{ i: '🔥', v: 14, l: 'Hari Streak' }, { i: '⚡', v: 2840, l: 'Total XP' }, { i: '📚', v: 6, l: 'Kursus' }].map((s, idx) =>
+            [{ i: '🔥', v: 14, l: 'Hari Streak' }, { i: '⚡', v: 2840, l: 'Total XP' }, { i: '📚', v: allModules.length, l: 'Modul Aktif' }].map((s, idx) =>
               React.createElement(B1Card, {
                 key: idx, pad: 12, style: {
                   textAlign: 'center', animation: 'stagger-in 0.4s ease backwards', animationDelay: `${0.1 + idx * 0.06}s`,
@@ -9106,45 +9162,62 @@
             )
           ),
           /* Continue Learning — Hero card */
-          React.createElement(B1Card, {
-            onClick: () => onNavigate(3), glow: true,
+          firstModule ? React.createElement(B1Card, {
+            onClick: () => {
+              onSelectLecture(firstModule.id);
+              onNavigate(9);
+            },
+            glow: true,
             style: { marginBottom: 18, background: DL.gradCard, animation: 'scale-in 0.48s cubic-bezier(0.34,1.56,0.64,1) backwards', animationDelay: '0.25s' },
           },
             React.createElement(B1Badge, { color: DL.gold, style: { marginBottom: 10 } }, '🔥 Lanjutkan'),
             React.createElement('div', { style: { display: 'flex', gap: 14, alignItems: 'flex-start' } },
               React.createElement(B1Icon, { icon: '🧬', size: 52 }),
               React.createElement('div', { style: { flex: 1 } },
-                React.createElement('div', { style: { fontSize: 16, fontWeight: 700, color: DL.text, lineHeight: 1.3 } }, 'Anatomi Manusia Dasar'),
-                React.createElement('div', { style: { fontSize: 11, color: DL.sub, margin: '4px 0 10px' } }, 'Ch.12 — Sistem Saraf Pusat'),
+                React.createElement('div', { style: { fontSize: 15, fontWeight: 700, color: DL.text, lineHeight: 1.3 } }, firstModule.title),
+                React.createElement('div', { style: { fontSize: 11, color: DL.sub, margin: '4px 0 10px' } }, firstModule.domainTitle || 'Modul Kuliah'),
                 React.createElement(B1Progress, { value: 72 }),
-                React.createElement('div', { style: { fontSize: 10, color: DL.mute, marginTop: 5 } }, '72% • 6 lessons tersisa'),
+                React.createElement('div', { style: { fontSize: 10, color: DL.mute, marginTop: 5 } }, '72% completed'),
               )
             )
+          ) : React.createElement(B1Card, {
+            style: { marginBottom: 18, textAlign: 'center', padding: '20px 14px' }
+          },
+            React.createElement('div', { style: { fontSize: 13, color: DL.sub } }, 'Belum ada modul yang terdaftar.')
           ),
           /* Courses list */
-          React.createElement(B1Section, { title: 'Kursus Aktif', action: 'Lihat Semua', style: { marginBottom: 10 } }),
+          React.createElement(B1Section, { title: 'Modul Kuliah', style: { marginBottom: 10 } }),
           React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10 } },
-            courses.map((c, i) => React.createElement(B1Card, {
-              key: c.id, onClick: () => onNavigate(3),
+            allModules.slice(0, 3).map((m, i) => React.createElement(B1Card, {
+              key: m.id,
+              onClick: () => {
+                onSelectLecture(m.id);
+                onNavigate(9);
+              },
               style: { animation: 'stagger-in 0.4s ease backwards', animationDelay: `${0.35 + i * 0.07}s` },
             },
               React.createElement('div', { style: { display: 'flex', gap: 12, alignItems: 'center' } },
-                React.createElement(B1Icon, { icon: c.icon, size: 44 }),
+                React.createElement(B1Icon, { icon: '📖', size: 44 }),
                 React.createElement('div', { style: { flex: 1 } },
-                  React.createElement('div', { style: { fontSize: 13, fontWeight: 600, color: DL.text } }, c.title),
-                  React.createElement('div', { style: { fontSize: 10, color: DL.sub, margin: '2px 0 8px' } }, c.sub),
-                  React.createElement(B1Progress, { value: c.progress, h: 4 }),
+                  React.createElement('div', { style: { fontSize: 13, fontWeight: 600, color: DL.text } }, m.title),
+                  React.createElement('div', { style: { fontSize: 10, color: DL.sub, margin: '2px 0 8px' } }, m.domainTitle || 'Sistem Saraf'),
+                  React.createElement(B1Progress, { value: 0, h: 4 }),
                 ),
-                React.createElement('span', { style: { fontSize: 12, color: DL.accent, fontWeight: 700 } }, `${c.progress}%`),
+                React.createElement('span', { style: { fontSize: 12, color: DL.accent, fontWeight: 700 } }, '0%'),
               )
             ))
           ),
           /* Quick actions */
           React.createElement(B1Section, { title: 'Aksi Cepat', style: { marginTop: 18, marginBottom: 10 } }),
           React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 } },
-            [{ i: '🧪', l: 'Quiz Harian', n: 4 }, { i: '📊', l: 'Progress', n: 2 }, { i: '🤖', l: 'AI Tutor', n: 3 }, { i: '📖', l: 'Glosarium', n: 3 }].map((a, i) =>
+            [
+              { i: '🧪', l: 'Latihan Quiz', n: 17 },
+              { i: '📊', l: 'Progress', n: 19 },
+              { i: '🤖', l: 'AI Tutor', n: 20 },
+              { i: '📖', l: 'Glosarium', n: 14 }
+            ].map((a, i) =>
               React.createElement(B1Card, {
-                key: i, pad: 14, onClick: () => onNavigate(a.n), style: {
+                key: i, pad: 14, onClick: () => handleActionClick(a.n), style: {
                   textAlign: 'center', animation: 'stagger-in 0.48s cubic-bezier(0.34,1.56,0.64,1) backwards', animationDelay: `${0.55 + i * 0.06}s`,
                 }
               },
@@ -9784,7 +9857,9 @@
         ? 'Learner profile • Demo account'
         : 'Learner profile • Session logged out';
       const accountStatus = accountLoggedIn ? 'Active' : 'Signed out';
-      const accountName = 'Dr. Raka';
+      const [accountName, setAccountName] = React.useState(() => {
+        return cortexGetStorage('cortex.userName', 'Dr. Raka');
+      });
 
       return React.createElement('div', {
         'data-screen-label': 'P7-Settings',
@@ -9954,21 +10029,31 @@
 
           React.createElement(B1Section, { title: 'Identitas Akun', style: { marginTop: 14, marginBottom: 4 } }),
           React.createElement(B1Card, { pad: 14, style: { marginTop: 8, marginBottom: 4 } },
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 } },
-              React.createElement('div', {
+            React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 12 } },
+              React.createElement('div', { style: { fontSize: 10, fontWeight: 700, color: DL.mute } }, 'NAMA MAHASISWA / DOKTER'),
+              React.createElement('input', {
+                type: 'text',
+                value: accountName,
+                onChange: (e) => {
+                  const val = e.target.value;
+                  setAccountName(val);
+                  cortexSetStorage('cortex.userName', val);
+                  // Trigger a custom event to notify other frames if necessary
+                  window.dispatchEvent(new Event('storage'));
+                },
                 style: {
-                  width: 48, height: 48, borderRadius: 18,
-                  background: accountLoggedIn
-                    ? 'linear-gradient(145deg, rgba(6,214,160,0.92), rgba(168,85,247,0.86))'
-                    : 'linear-gradient(145deg, rgba(148,163,184,0.88), rgba(99,102,241,0.7))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 20, boxShadow: `0 12px 28px ${DL.shadowColor}`,
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: 12,
+                  background: 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${DL.glassBorder}`,
+                  color: DL.text,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  outline: 'none',
+                  transition: 'all 0.2s',
                 }
-              }, accountLoggedIn ? 'U' : 'G'),
-              React.createElement('div', null,
-                React.createElement('div', { style: { fontSize: 15, fontWeight: 900, color: DL.text } }, accountName),
-                React.createElement('div', { style: { fontSize: 11, color: DL.sub, marginTop: 3 } }, accountSub),
-              ),
+              }),
             ),
             React.createElement('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 8 } },
               [
@@ -9979,7 +10064,7 @@
             ),
             React.createElement('div', { style: { fontSize: 10, color: DL.mute, marginTop: 10, lineHeight: 1.5 } },
               accountLoggedIn
-                ? 'This identity block is the current shell profile surface and can later receive real course and session metadata.'
+                ? 'Identitas lokal ini tersimpan otomatis dan akan mengalir ke sapaan di Dashboard Utama.'
                 : 'Sesi lokal sudah keluar. Shell tetap aman untuk dipakai lagi saat login ulang.'
             ),
           ),
