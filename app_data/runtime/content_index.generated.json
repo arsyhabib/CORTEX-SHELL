@@ -1,47 +1,85 @@
 {
-  "generatedAt": "2026-06-07",
-  "lectureDomains": [
+  "generatedAt": "2026-06-09T11:48:49.624Z",
+  "version": "2.0.0",
+  "domains": [
     {
-      "id": "6e",
-      "title": "Neurology / Batch 1 6E.",
-      "summary": "Sample domain for CORTEX-SHELL template.",
-      "moduleCount": 1,
-      "modules": [
-        {
-          "id": "shell_demo_01",
-          "title": "Sample Module: Getting Started",
-          "sourceFile": "app_data/demo/module_01.json",
-          "sourceDocument": "template_readme.txt",
-          "topicTags": [
-            "Demo",
-            "Template"
-          ],
-          "status": "Draft_extracted",
-          "domainId": "6e",
-          "order": 1
-        }
-      ]
-    }
-  ],
-  "lectureModuleCount": 1,
-  "examSets": [
-    {
-      "id": "set_asli_01",
-      "title": "Ujian Akhir Blok (Asli)",
-      "type": "asli",
-      "questionCount": 2,
-      "sourceFile": "app_data/demo/exam_asli_01.json",
-      "source_label": "Univ Neurologi Asli"
+      "id": "bank_soal_ai",
+      "type": "practice_generated",
+      "title": "Bank Soal AI",
+      "icon": "🤖",
+      "color": "#a855f7",
+      "version": "2.0.0",
+      "questionSetCount": 0,
+      "questionSets": [],
+      "questionCount": 0,
+      "metadata": {
+        "source": "ai_generated",
+        "generation_model": "cortex_ai_engine",
+        "source_domains": [
+          "materi",
+          "exam_asli"
+        ],
+        "total_sets": 0,
+        "total_questions": 0,
+        "language": "id",
+        "difficulty_range": [
+          "beginner",
+          "intermediate",
+          "advanced"
+        ]
+      }
     },
     {
-      "id": "bank_soal_ai_01",
-      "title": "Bank Soal AI Generated",
-      "type": "ai_generated",
-      "questionCount": 3,
-      "sourceFile": "app_data/demo/exam_ai_01.json",
-      "source_label": "Cortex AI Generated"
+      "id": "exam_asli",
+      "type": "assessment_authentic",
+      "title": "Ujian Asli",
+      "icon": "📝",
+      "color": "#f59e0b",
+      "version": "2.0.0",
+      "examSetCount": 0,
+      "examSets": [],
+      "questionCount": 0,
+      "metadata": {
+        "source": "university_official",
+        "subject_area": "Neurology",
+        "exam_type": "block_exam",
+        "total_sets": 0,
+        "total_questions": 0,
+        "language": "id",
+        "difficulty_levels": [
+          "High-Yield",
+          "Kunci",
+          "Clinical Reasoning"
+        ]
+      }
+    },
+    {
+      "id": "materi",
+      "type": "learning_content",
+      "title": "Materi Pembelajaran",
+      "icon": "📚",
+      "color": "#3b82f6",
+      "version": "2.0.0",
+      "moduleCount": 0,
+      "modules": [],
+      "metadata": {
+        "source": "university_slides",
+        "subject_area": "Neurology",
+        "academic_year": 2026,
+        "semester": 1,
+        "total_modules": 0,
+        "total_hours": 0,
+        "language": "id",
+        "instructor": "Dr. Habib Arsy"
+      }
     }
   ],
-  "examSetCount": 2,
-  "examQuestionCount": 5
+  "stats": {
+    "totalDomains": 3,
+    "totalModules": 0,
+    "totalExamSets": 0,
+    "totalQuestionSets": 0,
+    "totalQuestions": 0,
+    "lastUpdate": "2026-06-09T11:48:49.637Z"
+  }
 }

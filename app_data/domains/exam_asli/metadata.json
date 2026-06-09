@@ -1,0 +1,37 @@
+{
+  "domain_id": "exam_asli",
+  "domain_type": "assessment_authentic",
+  "display_name": "Ujian Asli",
+  "display_name_en": "Authentic Exams",
+  "description": "Soal ujian asli dari universitas, tidak dimodifikasi",
+  "icon": "📝",
+  "color_theme": "amber",
+  "color_hex": "#f59e0b",
+  "version": "2.0.0",
+  "created_date": "2026-06-09",
+  "last_updated": "2026-06-09",
+  "metadata": {
+    "source": "university_official",
+    "subject_area": "Neurology",
+    "exam_type": "block_exam",
+    "total_sets": 0,
+    "total_questions": 0,
+    "language": "id",
+    "difficulty_levels": ["High-Yield", "Kunci", "Clinical Reasoning"]
+  },
+  "exam_set_config": {
+    "naming_convention": "exam_asli_NNN",
+    "auto_increment": true,
+    "starting_number": 1,
+    "zero_padded": true,
+    "padding_digits": 3
+  },
+  "features": {
+    "supports_confidence_level": true,
+    "supports_evidence_citation": true,
+    "supports_detailed_explanation": true,
+    "supports_image_references": true,
+    "supports_tagging": true,
+    "can_generate_ai_bank": true
+  }
+}

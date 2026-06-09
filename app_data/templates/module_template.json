@@ -1,0 +1,42 @@
+{
+  "module_id": "module_NNN",
+  "domain_id": "materi",
+  "order": 0,
+  "title": "Module Title Here",
+  "subtitle": "Optional subtitle",
+  "description": "Short description of module content",
+  "version": "1.0.0",
+  "status": "draft",
+  "metadata": {
+    "duration_minutes": 45,
+    "learning_level": "intermediate",
+    "language": "id",
+    "source_type": "ppt_extraction",
+    "source_file": "Slide_Dosen_Module_NNN.pptx",
+    "instructor": "Dr. Name",
+    "created_date": "2026-06-09",
+    "last_updated": "2026-06-09"
+  },
+  "structure": {
+    "learning_goals": [
+      "Learning goal 1",
+      "Learning goal 2"
+    ],
+    "key_sections": [
+      {
+        "section_id": "s01",
+        "order": 1
+      }
+    ],
+    "summary_points": 5,
+    "glossary_terms": 10,
+    "visual_assets_count": 0,
+    "3d_models_count": 0
+  },
+  "content_file": "content.json",
+  "assets": {
+    "images": [],
+    "models_3d": [],
+    "documents": []
+  }
+}
