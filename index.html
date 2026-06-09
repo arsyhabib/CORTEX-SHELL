@@ -12988,31 +12988,44 @@
       }, [examSet]);
 
       const [questionIndex, setQuestionIndex] = React.useState(0);
-      
+      const [prevIndex, setPrevIndex] = React.useState(0);
+
       // Study mode state
       const [studyAnswers, setStudyAnswers] = React.useState({});
-      
+
       // Simulation mode state
       const [simulationAnswers, setSimulationAnswers] = React.useState({});
       const [flagged, setFlagged] = React.useState({});
       const [timeLeft, setTimeLeft] = React.useState(0);
       const [isSubmitted, setIsSubmitted] = React.useState(false);
       const [gridOpen, setGridOpen] = React.useState(true);
+      const [displayScore, setDisplayScore] = React.useState(0);
+      const [questionTransition, setQuestionTransition] = React.useState('enter-from-left');
 
       // Reset states on examSet change
       React.useEffect(() => {
         setQuestionIndex(0);
+        setPrevIndex(0);
         setStudyAnswers({});
         setSimulationAnswers({});
         setFlagged({});
         setIsSubmitted(false);
+        setDisplayScore(0);
         setGridOpen(true);
+        setQuestionTransition('enter-from-left');
         if (isSimulationMode && questions.length) {
           setTimeLeft(questions.length * 60);
         } else {
           setTimeLeft(0);
         }
       }, [examSet && examSet.id, questions.length, isSimulationMode]);
+
+      // Question index change handler with animation
+      const handleQuestionChange = React.useCallback((newIdx) => {
+        setQuestionTransition(newIdx > questionIndex ? 'enter-from-left' : 'enter-from-right');
+        setPrevIndex(questionIndex);
+        setQuestionIndex(newIdx);
+      }, [questionIndex]);
 
       // Timer effect
       React.useEffect(() => {
@@ -13029,6 +13042,16 @@
         }, 1000);
         return () => clearInterval(timer);
       }, [isSimulationMode, isSubmitted, timeLeft]);
+
+      // Score counter animation effect
+      React.useEffect(() => {
+        if (!isSubmitted || displayScore >= correctCount) return;
+        const increment = Math.ceil((correctCount - displayScore) / 10);
+        const timer = setTimeout(() => {
+          setDisplayScore(prev => Math.min(prev + increment, correctCount));
+        }, 30);
+        return () => clearTimeout(timer);
+      }, [isSubmitted, displayScore, correctCount]);
 
       const currentQuestion = questions[questionIndex] || null;
 
@@ -13101,6 +13124,9 @@
         }, 0);
       }, [isSimulationMode, questions, simulationAnswers]);
       const scorePct = totalQuestions ? Math.round((correctCount / totalQuestions) * 100) : 0;
+      const displayPct = totalQuestions ? Math.round((displayScore / totalQuestions) * 100) : 0;
+      const answeredCount = isSimulationMode ? Object.keys(simulationAnswers).length : Object.keys(studyAnswers).length;
+      const unansweredCount = totalQuestions - answeredCount;
 
       return React.createElement(B2PageShell, {
         label: 'Quiz',
@@ -13110,58 +13136,113 @@
           : 'Mode Belajar (Set Soal Asli)',
         onBack: () => onNavigate(16),
         right: isSimulationMode && !isSubmitted
-          ? React.createElement(B1Badge, { color: timeLeft < 30 ? DL.red : DL.gold }, `⏱️ ${formatTime(timeLeft)}`)
+          ? React.createElement('div', {
+              style: {
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '6px 12px', borderRadius: 10,
+                background: timeLeft < 60 ? (timeLeft < 30 ? `${DL.red}22` : `${DL.gold}22`) : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${timeLeft < 60 ? (timeLeft < 30 ? `${DL.red}55` : `${DL.gold}55`) : DL.glassBorder}`,
+                animation: timeLeft < 30 ? 'pulse-glow 1.2s ease-in-out infinite' : 'none',
+              }
+            },
+              React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: timeLeft < 30 ? DL.red : DL.gold, fontVariantNumeric: 'tabular-nums' } }, `⏱️ ${formatTime(timeLeft)}`),
+              React.createElement('div', {
+                style: {
+                  width: 4, height: 4, borderRadius: '50%',
+                  background: timeLeft < 30 ? DL.red : DL.gold,
+                  animation: `pulse 1s ease-in-out infinite`,
+                  opacity: timeLeft < 30 ? 1 : 0.6,
+                }
+              })
+            )
           : React.createElement(B1Badge, { color: DL.gold }, currentQuestion ? `Q ${questionIndex + 1}/${totalQuestions}` : '0 questions'),
       },
         // Scorecard display if submitted
-        isSimulationMode && isSubmitted && React.createElement(B1Card, {
-          pad: 18,
+        isSimulationMode && isSubmitted && React.createElement('div', {
           style: {
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15))',
-            border: `1px solid ${DL.accent}44`,
-            borderRadius: 20,
+            animation: 'cortex-page-enter-left 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both',
             marginBottom: 16,
-            textAlign: 'center',
           }
         },
-          React.createElement('div', { style: { fontSize: 14, fontWeight: 800, color: DL.accent, textTransform: 'uppercase', letterSpacing: 1 } }, 'Hasil Simulasi Ujian'),
-          React.createElement('div', { style: { fontSize: 44, fontWeight: 950, color: scorePct >= 70 ? DL.green : scorePct >= 50 ? DL.gold : DL.red, margin: '10px 0' } }, `${scorePct}%`),
-          React.createElement('div', { style: { fontSize: 13, color: DL.text, fontWeight: 600 } }, `Benar: ${correctCount} dari ${totalQuestions} Soal`),
-          React.createElement('div', { style: { fontSize: 11, color: DL.sub, marginTop: 4, marginBottom: 14 } },
-            scorePct >= 70 ? 'Luar biasa! Anda siap menghadapi ujian asli.' : 'Butuh latihan lagi. Silakan review jawaban Anda di bawah.'
-          ),
-          React.createElement('div', { style: { display: 'flex', gap: 10 } },
-            React.createElement(B1Button, {
-              label: 'Ulangi Ujian',
-              full: true,
-              onClick: () => {
-                setIsSubmitted(false);
-                setSimulationAnswers({});
-                setFlagged({});
-                setQuestionIndex(0);
-                setTimeLeft(totalQuestions * 60);
+          React.createElement(B1Card, {
+            pad: 20,
+            glow: true,
+            style: {
+              background: `linear-gradient(135deg, ${scorePct >= 70 ? `${DL.green}22, ${DL.teal}18` : scorePct >= 50 ? `${DL.gold}22, ${DL.accent}18` : `${DL.red}22, ${DL.gold}18`})`,
+              border: `1px solid ${scorePct >= 70 ? DL.green : scorePct >= 50 ? DL.gold : DL.red}44`,
+              borderRadius: 20,
+              textAlign: 'center',
+              position: 'relative',
+              overflow: 'hidden',
+            }
+          },
+            // Background glow effect
+            React.createElement('div', {
+              style: {
+                position: 'absolute',
+                inset: 0,
+                background: `radial-gradient(circle at 50% 0%, ${scorePct >= 70 ? DL.green : scorePct >= 50 ? DL.gold : DL.red}11, transparent 70%)`,
+                pointerEvents: 'none',
               }
             }),
-            React.createElement(B1Button, {
-              label: 'Ulas Jawaban',
-              variant: 'ghost',
-              full: true,
-              onClick: () => {
-                // Just keep showing review mode
-              }
-            })
+            // Content
+            React.createElement('div', { style: { position: 'relative', zIndex: 1 } },
+              React.createElement('div', { style: { fontSize: 13, fontWeight: 700, color: DL.accent, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 12 } }, '✓ Hasil Simulasi Ujian'),
+              React.createElement('div', { style: { fontSize: 56, fontWeight: 950, color: scorePct >= 70 ? DL.green : scorePct >= 50 ? DL.gold : DL.red, margin: '8px 0', fontVariantNumeric: 'tabular-nums', animation: `counter-up 0.8s cubic-bezier(0.34,1.56,0.64,1) both` } }, `${displayPct}%`),
+              React.createElement('div', { style: { fontSize: 14, color: DL.text, fontWeight: 700, marginBottom: 6 } }, `Benar: ${displayScore} dari ${totalQuestions} Soal`),
+              React.createElement('div', { style: { display: 'flex', gap: 8, fontSize: 12, color: DL.sub, marginBottom: 14, justifyContent: 'center', flexWrap: 'wrap' } },
+                React.createElement('div', { style: { padding: '4px 10px', borderRadius: 8, background: `${DL.teal}22`, border: `1px solid ${DL.teal}44` } }, `✓ ${correctCount} Benar`),
+                React.createElement('div', { style: { padding: '4px 10px', borderRadius: 8, background: `${DL.gold}22`, border: `1px solid ${DL.gold}44` } }, `◇ ${unansweredCount} Kosong`),
+                React.createElement('div', { style: { padding: '4px 10px', borderRadius: 8, background: `${DL.red}22`, border: `1px solid ${DL.red}44` } }, `✗ ${totalQuestions - correctCount - unansweredCount} Salah`),
+              ),
+              React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginBottom: 16, lineHeight: 1.5 } },
+                scorePct >= 70 ? '🎉 Luar biasa! Anda siap menghadapi ujian asli.' : scorePct >= 50 ? '👍 Bagus! Tapi ada yang perlu diperdalam.' : '📚 Butuh latihan lagi. Silakan review jawaban Anda di bawah.'
+              ),
+              React.createElement('div', { style: { display: 'flex', gap: 10 } },
+                React.createElement(B1Button, {
+                  label: '🔄 Ulangi Ujian',
+                  full: true,
+                  onClick: () => {
+                    setIsSubmitted(false);
+                    setSimulationAnswers({});
+                    setFlagged({});
+                    setQuestionIndex(0);
+                    setDisplayScore(0);
+                    setTimeLeft(totalQuestions * 60);
+                  }
+                }),
+                React.createElement(B1Button, {
+                  label: '📋 Ulas Jawaban',
+                  variant: 'ghost',
+                  full: true,
+                  onClick: () => {
+                    // Keep showing review mode
+                  }
+                })
+              )
+            )
           )
         ),
 
         React.createElement(B3Hero, {
-          kicker: isSimulationMode ? 'Simulasi AI Generated' : 'Real University Exam',
+          kicker: isSimulationMode ? (isSubmitted ? '✓ Simulasi Selesai' : '⏱️ Simulasi AI Generated') : 'Real University Exam',
           title: currentQuestion ? `Soal ${currentQuestion.number || questionIndex + 1}` : 'No question loaded',
-          subtitle: isSimulationMode
-            ? 'Timer berjalan mundur 1 menit per soal secara total. Tandai ragu-ragu dan periksa hasil di akhir.'
-            : 'Jawaban dan penjelasan langsung dimunculkan sesaat setelah Anda menjawab.',
-          color: DL.gold,
+          subtitle: isSimulationMode && !isSubmitted
+            ? `Timer berjalan mundur. ${answeredCount} terjawab, ${unansweredCount} kosong.`
+            : isSimulationMode && isSubmitted
+              ? `Review jawaban Anda. Skor: ${scorePct}%`
+              : 'Jawaban dan penjelasan langsung dimunculkan sesaat setelah Anda menjawab.',
+          color: isSimulationMode && !isSubmitted && timeLeft < 60 ? (timeLeft < 30 ? DL.red : DL.gold) : DL.gold,
           right: React.createElement('div', { style: { width: 52 } },
-            React.createElement(B1Progress, { value: totalQuestions ? ((questionIndex + 1) / totalQuestions) * 100 : 0, h: 6, color: 'linear-gradient(135deg,#fbbf24,#a855f7)' })
+            React.createElement(B1Progress, {
+              value: totalQuestions ? ((questionIndex + 1) / totalQuestions) * 100 : 0,
+              h: 6,
+              color: isSubmitted
+                ? scorePct >= 70 ? `linear-gradient(135deg,${DL.green},${DL.teal})`
+                  : scorePct >= 50 ? `linear-gradient(135deg,${DL.gold},${DL.accent})`
+                  : `linear-gradient(135deg,${DL.red},${DL.gold})`
+                : `linear-gradient(135deg,#fbbf24,#a855f7)`
+            })
           ),
         }),
 
@@ -13172,17 +13253,21 @@
         },
           React.createElement('div', {
             onClick: () => setGridOpen(!gridOpen),
-            style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }
+            style: {
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              cursor: 'pointer', userSelect: 'none', transition: 'all 0.2s'
+            }
           },
             React.createElement('div', { style: { fontSize: 12, fontWeight: 800, color: DL.text } }, '🗺️ Peta Navigasi Soal'),
-            React.createElement('div', { style: { fontSize: 11, color: DL.sub } }, gridOpen ? 'Tutup ▲' : 'Buka ▼')
+            React.createElement('div', { style: { fontSize: 11, color: DL.sub, transition: 'transform 0.2s' } }, gridOpen ? '▲ Tutup' : '▼ Buka')
           ),
           gridOpen && React.createElement('div', {
             style: {
               display: 'grid',
               gridTemplateColumns: 'repeat(5, 1fr)',
               gap: 8,
-              marginTop: 10
+              marginTop: 12,
+              animation: 'stagger-in 0.3s cubic-bezier(0.34,1.56,0.64,1) backwards',
             }
           },
             questions.map((q, idx) => {
@@ -13191,28 +13276,44 @@
                 ? simulationAnswers[idx] !== undefined
                 : studyAnswers[idx] !== undefined;
               const isFlagged = isSimulationMode && flagged[idx];
-              
+              const isCorrect = isSimulationMode && isSubmitted && isAnswered
+                ? String.fromCharCode(65 + (simulationAnswers[idx].charCodeAt(0) - 65)) === String.fromCharCode(65 + Number(q.answer_index))
+                : false;
+
               let bg = 'rgba(255, 255, 255, 0.05)';
               let borderCol = DL.glassBorder;
               let textColor = DL.sub;
-              
+              let indicator = idx + 1;
+
               if (isCurrent) {
                 borderCol = DL.accent;
                 textColor = DL.accent;
-              }
-              if (isFlagged) {
+                bg = `${DL.accent}22`;
+              } else if (isFlagged) {
                 bg = `${DL.gold}33`;
                 borderCol = DL.gold;
                 textColor = DL.gold;
+                indicator = '◇';
+              } else if (isSubmitted && isAnswered && isCorrect) {
+                bg = `${DL.green}22`;
+                borderCol = DL.green;
+                textColor = DL.green;
+                indicator = '✓';
+              } else if (isSubmitted && isAnswered && !isCorrect) {
+                bg = `${DL.red}22`;
+                borderCol = DL.red;
+                textColor = DL.red;
+                indicator = '✗';
               } else if (isAnswered) {
                 bg = `${DL.teal}22`;
                 borderCol = `${DL.teal}55`;
                 textColor = DL.teal;
+                indicator = '•';
               }
-              
+
               return React.createElement('button', {
                 key: idx,
-                onClick: () => setQuestionIndex(idx),
+                onClick: () => handleQuestionChange(idx),
                 style: {
                   height: 38,
                   borderRadius: 12,
@@ -13220,25 +13321,35 @@
                   border: `1px solid ${borderCol}`,
                   color: textColor,
                   fontWeight: isCurrent ? '800' : '600',
-                  fontSize: 12,
+                  fontSize: 11,
+                  fontVariantNumeric: 'tabular-nums',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: isCurrent ? `0 0 8px ${DL.accent}44` : 'none',
-                  transition: 'all 0.2s',
+                  boxShadow: isCurrent ? `0 0 12px ${DL.accent}55, inset 0 1px 0 ${DL.accent}44` : 'none',
+                  transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)',
+                  transform: isCurrent ? 'scale(1.08)' : 'scale(1)',
+                  animation: `stagger-in 0.3s cubic-bezier(0.34,1.56,0.64,1) backwards`,
+                  animationDelay: `${idx * 0.02}s`,
                 }
-              }, idx + 1);
+              }, typeof indicator === 'number' ? idx + 1 : indicator);
             })
           )
         ),
 
-        React.createElement(B1Card, { pad: 16, style: { marginBottom: 14 } },
+        React.createElement(B1Card, {
+          pad: 16,
+          style: {
+            marginBottom: 14,
+            animation: `${questionTransition === 'enter-from-left' ? 'cortex-page-enter-left' : 'cortex-page-enter-right'} 0.4s cubic-bezier(0.34,1.56,0.64,1) both`,
+          }
+        },
           React.createElement(B1Badge, { color: DL.teal, style: { marginBottom: 10 } }, 'Clinical reasoning'),
-          React.createElement('div', { style: { fontSize: 15, lineHeight: 1.48, color: DL.text, fontWeight: 800 } },
+          React.createElement('div', { style: { fontSize: 15, lineHeight: 1.56, color: DL.text, fontWeight: 800, marginBottom: 14 } },
             currentQuestion ? currentQuestion.stem : 'Choose a question set from the sidebar to begin review.'),
-          React.createElement('div', { style: { marginTop: 12 } },
-            choices.map(c => React.createElement(B3Choice, {
+          React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+            choices.map((c, idx) => React.createElement(B3Choice, {
               key: c.id,
               label: c.id,
               text: c.text,
@@ -13246,43 +13357,63 @@
               correct: c.correct,
               wrong: c.wrong,
               onClick: () => handleOptionClick(c.id),
+              style: {
+                animation: `stagger-in 0.3s cubic-bezier(0.34,1.56,0.64,1) backwards`,
+                animationDelay: `${idx * 0.05}s`,
+              }
             }))
           ),
         ),
 
-        showExplain && currentQuestion && React.createElement(B2Callout, { tone: 'pearl', title: 'Penjelasan Jawaban' },
-          currentQuestion.explanation || 'Penjelasan untuk soal ini belum tersedia.'),
+        showExplain && currentQuestion && React.createElement('div', {
+          style: {
+            animation: 'slide-up 0.4s cubic-bezier(0.34,1.56,0.64,1) both',
+            marginBottom: 14,
+          }
+        },
+          React.createElement(B2Callout, { tone: 'pearl', title: '💡 Penjelasan Jawaban' },
+            currentQuestion.explanation || 'Penjelasan untuk soal ini belum tersedia.')
+        ),
 
         // Navigation controls
-        isSimulationMode && !isSubmitted ? React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 } },
+        isSimulationMode && !isSubmitted ? React.createElement('div', {
+          style: {
+            display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14,
+            animation: 'stagger-in 0.3s cubic-bezier(0.34,1.56,0.64,1) backwards',
+          }
+        },
           React.createElement(B1Button, {
-            label: flagged[questionIndex] ? '★ Ragu-ragu (Aktif)' : '☆ Tandai Ragu-ragu',
+            label: flagged[questionIndex] ? '★ Ragu-ragu (Aktif)' : '☆ Tandai Ragu',
             variant: flagged[questionIndex] ? 'primary' : 'ghost',
             full: true,
-            onClick: () => setFlagged(prev => ({ ...prev, [questionIndex]: !prev[questionIndex] }))
+            onClick: () => setFlagged(prev => ({ ...prev, [questionIndex]: !prev[questionIndex] })),
+            style: { transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)' }
           }),
           React.createElement(B1Button, {
-            label: 'Selesaikan Ujian',
+            label: '✓ Selesaikan Ujian',
             full: true,
             onClick: () => {
               if (confirm('Apakah Anda yakin ingin menyelesaikan ujian ini?')) {
                 setIsSubmitted(true);
               }
-            }
+            },
+            style: { transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)' }
           })
         ) : null,
 
         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 } },
           React.createElement(B1Button, {
-            label: 'Sebelumnya',
+            label: '← Sebelumnya',
             variant: 'ghost',
             full: true,
-            onClick: () => setQuestionIndex(prev => (prev > 0 ? prev - 1 : totalQuestions - 1))
+            onClick: () => handleQuestionChange(questionIndex > 0 ? questionIndex - 1 : totalQuestions - 1),
+            disabled: isSubmitted
           }),
           React.createElement(B1Button, {
-            label: 'Berikutnya',
+            label: 'Berikutnya →',
             full: true,
-            onClick: () => setQuestionIndex(prev => (prev < totalQuestions - 1 ? prev + 1 : 0))
+            onClick: () => handleQuestionChange(questionIndex < totalQuestions - 1 ? questionIndex + 1 : 0),
+            disabled: isSubmitted
           }),
         ),
 
