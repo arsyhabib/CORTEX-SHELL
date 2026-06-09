@@ -4327,6 +4327,99 @@
     .cx-md-compact blockquote {
       padding: 0.75em 0.9em 0.75em 0.95em;
     }
+
+    /* Confetti Celebration Animation */
+    @keyframes confetti-fall {
+      to {
+        transform: translateY(100vh) rotateZ(360deg);
+        opacity: 0;
+      }
+    }
+
+    @keyframes confetti-spin {
+      to {
+        transform: rotateZ(720deg);
+      }
+    }
+
+    .cortex-confetti {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 10px;
+      height: 10px;
+      background: var(--color, #fbbf24);
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 99999;
+      animation: confetti-fall 3s ease-in forwards;
+    }
+
+    /* Glossary Tooltip */
+    .cortex-glossary-word {
+      position: relative;
+      cursor: help;
+      text-decoration: underline dotted;
+      text-decoration-color: currentColor;
+      opacity: 0.85;
+      transition: all 0.2s;
+      text-underline-offset: 3px;
+    }
+
+    .cortex-glossary-word:hover {
+      opacity: 1;
+      text-decoration-color: var(--cortex-accent, #a78bfa);
+    }
+
+    .cortex-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 12, 32, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      color: #e8ecf1;
+      font-size: 12px;
+      line-height: 1.4;
+      white-space: nowrap;
+      z-index: 10000;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+      animation: none;
+    }
+
+    .cortex-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 8px;
+      height: 8px;
+      background: rgba(10, 12, 32, 0.96);
+      border-right: 1px solid rgba(255, 255, 255, 0.15);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      transform: translateX(-50%) rotate(45deg);
+    }
+
+    .cortex-glossary-word:hover .cortex-tooltip {
+      opacity: 1;
+      visibility: visible;
+      animation: slide-up 0.2s ease both;
+    }
+
+    .cortex-glossary-word.active .cortex-tooltip {
+      opacity: 1;
+      visibility: visible;
+      animation: slide-up 0.2s ease both;
+    }
   </style>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -12922,6 +13015,109 @@
        Page 19: Progress Dashboard Page
        Page 20: AI Workspace Page */
 
+    // ============================================
+    // UTILITY: Confetti Celebration
+    // ============================================
+    function createConfettiExplosion(count = 50) {
+      const colors = ['#fbbf24', '#34d399', '#60a5fa', '#a78bfa', '#f472b6'];
+      const container = document.body;
+
+      for (let i = 0; i < count; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'cortex-confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+        confetti.style.width = (3 + Math.random() * 8) + 'px';
+        confetti.style.height = confetti.style.width;
+        confetti.style.animation = `confetti-fall ${2.5 + Math.random() * 1.5}s ease-in forwards`;
+        confetti.style.animationDelay = (Math.random() * 0.2) + 's';
+        container.appendChild(confetti);
+
+        setTimeout(() => confetti.remove(), 4500);
+      }
+    }
+
+    // ============================================
+    // UTILITY: Haptic Feedback
+    // ============================================
+    function triggerHaptic(type = 'light') {
+      if (!navigator.vibrate) return;
+      const patterns = {
+        light: [10],
+        medium: [20],
+        heavy: [40],
+        success: [20, 10, 20],
+        warning: [30, 20, 30],
+        error: [50, 20, 50]
+      };
+      navigator.vibrate(patterns[type] || patterns.light);
+    }
+
+    // ============================================
+    // UTILITY: Sound Effects
+    // ============================================
+    function playSound(type = 'success') {
+      // Create a simple beep using Web Audio API
+      if (!window.AudioContext && !window.webkitAudioContext) return;
+
+      try {
+        const audioCtx = window.audioContext || new (window.AudioContext || window.webkitAudioContext)();
+        window.audioContext = audioCtx;
+
+        const soundConfig = {
+          success: { freq: 800, duration: 0.2, ramp: 50 },
+          flag: { freq: 600, duration: 0.15, ramp: 30 },
+          submit: { freq: 700, duration: 0.25, ramp: 60 },
+          correct: { freq: 900, duration: 0.3, ramp: 80 },
+          error: { freq: 300, duration: 0.3, ramp: 50 }
+        };
+
+        const config = soundConfig[type] || soundConfig.success;
+        const now = audioCtx.currentTime;
+        const duration = config.duration;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.frequency.setValueAtTime(config.freq, now);
+        osc.frequency.exponentialRampToValueAtTime(config.freq * 0.7, now + duration);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
+
+        osc.start(now);
+        osc.stop(now + duration);
+      } catch (e) {
+        // Silently fail if audio not available
+      }
+    }
+
+    // ============================================
+    // UTILITY: Long Press Detection
+    // ============================================
+    function useGlossaryLongPress() {
+      const [touchStart, setTouchStart] = React.useState(0);
+      const [activeGlossaryId, setActiveGlossaryId] = React.useState(null);
+
+      const handleTouchStart = (e, glossaryId) => {
+        setTouchStart(Date.now());
+      };
+
+      const handleTouchEnd = (e, glossaryId) => {
+        const touchDuration = Date.now() - touchStart;
+        if (touchDuration > 500) {
+          // Long press detected (500ms+)
+          setActiveGlossaryId(activeGlossaryId === glossaryId ? null : glossaryId);
+          triggerHaptic('light');
+        }
+      };
+
+      return { activeGlossaryId, setActiveGlossaryId, handleTouchStart, handleTouchEnd };
+    }
+
     function cortexReadAIWorkspaceRuntime() {
       const fallback = {
         transportMode: 'auto',
@@ -13001,6 +13197,8 @@
       const [gridOpen, setGridOpen] = React.useState(true);
       const [displayScore, setDisplayScore] = React.useState(0);
       const [questionTransition, setQuestionTransition] = React.useState('enter-from-left');
+      const [confettiTriggered, setConfettiTriggered] = React.useState(false);
+      const { activeGlossaryId, setActiveGlossaryId, handleTouchStart, handleTouchEnd } = useGlossaryLongPress();
 
       // Reset states on examSet change
       React.useEffect(() => {
@@ -13053,6 +13251,20 @@
         return () => clearTimeout(timer);
       }, [isSubmitted, displayScore, correctCount]);
 
+      // Confetti celebration trigger (score >= 70%)
+      React.useEffect(() => {
+        if (!isSubmitted || confettiTriggered) return;
+        const scorePct = totalQuestions ? Math.round((correctCount / totalQuestions) * 100) : 0;
+        if (scorePct >= 70) {
+          setTimeout(() => {
+            createConfettiExplosion(75);
+            playSound('correct');
+            triggerHaptic('success');
+            setConfettiTriggered(true);
+          }, 800);
+        }
+      }, [isSubmitted, correctCount, confettiTriggered, totalQuestions]);
+
       const currentQuestion = questions[questionIndex] || null;
 
       // Handle Option Selection
@@ -13060,10 +13272,14 @@
         if (isSimulationMode) {
           if (isSubmitted) return;
           setSimulationAnswers(prev => ({ ...prev, [questionIndex]: choiceId }));
+          playSound('success');
+          triggerHaptic('medium');
         } else {
           // Study Mode: Lock after selection
           if (studyAnswers[questionIndex] !== undefined) return;
           setStudyAnswers(prev => ({ ...prev, [questionIndex]: choiceId }));
+          playSound('success');
+          triggerHaptic('medium');
         }
       };
 
@@ -13112,6 +13328,14 @@
       };
 
       const showExplain = isSimulationMode ? isSubmitted : (studyAnswers[questionIndex] !== undefined);
+
+      // Helper: Render text with glossary tooltips (simple implementation)
+      const renderGlossaryText = (text) => {
+        if (!text) return text;
+        // Simple version - just return text
+        // For full implementation, would parse text and find glossary terms
+        return text;
+      };
 
       // Score Calculation
       const totalQuestions = questions.length;
@@ -13386,7 +13610,11 @@
             label: flagged[questionIndex] ? '★ Ragu-ragu (Aktif)' : '☆ Tandai Ragu',
             variant: flagged[questionIndex] ? 'primary' : 'ghost',
             full: true,
-            onClick: () => setFlagged(prev => ({ ...prev, [questionIndex]: !prev[questionIndex] })),
+            onClick: () => {
+              setFlagged(prev => ({ ...prev, [questionIndex]: !prev[questionIndex] }));
+              playSound('flag');
+              triggerHaptic('light');
+            },
             style: { transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)' }
           }),
           React.createElement(B1Button, {
@@ -13394,6 +13622,8 @@
             full: true,
             onClick: () => {
               if (confirm('Apakah Anda yakin ingin menyelesaikan ujian ini?')) {
+                playSound('submit');
+                triggerHaptic('success');
                 setIsSubmitted(true);
               }
             },
