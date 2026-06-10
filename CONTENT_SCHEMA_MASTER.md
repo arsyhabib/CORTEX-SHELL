@@ -228,8 +228,8 @@ Tracks all 40% AI-researched content (not from source PDFs).
 
 ### File Location Patterns
 ```
-Exam Asli:    app_data/domains/soal/exam_asli/[exam_id].json
-Bank Soal AI: app_data/domains/soal/bank_soal_ai/[exam_id].json
+Exam Asli:    app_data/domains/exam_asli/[exam_id].json
+Bank Soal AI: app_data/domains/bank_soal_ai/[exam_id].json
 ```
 
 ### Top-Level Structure
@@ -362,7 +362,7 @@ Add to `examSets[]`:
   "title": "Exam Set Title",
   "type": "asli",
   "questionCount": 40,
-  "sourceFile": "app_data/domains/soal/exam_asli/[exam_id].json",
+  "sourceFile": "app_data/domains/exam_asli/[exam_id].json",
   "source_label": "Univ / Block Name"
 }
 ```

@@ -8845,14 +8845,16 @@
       );
     }
 
-    function PageWelcomeRefined({ onNavigate }) {
+    function PageWelcomeRefined({ onNavigate, appIdentity }) {
       const [step, setStep] = React.useState(0);
+      const wi = (appIdentity && appIdentity.welcome) || {};
+      const advance_ms = (wi.auto_advance_ms && wi.auto_advance_ms >= 2000) ? wi.auto_advance_ms : 3200;
       React.useEffect(() => {
         const timers = [300, 760, 1320, 1940].map((d, i) => setTimeout(() => setStep(i + 1), d));
         const exit = setTimeout(() => {
           try { localStorage.setItem('cortex.welcomeSeen', '1'); } catch (err) { }
           onNavigate(0);
-        }, 3200);
+        }, advance_ms);
         return () => {
           timers.forEach(clearTimeout);
           clearTimeout(exit);
@@ -9069,7 +9071,7 @@
               transform: step >= 2 ? 'translateY(0)' : 'translateY(14px)',
               transition: 'all 0.6s ease 0.1s',
             }
-          }, 'CORTEX'),
+          }, wi.headline || 'CORTEX'),
           React.createElement('div', {
             style: {
               fontSize: 11,
@@ -9081,7 +9083,7 @@
               transform: step >= 2 ? 'translateY(0)' : 'translateY(10px)',
               transition: 'all 0.5s ease 0.18s',
             }
-          }, 'Immersive launch'),
+          }, wi.subtitle_badge || 'Immersive launch'),
           React.createElement('div', {
             style: {
               maxWidth: 290,
@@ -9093,7 +9095,7 @@
               transform: step >= 3 ? 'translateY(0)' : 'translateY(12px)',
               transition: 'all 0.55s ease',
             }
-          }, 'Ruang awal yang disiapkan untuk visual, chat, audio, dan studi interaktif dengan suasana bintang yang lebih hidup.'),
+          }, wi.tagline || 'Ruang awal yang disiapkan untuk visual, chat, audio, dan studi interaktif dengan suasana bintang yang lebih hidup.'),
           React.createElement('div', {
             style: {
               display: 'flex',
@@ -9105,9 +9107,9 @@
               transition: 'all 0.55s ease 0.05s',
             }
           },
-            React.createElement('span', { style: { padding: '6px 10px', borderRadius: 999, border: '1px solid rgba(168,85,247,0.18)', background: 'rgba(168,85,247,0.08)', color: '#ddd6fe', fontSize: 10, fontWeight: 700, letterSpacing: 0.04, textTransform: 'uppercase' } }, 'Aurora'),
-            React.createElement('span', { style: { padding: '6px 10px', borderRadius: 999, border: '1px solid rgba(56,189,248,0.16)', background: 'rgba(56,189,248,0.07)', color: '#cffafe', fontSize: 10, fontWeight: 700, letterSpacing: 0.04, textTransform: 'uppercase' } }, 'Starfield'),
-            React.createElement('span', { style: { padding: '6px 10px', borderRadius: 999, border: '1px solid rgba(16,185,129,0.16)', background: 'rgba(16,185,129,0.06)', color: '#bbf7d0', fontSize: 10, fontWeight: 700, letterSpacing: 0.04, textTransform: 'uppercase' } }, 'Glass'),
+            React.createElement('span', { style: { padding: '6px 10px', borderRadius: 999, border: '1px solid rgba(168,85,247,0.18)', background: 'rgba(168,85,247,0.08)', color: '#ddd6fe', fontSize: 10, fontWeight: 700, letterSpacing: 0.04, textTransform: 'uppercase' } }, (wi.feature_badges && wi.feature_badges[0]) || 'Aurora'),
+            React.createElement('span', { style: { padding: '6px 10px', borderRadius: 999, border: '1px solid rgba(56,189,248,0.16)', background: 'rgba(56,189,248,0.07)', color: '#cffafe', fontSize: 10, fontWeight: 700, letterSpacing: 0.04, textTransform: 'uppercase' } }, (wi.feature_badges && wi.feature_badges[1]) || 'Starfield'),
+            React.createElement('span', { style: { padding: '6px 10px', borderRadius: 999, border: '1px solid rgba(16,185,129,0.16)', background: 'rgba(16,185,129,0.06)', color: '#bbf7d0', fontSize: 10, fontWeight: 700, letterSpacing: 0.04, textTransform: 'uppercase' } }, (wi.feature_badges && wi.feature_badges[2]) || 'Glass'),
           ),
           React.createElement('div', {
             style: {
@@ -9143,7 +9145,7 @@
               transform: step >= 4 ? 'translateY(0)' : 'translateY(8px)',
               transition: 'all 0.45s ease 0.1s',
             }
-          }, 'Entering studio')
+          }, wi.loading_text || 'Entering studio')
         ),
         React.createElement('div', {
           style: {
@@ -10799,6 +10801,7 @@
     const CORTEX_RUNTIME_CONTENT_INDEX_PATH = 'app_data/runtime/content_index.kimi.json';
     const CORTEX_RUNTIME_VISUAL_MANIFEST_PATH = 'app_data/runtime/visual_asset_manifest.generated.json';
     const CORTEX_RUNTIME_APP_CONFIG_PATH = 'app_data/system/config/app_config.json';
+    const CORTEX_RUNTIME_IDENTITY_PATH = 'app_data/system/identity/app_identity.json';
 
     /** Detect if opened via file:// protocol (blocks fetch) */
     function cortexIsLocalFile() {
@@ -14105,14 +14108,21 @@
       );
     }
 
-    function PageHelpAboutPrivacy({ onNavigate, appConfig }) {
+    function PageHelpAboutPrivacy({ onNavigate, appConfig, appIdentity }) {
       const [section, setSection] = React.useState('help');
       const cfg = appConfig || {};
+      const id = appIdentity || {};
       const text = {
-        help: (cfg.help && cfg.help.text) || 'Gunakan navigasi untuk berpindah antar surface. Pilih modul dari domain yang tersedia untuk memulai sesi belajar.',
-        about: (cfg.about && cfg.about.text) || 'CORTEX-SHELL adalah platform edukasi medis berbasis web untuk mahasiswa kedokteran.',
-        privacy: (cfg.privacy && cfg.privacy.text) || 'Tidak ada data pasien yang disimpan. Konten bersifat edukatif dan anonim.',
+        help:    (id.help && id.help.intro_text)   || (cfg.help && cfg.help.text)    || 'Gunakan navigasi untuk berpindah antar surface. Pilih modul dari domain yang tersedia untuk memulai sesi belajar.',
+        about:   (id.about && id.about.text)       || (cfg.about && cfg.about.text)  || 'CORTEX-SHELL adalah platform edukasi medis berbasis web untuk mahasiswa kedokteran.',
+        privacy: (id.privacy && id.privacy.text)   || (cfg.privacy && cfg.privacy.text) || 'Tidak ada data pasien yang disimpan. Konten bersifat edukatif dan anonim.',
       };
+      const supportContact = (id.help && id.help.support_contact) || (cfg.help && cfg.help.support_contact) || 'Hubungi pengembang melalui kontak yang tersedia di profil aplikasi.';
+      const versionLabel   = (id.about && id.about.version_label) || (cfg.about && cfg.about.version_label) || (cfg.app && cfg.app.version_label) || 'CORTEX-SHELL v1.0';
+      const dataHandling   = (id.help && id.help.data_handling)   || (cfg.help && cfg.help.data_handling)   || 'Konten materi dan soal dikemas untuk keperluan belajar. Data sensitif provider disimpan di luar shell.';
+      const institutionName = (id.institution && id.institution.name) || '';
+      const developerCredit = (id.about && id.about.developer_credit) || (cfg.about && cfg.about.developer_credit) || '';
+      const faqEntries = (id.help && Array.isArray(id.help.faq)) ? id.help.faq : [];
 
       return React.createElement(B2PageShell, {
         label: 'Help / About / Privacy',
@@ -14124,7 +14134,7 @@
         React.createElement(B3Hero, {
           kicker: 'Support center',
           title: 'Help, About, and Privacy',
-          subtitle: 'A calm trust surface for app guidance, design provenance, and privacy-safe product language.',
+          subtitle: institutionName ? `${institutionName} — platform edukasi medis berbasis klinis.` : 'A calm trust surface for app guidance, design provenance, and privacy-safe product language.',
           color: DL.teal,
         }),
 
@@ -14141,12 +14151,19 @@
         React.createElement(B1Card, { pad: 16, style: { marginTop: 14, marginBottom: 14 } },
           React.createElement(B1Badge, { color: section === 'privacy' ? DL.gold : DL.accent, style: { marginBottom: 10 } }, section),
           React.createElement(B2ReadingBlock, { lead: true }, text[section]),
+          section === 'help' && faqEntries.length > 0 && React.createElement('div', { style: { marginTop: 10 } },
+            faqEntries.map((faq, i) => React.createElement(B1Card, { key: i, pad: 10, style: { marginBottom: 6, background: 'rgba(255,255,255,0.03)' } },
+              React.createElement('div', { style: { fontWeight: 700, fontSize: 12, color: DL.text, marginBottom: 3 } }, faq.q),
+              React.createElement('div', { style: { fontSize: 12, color: DL.sub, lineHeight: 1.5 } }, faq.a)
+            ))
+          ),
           React.createElement(B1Divider, { style: { margin: '12px 0' } }),
           [
-            { t: 'Support contact', s: (cfg.help && cfg.help.support_contact) || 'Hubungi pengembang melalui kontak yang tersedia di profil aplikasi.' },
-            { t: 'Versi', s: (cfg.about && cfg.about.version_label) || (cfg.app && cfg.app.version_label) || 'CORTEX-SHELL v1.0' },
-            { t: 'Pengelolaan data', s: (cfg.help && cfg.help.data_handling) || 'Konten materi dan soal dikemas untuk keperluan belajar. Data sensitif provider disimpan di luar shell.' },
-          ].map((row, i) => React.createElement(B3Row, {
+            { t: 'Support contact', s: supportContact || '—' },
+            { t: 'Versi', s: versionLabel },
+            developerCredit ? { t: 'Developer', s: developerCredit } : null,
+            { t: 'Pengelolaan data', s: dataHandling },
+          ].filter(Boolean).map((row, i) => React.createElement(B3Row, {
             key: i,
             title: row.t,
             sub: row.s,
@@ -15983,6 +16000,7 @@
       const [visualManifest, setVisualManifest] = React.useState(null);
       const [visualManifestStatus, setVisualManifestStatus] = React.useState('loading');
       const [appConfig, setAppConfig] = React.useState(null);
+      const [appIdentity, setAppIdentity] = React.useState(null);
       const [selectedLectureId, setSelectedLectureId] = React.useState(() => {
         return params.get('lecture') || cortexGetStorage('cortex.selectedLectureId', '');
       });
@@ -16122,6 +16140,25 @@
           'app_data/system/config/app_config.json',
         ], (data) => !!(data && data.app)).then(({ data }) => {
           setAppConfig(data);
+        }).catch(() => {});
+      }, []);
+
+      React.useEffect(() => {
+        cortexFetchJSONCandidates([
+          CORTEX_RUNTIME_IDENTITY_PATH,
+          'app_data/system/identity/app_identity.json',
+        ], (data) => !!(data && data.app && data.branding)).then(({ data }) => {
+          setAppIdentity(data);
+          if (data && data.branding) {
+            const b = data.branding;
+            const root = document.documentElement;
+            if (b.primary_color)       root.style.setProperty('--cortex-primary',       b.primary_color);
+            if (b.primary_color_light)  root.style.setProperty('--cortex-primary-light',  b.primary_color_light);
+            if (b.secondary_color)      root.style.setProperty('--cortex-secondary',      b.secondary_color);
+            if (b.accent_color)         root.style.setProperty('--cortex-accent',         b.accent_color);
+            if (b.danger_color)         root.style.setProperty('--cortex-danger',         b.danger_color);
+            if (b.warning_color)        root.style.setProperty('--cortex-warning',        b.warning_color);
+          }
         }).catch(() => {});
       }, []);
 
@@ -16652,6 +16689,7 @@
           moduleLoading,
           examLoading,
           appConfig,
+          appIdentity,
         };
         // [REMOVED] isContentViewing override
         if (page === 0) return React.createElement(CortexErrorBoundary, { key: `eb_${page}` },
