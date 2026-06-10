@@ -1,9 +1,13 @@
-const CACHE_NAME = 'cortex-shell-launch-v1';
+const CACHE_NAME = 'cortex-shell-launch-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './404.html',
+  './cortex-app.js',
+  './assets/vendor/react.min.js',
+  './assets/vendor/react-dom.min.js',
+  './assets/vendor/marked.min.js',
   './assets/pwa/cortex-icon.svg',
   './assets/pwa/favicon-32.png',
   './assets/pwa/icon-192.png',
