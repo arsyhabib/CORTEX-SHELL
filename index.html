@@ -11484,46 +11484,76 @@
       );
     }
 
-    function PageBulletContent({ onNavigate }) {
+    function PageBulletContent({ onNavigate, lectureModule }) {
       const [toolState, setToolState] = React.useState('tap');
-      const bullets = [
-        {
-          text: 'Start with a one-line learning objective.',
-          sub: ['State the organ system being discussed.', 'Keep the objective measurable and simple.'],
-          tone: 'ok',
-        },
-        {
-          text: 'Group related findings before adding exceptions.',
-          sub: ['Primary signs first.', 'Modifiers, severity, and caveats second.'],
-        },
-        {
-          text: 'Use sub-bullets for mechanism, example, and clinical implication.',
-          sub: ['Mechanism: vascular supply decreases.', 'Example: transient weakness after exertion.', 'Implication: escalate when symptoms persist.'],
-          tone: 'warn',
-        },
-        {
-          text: 'End with a short recall cue.',
-          sub: ['One sentence.', 'No dense paragraph hiding inside a bullet.'],
-        },
+      const [activeSectionIdx, setActiveSectionIdx] = React.useState(0);
+
+      const FALLBACK_BULLETS = [
+        { text: 'Start with a one-line learning objective.', sub: ['State the organ system being discussed.', 'Keep the objective measurable and simple.'], tone: 'ok' },
+        { text: 'Group related findings before adding exceptions.', sub: ['Primary signs first.', 'Modifiers, severity, and caveats second.'] },
+        { text: 'Use sub-bullets for mechanism, example, and clinical implication.', sub: ['Mechanism: vascular supply decreases.', 'Example: transient weakness after exertion.', 'Implication: escalate when symptoms persist.'], tone: 'warn' },
+        { text: 'End with a short recall cue.', sub: ['One sentence.', 'No dense paragraph hiding inside a bullet.'] },
       ];
+
+      const moduleSections = React.useMemo(() => {
+        const rawSections = Array.isArray(lectureModule && lectureModule.sections) ? lectureModule.sections : [];
+        return rawSections
+          .filter((s) => Array.isArray(s.bullets) && s.bullets.length > 0)
+          .map((s) => ({
+            id: s.id || s.section_id || '',
+            title: cortexSentenceCase(String(s.title || s.heading || 'Section')),
+            bullets: s.bullets.map((b) => ({
+              text: String(b.text || ''),
+              sub: Array.isArray(b.sub) ? b.sub.map(String) : [],
+              tone: b.tone || undefined,
+            })),
+          }));
+      }, [lectureModule]);
+
+      const hasDynamicContent = moduleSections.length > 0;
+      const activeSection = hasDynamicContent ? (moduleSections[activeSectionIdx] || moduleSections[0]) : null;
+      const activeBullets = activeSection ? activeSection.bullets : FALLBACK_BULLETS;
+      const moduleTitle = lectureModule && lectureModule.title ? String(lectureModule.title) : 'Structured lesson';
+      const heroTitle = hasDynamicContent ? (activeSection ? activeSection.title : moduleTitle) : 'How to Read a Symptom Cluster';
+      const heroSub = hasDynamicContent
+        ? `${activeBullets.length} structured points from ${moduleTitle}`
+        : 'Bullet, sub-bullet, hierarchy, and scan-friendly spacing arranged for dense medical education content.';
 
       return React.createElement(B2PageShell, {
         label: 'Bullet Content',
-        title: 'Bullets',
-        subtitle: 'Structured lesson',
+        title: hasDynamicContent ? moduleTitle : 'Bullets',
+        subtitle: hasDynamicContent ? `${moduleSections.length} sections` : 'Structured lesson',
         onBack: () => onNavigate(0),
-        right: React.createElement('span', { style: { fontSize: 16, color: DL.mute } }, '1/4'),
+        right: React.createElement('span', { style: { fontSize: 16, color: DL.mute } }, hasDynamicContent ? `${activeSectionIdx + 1}/${moduleSections.length}` : '1/4'),
       },
         React.createElement(B1Card, { glow: true, style: { marginBottom: 14 } },
-          React.createElement(B2Kicker, null, 'Checklist anatomy'),
-          React.createElement('div', { style: { fontSize: 21, fontWeight: 800, color: DL.text, lineHeight: 1.25 } },
-            'How to Read a Symptom Cluster'),
-          React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginTop: 7, lineHeight: 1.55 } },
-            'Bullet, sub-bullet, hierarchy, and scan-friendly spacing arranged for dense medical education content.'),
+          React.createElement(B2Kicker, null, hasDynamicContent ? 'Lecture key points' : 'Checklist anatomy'),
+          React.createElement('div', { style: { fontSize: 21, fontWeight: 800, color: DL.text, lineHeight: 1.25 } }, heroTitle),
+          React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginTop: 7, lineHeight: 1.55 } }, heroSub),
+          hasDynamicContent && React.createElement('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 } },
+            React.createElement(B1Badge, { color: DL.teal }, `${moduleSections.length} sections`),
+            React.createElement(B1Badge, { color: DL.accent }, `${activeBullets.length} points`),
+          ),
+        ),
+
+        hasDynamicContent && moduleSections.length > 1 && React.createElement(B1Card, { pad: 12, style: { marginBottom: 12 } },
+          React.createElement('div', { style: { display: 'flex', gap: 7, flexWrap: 'wrap' } },
+            moduleSections.map((sec, idx) => React.createElement('button', {
+              key: sec.id || idx,
+              type: 'button',
+              onClick: () => setActiveSectionIdx(idx),
+              className: 'cortex-motion-press',
+              style: {
+                padding: '7px 12px', borderRadius: 12, border: `1px solid ${activeSectionIdx === idx ? `${DL.teal}72` : DL.glassBorder}`,
+                background: activeSectionIdx === idx ? `${DL.teal}1a` : 'rgba(255,255,255,0.04)',
+                color: activeSectionIdx === idx ? DL.teal : DL.sub, fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit',
+              },
+            }, sec.title.length > 22 ? sec.title.slice(0, 20) + '…' : sec.title))
+          ),
         ),
 
         React.createElement(B1Card, { pad: 15, style: { marginBottom: 14 } },
-          bullets.map((b, i) => React.createElement(B2Bullet, {
+          activeBullets.map((b, i) => React.createElement(B2Bullet, {
             key: i, index: i, text: b.text, sub: b.sub, tone: b.tone,
           })),
         ),
@@ -11548,48 +11578,97 @@
         ),
 
         React.createElement(B2Callout, { tone: 'evidence', title: 'Hierarchy note' },
-          'The page keeps bullets compact, but sub-bullets remain readable by using small gaps and muted arrows.')
+          hasDynamicContent
+            ? 'Bullet points are extracted directly from the loaded lecture module. Navigate sections using the section tabs above.'
+            : 'The page keeps bullets compact, but sub-bullets remain readable by using small gaps and muted arrows.')
       );
     }
 
-    function PageCalloutClinicalPearl({ onNavigate }) {
-      const [selected, setSelected] = React.useState('pearl');
+    function PageCalloutClinicalPearl({ onNavigate, lectureModule }) {
+      const [selected, setSelected] = React.useState('all');
+
+      const TONE_MAP = { pearl: 'pearl', clinical_pearl: 'pearl', exam_pearl: 'evidence', teaching_point: 'note', warning: 'danger', caution: 'caution', evidence: 'evidence', note: 'note', medication: 'pearl', radiology_pearl: 'evidence', danger: 'danger' };
+      const TONE_OPTS = [
+        { value: 'all', label: 'All' },
+        { value: 'pearl', label: 'Pearl' },
+        { value: 'caution', label: 'Caution' },
+        { value: 'evidence', label: 'Evidence' },
+        { value: 'danger', label: 'Escalation' },
+        { value: 'note', label: 'Note' },
+      ];
+
+      const FALLBACK_CALLOUTS = [
+        { tone: 'pearl', title: 'Clinical Pearl', icon: '+', text: 'A clear neurologic baseline makes later changes easier to interpret. Document speech, gaze, limb strength, and level of alertness in the same order each time.' },
+        { tone: 'caution', title: 'Caution', icon: '!', text: 'Do not treat isolated visual details as a diagnosis. Pair findings with history, timing, and objective assessment.' },
+        { tone: 'evidence', title: 'Evidence Cue', icon: 'E', text: 'Use this callout for citations, guideline reminders, or a short method note. The visual tone stays calm so it does not compete with urgent warnings.' },
+        { tone: 'danger', title: 'Escalation Pattern', icon: '!', text: 'Rapid deterioration, persistent confusion, or new unilateral weakness should trigger an escalation pattern in the learning flow.' },
+      ];
+
+      const dynamicCallouts = React.useMemo(() => {
+        const rawSections = Array.isArray(lectureModule && lectureModule.sections) ? lectureModule.sections : [];
+        const all = [];
+        rawSections.forEach((section) => {
+          const sectionTitle = cortexSentenceCase(String(section.title || section.heading || 'Section'));
+          const callouts = Array.isArray(section.callouts) ? section.callouts : [];
+          callouts.forEach((c) => {
+            all.push({
+              tone: TONE_MAP[c.tone] || c.tone || 'pearl',
+              rawTone: c.tone || 'pearl',
+              title: String(c.title || c.type || 'Clinical Pearl'),
+              text: String(c.text || ''),
+              icon: c.icon || undefined,
+              sectionRef: sectionTitle,
+            });
+          });
+        });
+        return all;
+      }, [lectureModule]);
+
+      const hasDynamic = dynamicCallouts.length > 0;
+      const allCallouts = hasDynamic ? dynamicCallouts : FALLBACK_CALLOUTS;
+      const shownCallouts = selected === 'all' ? allCallouts : allCallouts.filter((c) => c.tone === selected);
+      const moduleTitle = lectureModule && lectureModule.title ? String(lectureModule.title) : 'Callout system';
+      const pearlCount = allCallouts.filter((c) => c.tone === 'pearl').length;
+      const cautionCount = allCallouts.filter((c) => c.tone === 'caution' || c.tone === 'danger').length;
 
       return React.createElement(B2PageShell, {
         label: 'Clinical Pearl',
-        title: 'Clinical Pearls',
-        subtitle: 'Callout system',
+        title: hasDynamic ? moduleTitle : 'Clinical Pearls',
+        subtitle: hasDynamic ? `${allCallouts.length} clinical callouts` : 'Callout system',
         onBack: () => onNavigate(10),
-        right: React.createElement(B1Badge, { color: DL.green }, 'Ready'),
+        right: React.createElement(B1Badge, { color: DL.green }, hasDynamic ? `${allCallouts.length} pearls` : 'Ready'),
       },
         React.createElement(B1Card, { glow: true, style: { marginBottom: 14 } },
-          React.createElement(B2Kicker, { color: DL.green }, 'Clinical callout library'),
+          React.createElement(B2Kicker, { color: DL.green }, hasDynamic ? 'Module callout library' : 'Clinical callout library'),
           React.createElement('div', { style: { fontSize: 21, fontWeight: 800, color: DL.text, lineHeight: 1.25 } },
-            'Pearls, Cautions, Evidence, and Notes'),
+            hasDynamic ? 'Clinical Pearls, Cautions & Exam Tips' : 'Pearls, Cautions, Evidence, and Notes'),
           React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginTop: 7, lineHeight: 1.55 } },
-            'Teaching callouts with distinct tones for bedside emphasis, evidence cues, and escalation guidance.'),
+            hasDynamic
+              ? `${allCallouts.length} teaching callouts extracted from ${moduleTitle}. Includes ${pearlCount} clinical pearls and ${cautionCount} caution/escalation points.`
+              : 'Teaching callouts with distinct tones for bedside emphasis, evidence cues, and escalation guidance.'),
+          hasDynamic && React.createElement('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 } },
+            React.createElement(B1Badge, { color: DL.green }, `${pearlCount} pearls`),
+            React.createElement(B1Badge, { color: DL.gold }, `${cautionCount} cautions`),
+            React.createElement(B1Badge, { color: DL.teal }, `${allCallouts.length - pearlCount - cautionCount} notes`),
+          ),
         ),
 
-        React.createElement('div', { style: { marginBottom: 12 } },
+        React.createElement('div', { style: { marginBottom: 12, overflowX: 'auto' } },
           React.createElement(B2Segmented, {
             value: selected,
-            options: [
-              { value: 'pearl', label: 'Pearl' },
-              { value: 'caution', label: 'Caution' },
-              { value: 'evidence', label: 'Evidence' },
-            ],
+            options: TONE_OPTS.filter((opt) => opt.value === 'all' || allCallouts.some((c) => c.tone === opt.value)),
             onChange: setSelected,
           }),
         ),
 
-        React.createElement(B2Callout, { tone: 'pearl', title: 'Clinical Pearl', icon: '+' },
-          'A clear neurologic baseline makes later changes easier to interpret. Document speech, gaze, limb strength, and level of alertness in the same order each time.'),
-        React.createElement(B2Callout, { tone: 'caution', title: 'Caution', icon: '!' },
-          'Do not treat isolated visual details as a diagnosis. Pair findings with history, timing, and objective assessment.'),
-        React.createElement(B2Callout, { tone: 'evidence', title: 'Evidence Cue', icon: 'E' },
-          'Use this callout for citations, guideline reminders, or a short method note. The visual tone stays calm so it does not compete with urgent warnings.'),
-        React.createElement(B2Callout, { tone: 'danger', title: 'Escalation Pattern', icon: '!' },
-          'Rapid deterioration, persistent confusion, or new unilateral weakness should trigger an escalation pattern in the learning flow.'),
+        shownCallouts.length > 0
+          ? shownCallouts.map((c, i) => React.createElement('div', { key: i },
+            hasDynamic && c.sectionRef && i > 0 && shownCallouts[i - 1].sectionRef !== c.sectionRef
+              ? React.createElement('div', { style: { fontSize: 10, color: DL.mute, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', padding: '8px 0 4px' } }, c.sectionRef)
+              : (hasDynamic && i === 0 ? React.createElement('div', { style: { fontSize: 10, color: DL.mute, fontWeight: 800, letterSpacing: 0.8, textTransform: 'uppercase', padding: '4px 0 4px' } }, c.sectionRef) : null),
+            React.createElement(B2Callout, { tone: c.tone, title: c.title, icon: c.icon }, c.text),
+          ))
+          : React.createElement(B2Callout, { tone: 'note', title: 'No callouts' }, `No ${selected === 'all' ? '' : selected + ' '}callouts available for this filter.`),
 
         React.createElement(B1Section, { title: 'Long-press Pearl State', style: { marginTop: 6, marginBottom: 9 } }),
         React.createElement(B1Card, {
@@ -11602,10 +11681,10 @@
         },
           React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' } },
             React.createElement('div', null,
-              React.createElement('div', { style: { fontSize: 13, fontWeight: 800, color: DL.text } }, 'Press to cycle tactile emphasis'),
-              React.createElement('div', { style: { fontSize: 10, color: DL.sub, marginTop: 2 } }, 'Demonstrates pressed visual feedback and tone shift.'),
+              React.createElement('div', { style: { fontSize: 13, fontWeight: 800, color: DL.text } }, 'Filter by tone'),
+              React.createElement('div', { style: { fontSize: 10, color: DL.sub, marginTop: 2 } }, hasDynamic ? `Showing ${shownCallouts.length} of ${allCallouts.length} callouts` : 'Demonstrates pressed visual feedback and tone shift.'),
             ),
-            React.createElement(B2PressHint, { active: selected === 'caution', label: 'Tone' }),
+            React.createElement(B2PressHint, { active: selected !== 'all', label: 'Tone' }),
           ),
         )
       );
@@ -12604,23 +12683,70 @@
       );
     }
 
-    function PageBilingualSimple({ onNavigate }) {
+    function PageBilingualSimple({ onNavigate, lectureModule }) {
       const [mode, setMode] = React.useState('simple');
+      const [activeSectionIdx, setActiveSectionIdx] = React.useState(0);
       const simple = mode === 'simple';
+
+      const FALLBACK_BILINGUAL = {
+        title: 'Perfusion Explained for Different Reading Needs',
+        concept: 'Perfusi / Perfusion',
+        simple_id: 'Bayangkan darah seperti layanan antar oksigen. Perfusi berarti oksigen sampai ke tempat yang membutuhkan. Jika jalannya terganggu, tubuh memberi tanda seperti lemah, bingung, atau pucat.',
+        simple_id_note: 'Versi sederhana membantu pelajar baru memahami inti konsep sebelum masuk ke istilah teknis.',
+        bilingual_id: 'Perfusi adalah aliran darah yang membawa oksigen ke jaringan. Jika aliran ini turun, sel tubuh bisa bekerja lebih lambat atau rusak.',
+        bilingual_en: 'Perfusion means blood flow that delivers oxygen to tissue. When flow drops, cells may slow down or become injured.',
+        medical_id: 'Perfusi adalah pengiriman darah teroksigenasi ke jaringan melalui jaringan vaskular, dipengaruhi oleh tekanan, resistansi, dan autoregulasi lokal.',
+        medical_note: 'The medical version is useful after the learner understands the simple model and is ready for mechanism-level detail.',
+      };
+
+      const moduleBilinguals = React.useMemo(() => {
+        const modBilingual = lectureModule && lectureModule.bilingual;
+        if (modBilingual && !Array.isArray(modBilingual)) return [modBilingual];
+        if (Array.isArray(modBilingual)) return modBilingual;
+        const rawSections = Array.isArray(lectureModule && lectureModule.sections) ? lectureModule.sections : [];
+        return rawSections
+          .filter((s) => s.bilingual && typeof s.bilingual === 'object')
+          .map((s) => Object.assign({ concept: cortexSentenceCase(String(s.title || s.heading || 'Section')) }, s.bilingual));
+      }, [lectureModule]);
+
+      const hasDynamic = moduleBilinguals.length > 0;
+      const activeBilingual = hasDynamic ? (moduleBilinguals[activeSectionIdx] || moduleBilinguals[0]) : FALLBACK_BILINGUAL;
+      const moduleTitle = lectureModule && lectureModule.title ? String(lectureModule.title) : '';
+      const heroTitle = activeBilingual.title || (activeBilingual.concept ? `${activeBilingual.concept} — Penjelasan Multi-level` : (moduleTitle || 'Simpler Explanation'));
+      const heroSub = hasDynamic
+        ? `Penjelasan tiga tingkat untuk ${activeBilingual.concept || moduleTitle}: sederhana, bilingual, dan medis teknis.`
+        : 'Dummy state showing simpler wording and bilingual support inside the same mobile frame.';
 
       return React.createElement(B2PageShell, {
         label: 'Bilingual / Simple',
-        title: 'Simpler',
-        subtitle: 'Bilingual state',
+        title: hasDynamic ? (moduleTitle || 'Simpler') : 'Simpler',
+        subtitle: hasDynamic ? `${moduleBilinguals.length} concept${moduleBilinguals.length > 1 ? 's' : ''}` : 'Bilingual state',
         onBack: () => onNavigate(15),
         right: React.createElement(B1Badge, { color: simple ? DL.gold : DL.teal }, simple ? 'Simple' : 'Bilingual'),
       },
         React.createElement(B1Card, { glow: true, style: { marginBottom: 14 } },
-          React.createElement(B2Kicker, { color: simple ? DL.gold : DL.teal }, 'Accessible explanation'),
-          React.createElement('div', { style: { fontSize: 21, fontWeight: 850, color: DL.text, lineHeight: 1.22 } },
-            'Perfusion Explained for Different Reading Needs'),
-          React.createElement('div', { style: { fontSize: 12, color: DL.sub, lineHeight: 1.55, marginTop: 7 } },
-            'Dummy state showing simpler wording and bilingual support inside the same mobile frame.'),
+          React.createElement(B2Kicker, { color: simple ? DL.gold : DL.teal }, hasDynamic ? 'Penjelasan multi-level' : 'Accessible explanation'),
+          React.createElement('div', { style: { fontSize: 21, fontWeight: 850, color: DL.text, lineHeight: 1.22 } }, heroTitle),
+          React.createElement('div', { style: { fontSize: 12, color: DL.sub, lineHeight: 1.55, marginTop: 7 } }, heroSub),
+          hasDynamic && activeBilingual.concept && React.createElement('div', { style: { display: 'flex', gap: 8, marginTop: 12 } },
+            React.createElement(B1Badge, { color: DL.gold }, activeBilingual.concept),
+          ),
+        ),
+
+        hasDynamic && moduleBilinguals.length > 1 && React.createElement(B1Card, { pad: 10, style: { marginBottom: 12 } },
+          React.createElement('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
+            moduleBilinguals.map((item, idx) => React.createElement('button', {
+              key: idx,
+              type: 'button',
+              onClick: () => setActiveSectionIdx(idx),
+              className: 'cortex-motion-press',
+              style: {
+                padding: '6px 11px', borderRadius: 12, border: `1px solid ${activeSectionIdx === idx ? `${DL.teal}72` : DL.glassBorder}`,
+                background: activeSectionIdx === idx ? `${DL.teal}1a` : 'rgba(255,255,255,0.04)',
+                color: activeSectionIdx === idx ? DL.teal : DL.sub, fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit',
+              },
+            }, (item.concept || `Concept ${idx + 1}`).slice(0, 20)))
+          ),
         ),
 
         React.createElement('div', { style: { marginBottom: 14 } },
@@ -12639,13 +12765,11 @@
           ? React.createElement(React.Fragment, null,
             React.createElement(B1Card, { pad: 15, style: { marginBottom: 12 } },
               React.createElement(B1Badge, { color: DL.teal, style: { marginBottom: 10 } }, 'Indonesia'),
-              React.createElement(B2ReadingBlock, { lead: true },
-                'Perfusi adalah aliran darah yang membawa oksigen ke jaringan. Jika aliran ini turun, sel tubuh bisa bekerja lebih lambat atau rusak.'),
+              React.createElement(B2ReadingBlock, { lead: true }, activeBilingual.bilingual_id || FALLBACK_BILINGUAL.bilingual_id),
             ),
             React.createElement(B1Card, { pad: 15, style: { marginBottom: 14 } },
               React.createElement(B1Badge, { color: DL.accent, style: { marginBottom: 10 } }, 'English'),
-              React.createElement(B2ReadingBlock, { lead: true },
-                'Perfusion means blood flow that delivers oxygen to tissue. When flow drops, cells may slow down or become injured.'),
+              React.createElement(B2ReadingBlock, { lead: true }, activeBilingual.bilingual_en || FALLBACK_BILINGUAL.bilingual_en),
             ),
           )
           : React.createElement(B1Card, { pad: 16, style: { marginBottom: 14 } },
@@ -12653,12 +12777,12 @@
               simple ? 'Simpler wording' : 'Medical wording'),
             React.createElement(B2ReadingBlock, { lead: true },
               simple
-                ? 'Bayangkan darah seperti layanan antar oksigen. Perfusi berarti oksigen sampai ke tempat yang membutuhkan. Jika jalannya terganggu, tubuh memberi tanda seperti lemah, bingung, atau pucat.'
-                : 'Perfusion is the delivery of oxygenated blood to tissue beds through vascular networks, influenced by pressure, resistance, and local autoregulation.'),
+                ? (activeBilingual.simple_id || FALLBACK_BILINGUAL.simple_id)
+                : (activeBilingual.medical_id || FALLBACK_BILINGUAL.medical_id)),
             React.createElement(B2ReadingBlock, null,
               simple
-                ? 'Versi sederhana membantu pelajar baru memahami inti konsep sebelum masuk ke istilah teknis.'
-                : 'The medical version is useful after the learner understands the simple model and is ready for mechanism-level detail.'),
+                ? (activeBilingual.simple_id_note || FALLBACK_BILINGUAL.simple_id_note)
+                : (activeBilingual.medical_note || FALLBACK_BILINGUAL.medical_note)),
           ),
 
         React.createElement(B1Section, { title: 'Support Tools', style: { marginBottom: 9 } }),
@@ -12678,8 +12802,10 @@
           )),
         ),
 
-        React.createElement(B2Callout, { tone: 'note', title: 'State requirement' },
-          'This page demonstrates bilingual and simpler explanation states using the same concept in progressively clearer language.')
+        React.createElement(B2Callout, { tone: 'note', title: 'Content source' },
+          hasDynamic
+            ? `Penjelasan diekstrak dari modul ${moduleTitle}. Setiap tingkatan — sederhana, bilingual, dan medis — menggunakan konten yang sama dalam format berbeda.`
+            : 'This page demonstrates bilingual and simpler explanation states using the same concept in progressively clearer language.')
       );
     }
 

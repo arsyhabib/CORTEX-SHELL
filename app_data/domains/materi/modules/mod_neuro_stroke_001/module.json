@@ -1,0 +1,796 @@
+{
+  "id": "mod_neuro_stroke_001",
+  "title": "Acute Ischemic Stroke",
+  "subtitle": "Pathophysiology, Diagnosis & Management",
+  "domain": "neuro_emergency",
+  "batch_id": "batch_1",
+  "source_pdf": "Neuro_Emergency_2025_Batch1.pdf",
+  "source_filename": "Neuro_Emergency_2025_Batch1",
+  "topicTags": ["Stroke", "Neuroemergency", "Thrombolysis", "Thrombectomy"],
+  "summary": [
+    "Stroke iskemik adalah penyebab kematian ketiga global — 80% dari semua stroke, memerlukan reperfusi dalam golden hour untuk mencegah disability permanen.",
+    "Ischemic cascade: oklusi pembuluh → hypoperfusion → infarct core (necrosis ≤5 menit) + penumbra (salvageable 6–24 jam) → target utama terapi akut.",
+    "NIHSS score adalah prognostic indicator terkuat: score ≤4 minor, 5–15 moderate, >11 curiga LVO, >20 severe dengan mortalitas 43%.",
+    "IV tPA (alteplase 0.9 mg/kg) adalah gold standard dalam 4.5 jam; mechanical thrombectomy superior untuk LVO dalam 24 jam dengan imaging selection.",
+    "Pencegahan sekunder: antiplatelet untuk non-cardioembolic, anticoagulation untuk AF, statin high-intensity, target BP <140/90, smoking cessation.",
+    "CT head non-contrast: exclude hemorrhage. CTA: detect LVO. MRI-DWI: confirm ischemia. Perfusion imaging: assess mismatch = salvageable penumbra."
+  ],
+  "exam_focus": [
+    "IV tPA eligibility criteria dan timing window (0–3 jam vs 0–4.5 jam)",
+    "Mechanical thrombectomy indication: LVO confirmed + NIHSS >6 + time window 0–24 jam",
+    "Stroke mimics dan differensiasi dari true stroke dengan imaging",
+    "Complication management: hemorrhagic transformation, cerebral edema, seizure",
+    "Secondary prevention: antiplatelet vs anticoagulation berdasarkan stroke etiology",
+    "NIHSS score interpretation dan prognosis correlation",
+    "Perfusion-diffusion mismatch: DWI vs PWI pada MRI",
+    "ASPECTS score dan relevansinya untuk thrombectomy eligibility"
+  ],
+  "glossary": [
+    {
+      "term": "Stroke Iskemik",
+      "meaning": "Kondisi emergensi neurologi akibat oklusi pembuluh darah serebral yang menyebabkan ischemia dan necrosis jaringan otak. Menyumbang 80% dari semua stroke. Membutuhkan intervensi cepat dalam golden hour untuk mencegah disability permanen."
+    },
+    {
+      "term": "Ischemic Cascade",
+      "meaning": "Serangkaian kejadian biokimia setelah oklusi pembuluh: energy failure → ion pump dysfunction → excitotoxic glutamate release → calcium paradox → inflammation → apoptosis. Target neuroprotection berada pada fase awal cascade."
+    },
+    {
+      "term": "Penumbra",
+      "meaning": "Area otak di sekitar infarct core dengan perfusi reduced tetapi belum terjadi irreversible necrosis. Neurophysiologically abnormal tetapi structurally intact 6–24 jam. Target utama reperfusion therapy — jika di-reperfuse dalam window, bisa recover."
+    },
+    {
+      "term": "NIHSS",
+      "meaning": "National Institutes of Health Stroke Scale — assessment tool 11-item (0–42 poin) untuk severity stroke. Score 0–4: minor, 5–15: moderate, >11: curiga large vessel occlusion, >20: severe. Predictor terkuat outcome 3 bulan."
+    },
+    {
+      "term": "tPA / Alteplase",
+      "meaning": "Tissue Plasminogen Activator — serine protease yang convert plasminogen → plasmin untuk fibrin degradation dalam thrombus. Diberikan IV 0.9 mg/kg (max 90 mg) dalam 4.5 jam dari onset. Standard terapi pertama stroke iskemik eligible."
+    },
+    {
+      "term": "Large Vessel Occlusion (LVO)",
+      "meaning": "Oklusi dari large-caliber intracranial vessels — internal carotid, proximal MCA (M1), basilar artery. Menyebabkan massive ischemia, high mortality. Primary indication untuk mechanical thrombectomy. Detected dengan CTA/MRA."
+    },
+    {
+      "term": "Mechanical Thrombectomy",
+      "meaning": "Prosedur interventional menggunakan stent retrievers atau aspiration catheters untuk mechanically remove thrombus dari occluded vessel. Gold standard untuk LVO stroke. TICI 2b-3 target — superior outcomes dibanding IV tPA saja."
+    },
+    {
+      "term": "ASPECTS Score",
+      "meaning": "Alberta Stroke Program Early CT Score — semiquantitative scoring 0–10 untuk early ischemic changes pada CT non-contrast. Score ≥6: prognosis baik dan kandidat thrombectomy. Score <5: high infarct burden, relative contraindication beberapa terapi."
+    },
+    {
+      "term": "Hemorrhagic Transformation",
+      "meaning": "Perdarahan dalam atau sekitar area infarction, terjadi 5–45% stroke pasien. Symptomatic HT (worsening deficit) pada <1% post-tPA. Risk factors: large infarct, diabetes, anticoagulation, old age. Management: stop anticoagulation, transfuse jika coagulopathic."
+    },
+    {
+      "term": "TIA (Transient Ischemic Attack)",
+      "meaning": "Defisit neurologi fokal sementara dari vascular cause yang resolves dalam 24 jam (biasanya <30 menit). Sentinel event: 16% stroke risk dalam 3 bulan. Sama emergency management seperti stroke — jangan dismiss sebagai 'hanya TIA'."
+    },
+    {
+      "term": "Perfusion-Diffusion Mismatch",
+      "meaning": "Pada MRI: area PWI hypoperfusion lebih besar dari DWI infarction restriction. Gap ini = ischemic penumbra yang masih viable dan dapat di-salvage dengan reperfusion. Basis untuk extended window thrombectomy (DAWN, DEFUSE 3 trials)."
+    },
+    {
+      "term": "Secondary Prevention",
+      "meaning": "Strategi jangka panjang mencegah stroke rekuren (risk 10% tahun pertama, 25% dalam 5 tahun). Komponen: antiplatelet/anticoagulation (sesuai etiology), statin high-intensity, antihypertensive (target <140/90), smoking cessation, lifestyle modification."
+    },
+    {
+      "term": "Decompressive Craniectomy",
+      "meaning": "Prosedur bedah mengangkat bone flap untuk relieve intracranial pressure pada malignant cerebral edema post-stroke besar (umumnya MCA territory). Jika dilakukan dalam 48 jam, mengurangi mortalitas dan morbiditas pada younger patients."
+    },
+    {
+      "term": "FAST Screening",
+      "meaning": "Face-Arm-Speech-Time — screening tool publik untuk prehospital stroke recognition. Face drooping, Arm weakness/drift, Speech slurring, Time to call emergency. Sensitivity ~72% untuk detecting stroke di lapangan."
+    },
+    {
+      "term": "Cardioembolic Stroke",
+      "meaning": "Stroke akibat embolus dari sumber kardiak, terutama atrial fibrillation (LAA thrombus). Menyumbang 20–30% stroke iskemik. Indikasi anticoagulation (warfarin INR 2–3 atau DOAC) untuk secondary prevention. Risk stratifikasi dengan CHA₂DS₂-VASc score."
+    }
+  ],
+  "bilingual": [
+    {
+      "concept": "Stroke Iskemik",
+      "title": "Stroke Iskemik — Penjelasan Tiga Tingkat",
+      "simple_id": "Stroke otak adalah kondisi darurat dimana pembuluh darah yang mengalirkan darah ke otak tersumbat. Tanpa darah, sel otak mulai mati dalam hitungan menit. Itulah mengapa kita harus bertindak CEPAT — setiap menit sangat berharga untuk mencegah cacat permanen.",
+      "simple_id_note": "Analogi: otak seperti tanaman yang butuh air — jika pipa tersumbat, tanaman akan layu dan mati jika tidak segera diperbaiki.",
+      "bilingual_id": "Stroke iskemik terjadi ketika aliran darah ke bagian otak terhambat akibat thrombus atau embolus pada pembuluh darah serebral. Sel-sel otak dalam area yang terdampak mulai mengalami disfungsi dan kematian dalam menit pertama. Penanganan cepat dengan tPA atau thrombectomy adalah kunci untuk membatasi kerusakan permanen.",
+      "bilingual_en": "Ischemic stroke occurs when blood supply to part of the brain is interrupted by a clot in the cerebral vasculature. Neurons in the affected territory begin to malfunction and die within minutes. Rapid treatment with tPA or mechanical thrombectomy is the key to limiting permanent damage.",
+      "medical_id": "Stroke iskemik akut adalah kondisi neuroemergency akibat oklusi pembuluh darah serebral yang menyebabkan ischemic cascade — energy failure, ion pump dysfunction, excitotoxic glutamate release, dan cytotoxic edema. Area infarct core mengalami irreversible necrosis dalam 4–5 menit, sedangkan penumbra di sekitarnya masih salvageable dalam 6–24 jam jika reperfusi berhasil dicapai melalui thrombolysis atau mechanical thrombectomy.",
+      "medical_note": "Pemahaman tentang ischemic cascade dan therapeutic windows adalah fondasi untuk pengambilan keputusan klinis yang tepat waktu dalam manajemen stroke akut."
+    },
+    {
+      "concept": "Penumbra & Golden Hour",
+      "title": "Penumbra — Otak yang Masih Bisa Diselamatkan",
+      "simple_id": "Di sekitar area otak yang sudah rusak, ada area yang 'setengah mati' — masih hidup tetapi tidak berfungsi normal. Jika kita bisa pulihkan aliran darah ke area ini dalam waktu tertentu, sel-sel otak bisa kembali bekerja. Ini mengapa setiap menit penting.",
+      "simple_id_note": "Penumbra seperti ember yang hampir kosong — masih bisa diisi sebelum benar-benar habis.",
+      "bilingual_id": "Penumbra adalah area otak di sekitar infarct core yang mengalami hipoperfusi tetapi belum terjadi kematian sel ireversibel. Area ini masih dapat diselamatkan jika reperfusi berhasil dalam 6–24 jam, tergantung pada lokasi, kolateral pembuluh darah, dan ukuran area yang terkena.",
+      "bilingual_en": "The penumbra is the region of brain tissue surrounding the infarct core that has reduced blood flow but has not yet undergone irreversible cell death. This tissue can still be salvaged if reperfusion is achieved within 6–24 hours, depending on location, collateral supply, and lesion size.",
+      "medical_id": "Ischemic penumbra adalah zona dengan CBF antara oligemia (viability threshold) dan complete ischemia (necrosis threshold). Neurovascular uncoupling dan spreading depolarization terjadi dalam penumbra, mempercepat ekspansi infarct. Imaging target: DWI-PWI mismatch pada MRI atau perfusion-core mismatch pada CT perfusion menunjukkan salvageable tissue untuk guiding extended window reperfusion.",
+      "medical_note": "Konsep penumbra adalah scientific basis untuk semua extended window trials (DAWN, DEFUSE 3, ESCAPE-NA1) yang memperpanjang therapeutic window hingga 24 jam dengan imaging selection."
+    },
+    {
+      "concept": "tPA & Thrombectomy",
+      "title": "Pengobatan Stroke — Dua Pilihan Utama",
+      "simple_id": "Ada dua cara utama untuk buka sumbatan: (1) suntikan obat pelarut gumpalan darah lewat infus — harus dilakukan dalam 4.5 jam, (2) memasukkan alat melalui pembuluh darah untuk tarik gumpalan keluar — bisa sampai 24 jam. Kedua cara ini bisa menyelamatkan otak dari kerusakan permanen.",
+      "simple_id_note": "Cara 1 seperti memberi obat pencahar untuk sumbatan — bekerja dari dalam. Cara 2 seperti mekanik yang masuk dan menarik penyumbat keluar.",
+      "bilingual_id": "Tatalaksana akut stroke iskemik memiliki dua pilar utama: (1) IV tPA (alteplase) yang diberikan dalam 4.5 jam untuk melarutkan thrombus secara enzimatik, dan (2) mechanical thrombectomy menggunakan stent retriever atau aspiration catheter untuk LVO dalam 24 jam. Kedua modalitas ini dapat dikombinasikan (bridging therapy) untuk hasil optimal.",
+      "bilingual_en": "Acute ischemic stroke treatment has two main pillars: (1) IV tPA (alteplase) given within 4.5 hours to enzymatically dissolve the thrombus, and (2) mechanical thrombectomy using stent retrievers or aspiration catheters for LVO within 24 hours. Both modalities can be combined (bridge therapy) for optimal outcomes.",
+      "medical_id": "IV thrombolysis dengan rtPA (alteplase 0.9 mg/kg, max 90 mg) memiliki evidence level IA untuk stroke onset <4.5 jam tanpa kontraindikasi. Mechanical thrombectomy dengan stent retrievers mencapai TICI 2b-3 pada 80–90% kasus LVO, dengan NNT 2–3 untuk prevent poor outcome — jauh superior dibanding IV tPA saja. Extended window thrombectomy (8–24 jam) valid dengan perfusion mismatch criteria (DAWN, DEFUSE 3).",
+      "medical_note": "Kombinasi IV tPA + mechanical thrombectomy (bridging strategy) adalah pendekatan optimal untuk LVO patients yang masih dalam window thrombolysis — memberikan chance reperfusion sebelum angiography dimulai."
+    }
+  ],
+  "sections": [
+    {
+      "id": "s01",
+      "title": "Epidemiology & Global Burden",
+      "kind": "Reading",
+      "summary": "Stroke iskemik menyumbang 80% dari semua stroke, dengan insidens meningkat 100% di negara berkembang dua dekade terakhir. Risk factors utama: hypertension, diabetes, AF, smoking.",
+      "content": [
+        { "text": "Stroke adalah penyebab kematian ketiga dan disabilitas utama global menurut WHO. Lebih dari 87% kasus adalah stroke iskemik; sisanya hemorrhagic (10%) dan subarachnoid hemorrhage (3%). Di negara berkembang, insidens stroke meningkat 100% dalam dua dekade terakhir karena aging population dan meningkatnya cardiovascular risk factors." },
+        { "text": "Risk factors utama untuk stroke iskemik mencakup hypertension (60–80% pasien stroke iskemik), diabetes mellitus (meningkatkan risk 3x), atrial fibrillation (meningkatkan cardioembolic stroke 5x), smoking (1.5–2.5x risk), dyslipidemia, obesity, sedentary lifestyle, dan previous stroke/TIA. Metabolic syndrome meningkatkan stroke risk hingga 5x." },
+        { "text": "Stroke iskemik memiliki epidemiologi yang kompleks: younger patients (age <50 tahun) lebih sering mengalami cardioembolic stroke atau arterial dissection, sedangkan elderly lebih sering atherothrombotic large vessel disease. Perbedaan geografis signifikan: stroke rate di Asia 50–100 per 100,000 per tahun (lebih tinggi), di Eropa 100–200 per 100,000." },
+        { "text": "Outcome jangka panjang serius: 30% pasien dengan acute ischemic stroke meninggal dalam 1 tahun, 50% menjadi dependent untuk aktivitas sehari-hari, dan hanya 25% recovery sempurna. Setiap jam delay dalam reperfusion menyebabkan permanent neurological deficit." }
+      ],
+      "glossary_refs": ["stroke_iskemik", "cardioembolic_stroke"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_stroke_epidemiology_01", "visual_stroke_age_distribution_01"],
+      "bullets": [
+        {
+          "text": "Stroke iskemik: 80% dari semua stroke, mortalitas 30-hari 8–12%, disabilitas jangka panjang 50–60%.",
+          "sub": ["Hemorrhagic stroke: 10% dari semua stroke", "Subarachnoid hemorrhage: 3%", "Undetermined: 7%"],
+          "tone": "ok"
+        },
+        {
+          "text": "Risk factors utama yang harus dihafal untuk ujian: HYPERTENSION > DM > AF > SMOKING.",
+          "sub": ["Hypertension: ada pada 60–80% stroke pasien", "Atrial fibrillation: meningkatkan embolic stroke risk 5x", "Diabetes: meningkatkan stroke risk 3x", "Smoking: meningkatkan risk 1.5–2.5x"]
+        },
+        {
+          "text": "Younger stroke (<50 tahun): cari etiologi berbeda — dissection, PFO, hypercoagulable state, vasculitis.",
+          "sub": ["Arterial dissection: tersering di carotid dan vertebral", "Patent foramen ovale (PFO): paradoxical embolism", "Hypercoagulable: antiphospholipid syndrome, protein C/S deficiency"],
+          "tone": "warn"
+        },
+        {
+          "text": "Seasonal & geographic variation: higher in winter (vasoconstriction), higher in Asia vs Europe.",
+          "sub": ["Asia: 50–100 per 100,000/tahun", "Europe: 100–200 per 100,000/tahun", "Winter increase: cold-induced vasoconstriction hypothesis"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "exam_pearl",
+          "title": "Mnemonik ABCD² untuk TIA Risk",
+          "text": "ABCD² score: Age ≥60 (1 pt) + Blood pressure ≥140/90 (1 pt) + Clinical features unilateral weakness (2 pts) atau speech disturbance (1 pt) + Diabetes (1 pt). Score 4–6 → 8% risk stroke dalam 2 hari, 16% dalam 90 hari."
+        },
+        {
+          "tone": "clinical_pearl",
+          "title": "Atrial Fibrillation Post-Stroke",
+          "text": "Pasien dengan newly detected atrial fibrillation setelah stroke iskemik memiliki risk stroke berulang ~15% per tahun jika tidak di-anticoagulate. CHA₂DS₂-VASc score membantu stratifikasi risk."
+        },
+        {
+          "tone": "warning",
+          "title": "Stroke Muda Butuh Workup Ekstensif",
+          "text": "Stroke pada pasien muda (<50 tahun) memerlukan investigasi ekstensif untuk arterial dissection, patent foramen ovale, hypercoagulable state, dan vasculitis — bukan hanya atherosclerotic disease."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "Perbedaan Etiologi Mempengaruhi Prevensi Sekunder",
+          "text": "Etiologi stroke menentukan secondary prevention: atherothrombotic → antiplatelet, cardioembolic → anticoagulation, lacunar/small vessel → antihypertensive aggressive."
+        }
+      ],
+      "bilingual": {
+        "concept": "Epidemiologi Stroke",
+        "simple_id": "Stroke adalah kondisi darurat dimana pembuluh darah di otak tersumbat atau pecah. Ini adalah penyebab kecacatan terbesar di dunia. Setiap tahun jutaan orang terkena stroke, dan setengahnya tidak bisa pulih sepenuhnya.",
+        "bilingual_id": "Stroke iskemik menyumbang 80% dari semua kasus stroke global, dengan insidens yang terus meningkat di negara berkembang. Faktor risiko utama meliputi hipertensi, diabetes, fibrilasi atrium, dan merokok.",
+        "bilingual_en": "Ischemic stroke accounts for 80% of all global stroke cases, with incidence continuously rising in developing nations. Main risk factors include hypertension, diabetes, atrial fibrillation, and smoking.",
+        "medical_id": "Epidemiologi stroke iskemik menunjukkan distribusi bimodal berdasarkan usia: young stroke (<50 tahun) didominasi oleh cardioembolic dan arteriopati non-aterosklerotik (dissection, vasculitis), sedangkan elderly didominasi oleh atherothrombotic large vessel disease dan small vessel lacunar disease. Prevalensi AF yang meningkat pada populasi aging menjadi driver utama peningkatan cardioembolic stroke."
+      }
+    },
+    {
+      "id": "s02",
+      "title": "Pathophysiology — Ischemic Cascade",
+      "kind": "Reading",
+      "summary": "Ischemic cascade dimulai dari oklusi pembuluh → infarct core (necrosis dalam 4–5 menit) + penumbra (salvageable dalam 6–24 jam). Target terapi adalah reperfuse penumbra.",
+      "content": [
+        { "text": "Patofisiologi stroke iskemik didasarkan pada konsep ischemic cascade — serangkaian kejadian biokimia yang terjadi setelah oklusi pembuluh darah serebral. Dalam hitungan detik pertama, blood flow berkurang drastis di wilayah yang dilayani oleh pembuluh yang tersumbat. Area dengan perfusi terendah mengalami complete ischemia dan neuronal necrosis dalam 4–5 menit, membentuk infarct core." },
+        { "text": "Penumbra adalah target utama terapi akut. Dalam penumbra, energy metabolism terterganggu: ATP production menurun, sodium-potassium pump menutup, terjadi influx kalsium intrasel (calcium paradox), dan release neurotransmitter glutamate yang berlebihan (excitotoxicity). Meskipun struktur neuronal masih intact dalam 6–24 jam pertama, penumbra mengalami progressive necrosis jika tidak di-reperfuse." },
+        { "text": "Konsep therapeutic window berbeda-beda: 0–4.5 jam untuk IV thrombolysis, 0–24 jam untuk mechanical thrombectomy pada LVO (dengan imaging selection), 0–6 jam untuk salvage penumbra paling optimal. Therapeutic window dapat diperpanjang dengan perfusion imaging jika ada mismatch antara perfusion defect dan diffusion restriction." },
+        { "text": "Setelah reperfusion, reperfusion injury dimulai: reintroduction dari oxygen menyebabkan production reactive oxygen species (ROS), inflammatory cascade activation, blood-brain barrier breakdown, dan cerebral edema. Infarction dapat berkembang lebih lanjut dalam jam-jam pertama setelah reperfusion." }
+      ],
+      "glossary_refs": ["ischemic_cascade", "penumbra", "tpa_alteplase"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_ischemic_cascade_01", "visual_penumbra_core_01", "visual_therapeutic_window_timeline_01"],
+      "bullets": [
+        {
+          "text": "Infarct core: complete ischemia → neuronal necrosis dalam ≤5 menit — TIDAK bisa diselamatkan.",
+          "sub": ["CBF < 10 mL/100g/menit → irreversible", "Neuronal death dalam 4–5 menit tanpa perfusi", "Tidak ada yang bisa dilakukan untuk core yang sudah infark"],
+          "tone": "warn"
+        },
+        {
+          "text": "Penumbra: reduced blood flow → dysfunction tanpa necrosis — MASIH bisa diselamatkan dalam 6–24 jam.",
+          "sub": ["CBF antara 10–20 mL/100g/menit", "Electrically silent tapi structurally intact", "Target utama semua reperfusion therapy"],
+          "tone": "ok"
+        },
+        {
+          "text": "Excitotoxicity: glutamate release berlebihan → NMDA receptor activation → massive Ca2+ influx → neuronal death.",
+          "sub": ["Glutamate adalah excitatory neurotransmitter yang toxic pada excess", "Ca2+ overload aktivasi proteases, lipases, endonucleases", "NMDA antagonists diteliti sebagai neuroprotection tapi belum proven di klinis"]
+        },
+        {
+          "text": "Spreading depolarization: propagating wave yang memperluas infarct ke penumbra — target emerging neuroprotection.",
+          "sub": ["Mirip migraine aura tetapi jauh lebih destructive", "Dihubungkan dengan seizure post-stroke", "Dapat di-monitor dengan cortical EEG di ICU"]
+        },
+        {
+          "text": "Reperfusion injury: setelah vessel di-open, ROS production + BBB breakdown dapat memperburuk edema.",
+          "sub": ["ROS: reactive oxygen species yang destructive", "BBB breakdown → vasogenic edema", "Manageable dengan careful BP control post-reperfusion"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "teaching_point",
+          "title": "Time is Brain — Angka Konkret",
+          "text": "Setiap 30 menit delay dalam reperfusion = loss of 7.3 juta neuron dan 47 km axonal connections. Setiap 15 menit delay dari presentasi ke thrombolysis = worse 3-month outcome."
+        },
+        {
+          "tone": "clinical_pearl",
+          "title": "DWI-PWI Mismatch = Salvageable Penumbra",
+          "text": "Jika DWI (infarct restriction) < PWI (perfusion defect) pada MRI — mismatch ini menunjukkan viable penumbra. Basis ilmiah untuk extended window mechanical thrombectomy (DAWN, DEFUSE 3 trials)."
+        },
+        {
+          "tone": "exam_pearl",
+          "title": "Concept 'Penumbra' untuk MCQ",
+          "text": "Penumbra: (1) CBF antara necrosis threshold dan viability threshold, (2) electrically silent, (3) structurally intact dalam jam-jam pertama, (4) expands jika tidak di-reperfuse, (5) target SEMUA reperfusion therapy."
+        },
+        {
+          "tone": "warning",
+          "title": "Reperfusion Injury Paradox",
+          "text": "Reperfusion setelah ischemia dapat MEMPERBURUK injury melalui ROS production dan BBB breakdown. Hal ini menjadi alasan mengapa aggressive BP lowering post-reperfusion harus dihindari."
+        }
+      ],
+      "bilingual": {
+        "concept": "Ischemic Cascade",
+        "simple_id": "Ketika pembuluh darah tersumbat, otak langsung kekurangan 'bahan bakar'. Sel-sel otak yang kekurangan darah mulai panik — melepaskan zat kimia berbahaya yang merusak sel-sel di sekitarnya. Zona yang rusak langsung (inti) tidak bisa diselamatkan, tapi zona di sekitarnya (penumbra) masih bisa jika kita cepat bertindak.",
+        "simple_id_note": "Bayangkan kebakaran rumah: pusat api sudah tidak bisa diselamatkan, tapi area sekitar masih bisa dilindungi dengan air.",
+        "bilingual_id": "Ischemic cascade adalah serangkaian reaksi biokimia setelah oklusi pembuluh: kegagalan energi → disfungsi pompa ion → influx kalsium → eksitotoksisitas glutamat → kematian neuron. Area infarct core langsung nekrosis, sedangkan penumbra di sekitarnya masih viable jika reperfusi tercapai.",
+        "bilingual_en": "The ischemic cascade is a sequence of biochemical reactions after vessel occlusion: energy failure → ion pump dysfunction → calcium influx → glutamate excitotoxicity → neuronal death. The infarct core undergoes immediate necrosis, while the surrounding penumbra remains viable if reperfusion is achieved.",
+        "medical_id": "Ischemic cascade dimulai dari reduction CBF → mitochondrial failure → ATP depletion → Na/K-ATPase failure → membrane depolarization → voltage-gated Ca2+ channels opening → glutamate release → NMDA receptor overactivation → cytotoxic edema. Parallel pathway melibatkan apoptotic cascade (caspase activation), oxidative stress, dan inflammatory response yang dimediasi microglia dan neutrophils."
+      }
+    },
+    {
+      "id": "s03",
+      "title": "Clinical Presentation & NIHSS",
+      "kind": "Reading",
+      "summary": "Stroke iskemik: onset mendadak dengan focal deficit. NIHSS assessment kritis untuk severity. Territorial syndromes penting untuk lokalisasi. FAST screening untuk prehospital.",
+      "content": [
+        { "text": "Presentasi klinis stroke iskemik sangat bervariasi tergantung lokasi oklusi dan ukuran infarct. Onset symptoms adalah mendadak (seconds to minutes), membedakannya dari differential diagnoses lain seperti migraine (gradual), tumor (progressive), atau infection (subacute)." },
+        { "text": "FAST screening (Face-Arm-Speech-Time) adalah tool untuk prehospital detection: Face drooping, Arm drift, Speech slurring. Sensitivity dan specificity FAST ~72%. NIHSS (National Institutes of Health Stroke Scale) adalah standar clinical assessment dengan 11 items (0–42 points) untuk severity quantification." },
+        { "text": "Territorial syndromes: MCA stroke (50% dari stroke iskemik) — kontralateral hemiparesis (face > arm > leg), hemisensory loss, hemianopia, afasia (left) atau neglect (right). ACA stroke — leg weakness dominant. PCA stroke — homonymous hemianopia. Vertebrobasilar — tetraplegia, cranial nerve palsy, ataxia." },
+        { "text": "TIA adalah gejala neurologi fokal yang resolve dalam 24 jam — sentinel event dengan 16% stroke risk dalam 3 bulan. Stroke mimic (25–50% dari admissions) termasuk migraine, seizure, hypoglycemia, Todd's paralysis — imaging mandatory untuk differentiation." }
+      ],
+      "glossary_refs": ["nihss", "fast_screening", "tia"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_NIHSS_assessment_01", "visual_stroke_territories_01"],
+      "bullets": [
+        {
+          "text": "Onset mendadak adalah KEY feature stroke — pasien biasanya bisa sebut waktu tepat gejala mulai.",
+          "sub": ["Seconds to minutes: typical stroke onset", "Minutes to hours: migraine or evolving TIA", "Hours to days: intracranial tumor atau infection"],
+          "tone": "ok"
+        },
+        {
+          "text": "NIHSS score correlation dengan prognosis dan LVO likelihood:",
+          "sub": ["Score 0–4: minor stroke, 90% chance good outcome", "Score 5–15: moderate, 40% good outcome", "Score >11: curiga LVO, consider thrombectomy", "Score >20: severe, 10% chance good outcome, 43% mortality"],
+          "tone": "ok"
+        },
+        {
+          "text": "MCA territory stroke (paling common 50%): INGAT pattern face > arm > leg untuk motor deficits.",
+          "sub": ["Kiri (dominant): aphasia + right-sided weakness", "Kanan (non-dominant): neglect + left-sided weakness", "Large MCA: malignant edema risk → decompressive craniectomy"],
+          "tone": "warn"
+        },
+        {
+          "text": "Posterior circulation (basilar artery) stroke: HIGH MORTALITY jika tidak ditangani — emergency thrombectomy.",
+          "sub": ["Locked-in syndrome: tetraplegia + bulbar palsy + preserved consciousness", "Cerebellar stroke: ataxia + nystagmus + dysarthria", "Wallenberg syndrome: ipsilateral face + contralateral body sensory loss"],
+          "tone": "warn"
+        },
+        {
+          "text": "Stroke mimics (25–50% admissions): identifikasi dengan imaging dan clinical clues.",
+          "sub": ["Hypoglycemia: PERIKSA GULA DARAH DULU pada semua suspected stroke", "Seizure + Todd's paralysis: bisa menyerupai hemiparesis post-ictal", "Hemiplegic migraine: gradual onset, visual aura, resolves — DWI MRI normal"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "clinical_pearl",
+          "title": "Hypoglycemia Mimics Stroke",
+          "text": "Blood glucose <40 mg/dL dapat present dengan acute hemiparesis dan speech disturbance yang identical dengan stroke. CEK GULA DARAH pada semua suspected stroke — jika hypoglycemia, gejala resolves immediately dengan glucose correction tanpa imaging abnormality."
+        },
+        {
+          "tone": "exam_pearl",
+          "title": "NIHSS Correlations untuk MCQ",
+          "text": "NIHSS >11 → highly suspicious LVO → pertimbangkan mechanical thrombectomy. NIHSS <3 → tPA relative contraindication karena benefit-risk unfavorable untuk very mild stroke. NIHSS serial → track deterioration atau improvement."
+        },
+        {
+          "tone": "warning",
+          "title": "Bilateral Symptoms ≠ Stroke",
+          "text": "Stroke typically unilateral karena oklusi satu vascular territory. Bilateral symptoms (bilateral weakness, bilateral sensory loss) lebih suggestive metabolic disease, demyelination, atau global hypoperfusion — bukan single vessel stroke."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "Aphasia vs Dysarthria",
+          "text": "Aphasia (left hemisphere): language disorder — comprehension dan/atau expression disrupted. Dysarthria (brainstem/cerebellar): speech clarity problem — language intact tetapi articulation terganggu. Penting untuk differentiate karena implikasi lokasi berbeda."
+        }
+      ],
+      "bilingual": {
+        "concept": "Gejala Stroke",
+        "simple_id": "Gejala stroke muncul tiba-tiba. Tanda yang paling mudah dikenali: satu sisi wajah turun, satu lengan melemah, bicara jadi pelo atau tidak jelas. Jika melihat tanda-tanda ini, segera hubungi darurat — setiap detik berharga.",
+        "simple_id_note": "Ingat FAST: Face (wajah turun), Arm (lengan lemah), Speech (bicara kacau), Time (segera telepon darurat).",
+        "bilingual_id": "Stroke iskemik bermanifestasi dengan defisit neurologis fokal yang onsetnya mendadak, sesuai dengan territory vaskular yang terkena. Penilaian NIHSS digunakan untuk mengkuantifikasi beratnya defisit dan memandu keputusan terapi.",
+        "bilingual_en": "Ischemic stroke manifests as sudden-onset focal neurological deficits corresponding to the affected vascular territory. The NIHSS score quantifies deficit severity and guides treatment decisions.",
+        "medical_id": "Territorial stroke syndromes mencerminkan distribution vaskular serebral yang dapat diprediksi. MCA territory (50% stroke): kontralateral hemiparesis dengan face = arm > leg distribution, plus aphasia (left MCA) atau hemineglect (right MCA). Vertebrobasilar territory: crossed findings (ipsilateral cranial nerve + contralateral long tract) adalah pathognomonic brainstem localization. NIHSS memiliki excellent inter-rater reliability dan korelasi kuat dengan imaging findings dan prognosis."
+      }
+    },
+    {
+      "id": "s04",
+      "title": "Differential Diagnosis & Stroke Mimics",
+      "kind": "Reading",
+      "summary": "30–50% suspected stroke adalah stroke mimics. Migraine, seizure, hypoglycemia adalah yang paling common. DWI-MRI gold standard untuk differentiation.",
+      "content": [
+        { "text": "30–50% pasien yang dievaluasi dengan suspected acute stroke ternyata bukan stroke (stroke mimics). Kondisi ini penting karena dapat menyebabkan unnecessary thrombolysis dengan risiko bleeding. Clinical assessment alone adalah insufficient untuk differentiate stroke dari mimics — neuroimaging adalah mandatory." },
+        { "text": "Migraine dengan aura adalah stroke mimic paling frequent: visual symptoms berkembang over 20–30 menit (gradual — versus minutes pada stroke), headache mengikuti neurological symptoms, MRI DWI normal. Seizure dan Todd's paralysis: seizure activity visible, post-ictal confusion, EEG abnormalities, resolves dalam jam." },
+        { "text": "Hypoglycemia dapat present dengan acute hemiparesis dan speech difficulty — blood glucose check adalah mandatory. Multiple sclerosis relapse, PRES (posterior reversible encephalopathy syndrome), TTP, conversion disorder semuanya dapat menyerupai stroke. Intracerebral hemorrhage — imaging differentiator karena CT hyperdensity." },
+        { "text": "DWI-MRI adalah gold standard untuk confirming acute ischemia — hyperintense signal dalam menit pertama, specificity >90%. Normal DWI 24 jam setelah onset membuat stroke ischemia sangat unlikely. CT non-contrast penting untuk exclude hemorrhage tetapi tidak sensitif untuk early infarction." }
+      ],
+      "glossary_refs": ["nihss", "stroke_iskemik"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_stroke_mimic_flowchart_01", "visual_imaging_comparison_01"],
+      "bullets": [
+        {
+          "text": "HARUS CEK GULA DARAH (BG) pada semua suspected stroke — hypoglycemia mimics stroke perfectly.",
+          "sub": ["BG <40 mg/dL: dapat cause focal deficits identical dengan stroke", "Correction glucose → immediate resolution jika hypoglycemia", "Jangan tunda imaging untuk BG check — lakukan bersamaan"],
+          "tone": "warn"
+        },
+        {
+          "text": "Migraine vs Stroke: key differentiator adalah TIMING onset gejala.",
+          "sub": ["Migraine aura: gradual onset 20–30 menit, visual symptoms dominant", "Stroke: sudden onset dalam seconds to minutes", "DWI MRI normal pada migraine, positive pada stroke"]
+        },
+        {
+          "text": "Todd's paralysis: post-ictal hemiparesis yang resolves dalam jam — tidak butuh thrombolysis.",
+          "sub": ["History seizure sebelumnya?", "Witness melihat convulsion?", "Improved rapidly? → curiga Todd's", "EEG berguna untuk differentiation"]
+        },
+        {
+          "text": "PRES (Posterior Reversible Encephalopathy Syndrome): seizure + headache + visual + severe hypertension → MRI FLAIR changes parietal/occipital.",
+          "sub": ["Trigger: severe hypertension, eclampsia, immunosuppression, sepsis", "DWI biasanya normal atau minimal (vs stroke yang DWI positive)", "Reversible dengan BP control dan remove trigger"]
+        },
+        {
+          "text": "Normal CT non-contrast ≠ No stroke — infarction sering tidak terlihat dalam jam pertama.",
+          "sub": ["CT sensitivity untuk ischemia dalam 6 jam: <50%", "MRI DWI sensitivity: >95% dalam 6 jam", "Early CT signs: loss gray-white junction, sulcal effacement, hyperdense artery"],
+          "tone": "ok"
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "clinical_pearl",
+          "title": "Rapid Improvement Post-tPA = Curiga Stroke Mimic",
+          "text": "Jika pasien mendapat tPA dan kemudian improve sangat cepat dan lengkap (NIHSS turun dari 12 ke 1 dalam 2 jam), pertimbangkan stroke mimic. True stroke biasanya menunjukkan partial improvement atau tidak improve. DWI-MRI post-tPA akan confirm jika tidak ada infarction."
+        },
+        {
+          "tone": "exam_pearl",
+          "title": "Stroke Mimic Rate untuk MCQ",
+          "text": "25–50% dari acute stroke admissions adalah stroke mimics. Tapi jangan delay treatment untuk definitively rule out mimic — benefit dari early thrombolysis untuk true stroke lebih besar dari risk pada mimic. Imaging BERSAMAAN dengan clinical assessment."
+        },
+        {
+          "tone": "warning",
+          "title": "Jangan Delay Imaging untuk Extensive Workup",
+          "text": "CT head untuk exclude hemorrhage harus dilakukan dalam 25 menit dari arrival. Jangan delay untuk EKG, troponin, atau extensive blood workup — imaging PRIORITY. Blood tests dapat dikerjakan simultaneously."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "DWI-MRI Negatif 24 Jam Post-Onset = Bukan Stroke",
+          "text": "Jika DWI-MRI dilakukan 24 jam setelah symptom onset dan hasilnya negative (tidak ada diffusion restriction), stroke ischemia sangat unlikely. Ini membantu retrospective diagnosis stroke mimic seperti hemiplegic migraine atau conversion disorder."
+        }
+      ]
+    },
+    {
+      "id": "s05",
+      "title": "Neuroimaging & Diagnostic Workup",
+      "kind": "Reading",
+      "summary": "CT head: exclude hemorrhage. CTA: detect LVO. MRI-DWI: confirm ischemia. Perfusion imaging: mismatch = salvageable penumbra. Target door-to-CT <25 menit.",
+      "content": [
+        { "text": "Neuroimaging adalah cornerstone dari acute stroke diagnosis. Tujuan imaging dalam fase akut: (1) exclude hemorrhage, (2) exclude stroke mimics, (3) assess penumbra dan predict outcome, (4) detect arterial occlusion dan plan intervention. CT head non-contrast adalah first-line imaging — cepat (<5 menit), tersedia 24/7, reliably exclude hemorrhage." },
+        { "text": "CT Angiography (CTA) menginjeksi kontras dan visualisasi intrakranial arteries. CTA detect large vessel occlusion (LVO) dengan sensitivity >95%. CT Perfusion (CTP) menunjukkan hypoperfusion areas dan dapat menunjukkan perfusion-diffusion mismatch pattern, indicating salvageable tissue. Kualitas CTP sangat dependent pada timing injeksi." },
+        { "text": "MRI-DWI adalah gold standard untuk acute ischemia — hyperintense signal dalam menit pertama (jauh lebih awal dari CT). ADC map menunjukkan restriction pada acute infarction. DWI-PWI mismatch — areas dengan PWI hypoperfusion tetapi normal DWI — menunjukkan ischemic penumbra yang viable. Ini sangat valuable untuk determining therapeutic window." },
+        { "text": "ASPECTS score pada CT non-contrast: semiquantitative scoring 0–10 untuk early ischemic changes. Score ≥6 associated dengan better prognosis dan thrombectomy candidate. Carotid ultrasound, echocardiography, dan cardiac monitoring penting untuk identifying source of embolism dan secondary prevention planning." }
+      ],
+      "glossary_refs": ["aspects_score", "perfusion_diffusion_mismatch", "lvo"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_CT_vs_MRI_01", "visual_DWI_ADC_interpretation_01", "visual_CTA_LVO_01", "visual_perfusion_mismatch_01"],
+      "bullets": [
+        {
+          "text": "CT non-contrast PERTAMA: exclude hemorrhage dalam 5 menit — jangan delay untuk imaging lain.",
+          "sub": ["Hemorrhage: hyperdense area pada CT", "Early ischemia: subtle loss gray-white junction, sulcal effacement", "Normal CT ≠ No stroke (sensitivity rendah untuk early infarction)"],
+          "tone": "ok"
+        },
+        {
+          "text": "CTA: detect LVO dalam satu acquisition dengan CT non-contrast — door-to-CTA dalam 25 menit.",
+          "sub": ["Occlusion ICA, M1 MCA, basilar artery: criteria untuk thrombectomy", "Collaterals assessment: baik = slower infarct expansion", "Sensitivity untuk LVO: >95%"]
+        },
+        {
+          "text": "MRI-DWI: gold standard untuk acute ischemia — positive dalam menit pertama.",
+          "sub": ["DWI hyperintense + ADC hypointense = acute ischemia confirmed", "DWI negative 24 jam post-onset: stroke very unlikely", "DWI-PWI mismatch: salvageable penumbra — basis extended window therapy"],
+          "tone": "ok"
+        },
+        {
+          "text": "ASPECTS score: ≥6 = good candidate thrombectomy, <5 = high infarct burden, relative contraindication.",
+          "sub": ["10 regions dinilai pada CT CT axial: M1–M6, caudate, putamen, internal capsule, insula", "Each region score dikurangi 1 jika early ischemia terdeteksi", "ASPECTS ≥6 menunjukkan <1/3 MCA territory involvement"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "exam_pearl",
+          "title": "Mnemonik Imaging Stroke: ABC-DI",
+          "text": "ABC-DI: Assessment (clinical NIHSS), Blood (CT non-contrast untuk hemorrhage), Collateral/Core (CTA untuk LVO dan collaterals), Diffusion (MRI-DWI untuk confirm ischemia), Intervention (plan tPA atau thrombectomy). Urutan ini memastikan no step terlewat."
+        },
+        {
+          "tone": "clinical_pearl",
+          "title": "Normal CT Non-Contrast Tidak Exclude Stroke",
+          "text": "CT non-contrast sensitivity untuk early ischemia (<6 jam) kurang dari 50%. Jangan falsely reassured oleh CT normal. Jika clinical suspicion tinggi dan dalam time window, proceed dengan CTA untuk LVO dan pertimbangkan tPA."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "Door-to-Imaging Target",
+          "text": "Quality metric: door-to-CT <25 menit. Setiap delay dalam imaging = delay dalam treatment decision. CT dan blood work boleh dikerjakan bersamaan — jangan sequential."
+        },
+        {
+          "tone": "warning",
+          "title": "CT Perfusion: Kualitas Dependent Timing",
+          "text": "CT Perfusion hasilnya sangat bergantung pada timing injeksi kontras. Suboptimal timing dapat miss atau overestimate infarct volume. Gunakan CTP sebagai supplement, bukan replacement untuk clinical judgment."
+        }
+      ]
+    },
+    {
+      "id": "s06",
+      "title": "Acute Management: First 60 Minutes",
+      "kind": "Reading",
+      "summary": "Time-critical management: prehospital recognition → ED triage → imaging → thrombolysis decision. Target door-to-needle <60 menit. Supportive care bersamaan.",
+      "content": [
+        { "text": "Manajemen akut stroke iskemik adalah time-critical dan memerlukan koordinasi multidisipliner. Pre-hospital: FAST recognition, ambulance transport ke stroke center, notify receiving hospital. Prehospital blood glucose check karena hypoglycemia adalah reversible stroke mimic." },
+        { "text": "ED arrival dan triage: pasien dengan suspected stroke mendapat prioritas tinggi (critical/resuscitation). Target: door-to-CT time <25 menit. Initial assessment: exact time of onset (atau last known well), NIHSS scoring, vital signs, blood glucose, medical history, current medications." },
+        { "text": "Vital signs normalization: hypertension sering ditemukan dalam acute stroke — jangan turunkan aggressively jika <220/120 karena dapat damage penumbra. Target dalam phase akut: tidak <130/80. Fever, hyperglycemia (>200 mg/dL), dan hypoxia harus dicorrect karena worsen neurological outcome." },
+        { "text": "Supportive care: NPO sampai swallow assessment cleared (risk aspirasi). IV access dua large-bore lines. Continuous cardiac monitoring, BP setiap 15 menit, neuro checks tiap 15 menit × 2 jam pertama. Early DVT prophylaxis dengan leg compression devices. Swallow assessment sebelum ANY oral intake." }
+      ],
+      "glossary_refs": ["nihss", "fast_screening"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_ED_stroke_protocol_01", "visual_door_to_needle_timeline_01"],
+      "bullets": [
+        {
+          "text": "Door-to-CT <25 menit: QUALITY METRIC utama — setiap delay menutup therapeutic window.",
+          "sub": ["Simultaneous: CT head + blood draw + NIHSS", "Tidak sequential — lakukan bersamaan", "Direct ke CT scanner dari triase tanpa singgah assessment lain"],
+          "tone": "warn"
+        },
+        {
+          "text": "Exact time of onset atau last known well: informasi PALING KRITIS untuk treatment decision.",
+          "sub": ["Ask: 'Kapan terakhir kali pasien terlihat normal?'", "Witness sangat berharga — hubungi keluarga SEGERA", "Wake-up stroke: last known well = waktu tidur terakhir"],
+          "tone": "warn"
+        },
+        {
+          "text": "BP management dalam acute stroke: JANGAN aggressively lower kecuali SBP >220 atau persiapan tPA.",
+          "sub": ["Pre-tPA: target SBP <185/110 dengan labetalol atau nicardipine", "Post-tPA: SBP <140 targetkan secara gradual", "Avoid nitroprusside — dapat meningkatkan ICP"],
+          "tone": "warn"
+        },
+        {
+          "text": "NPO sampai swallow assessment: dysphagia prevalence 15–55% dalam acute stroke.",
+          "sub": ["Aspirasi pneumonia = komplikasi fatal yang preventable", "Speech-Language Pathologist assessment ideal", "NG feeding jika swallow tidak clear dalam 24 jam"]
+        },
+        {
+          "text": "Fever control agresif: setiap 1°C di atas 37°C → worse neurological outcome.",
+          "sub": ["Antipyretics: paracetamol 1 g IV q6h untuk T >37.5°C", "Cooling blanket jika refractory", "Infection workup: cultures blood + urine + CXR"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "clinical_pearl",
+          "title": "Last Known Well = Last Seen Normal",
+          "text": "Wake-up stroke (gejala ditemukan setelah bangun tidur): last known well adalah waktu saat pasien terakhir terlihat normal sebelum tidur. Ini penting karena pasien ini sering exclude dari standard IV tPA window — tetapi mungkin eligible untuk extended window thrombectomy dengan imaging selection."
+        },
+        {
+          "tone": "warning",
+          "title": "Jangan Delay Imaging untuk Lab Results",
+          "text": "CT head harus tidak ditunda untuk menunggu lab results (troponin, coagulation, etc.). Blood draw dilakukan bersamaan dengan perjalanan ke CT scanner. Satu-satunya yang harus diketahui sebelum tPA: platelet count, INR, dan glucose."
+        },
+        {
+          "tone": "exam_pearl",
+          "title": "Alasan BP Tidak Diturunkan Agresif dalam Acute Stroke",
+          "text": "Penumbra butuh adequate cerebral perfusion pressure (CPP) untuk survive. Aggressive BP lowering → decreased perfusion ke penumbra → infarct expansion. 'Permissive hypertension' dalam 24 jam pertama adalah strategi yang accepted untuk non-tPA candidates."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "Swallow Assessment: Wajib Sebelum Oral Intake",
+          "text": "Disfagia sangat common pada stroke (terutama brainstem stroke) dan tidak selalu obvious. Water swallow test (3-oz water test) adalah bedside screening yang practical. Jika gagal → NPO + SLP assessment + NG tube consideration."
+        }
+      ]
+    },
+    {
+      "id": "s07",
+      "title": "IV Thrombolysis — tPA Protocol",
+      "kind": "Reading",
+      "summary": "tPA 0.9 mg/kg (max 90 mg) dalam 4.5 jam dari onset. Inclusion/exclusion criteria ketat. Door-to-needle target <60 menit. Monitor ketat post-tPA untuk hemorrhagic transformation.",
+      "content": [
+        { "text": "Intravenous thrombolysis dengan tPA (alteplase) adalah standard therapy pertama untuk acute ischemic stroke yang memenuhi eligibility criteria. Mechanism: tPA convert plasminogen → plasmin yang dissolve fibrin dalam thrombus. Window: 0–3 jam (standard), 0–4.5 jam (extended dengan caveats). NNT dalam 90 menit pertama: ~5 pasien." },
+        { "text": "Inclusion criteria: age 18–80, symptom onset <3 jam (atau <4.5 jam extended), clinical diagnosis acute ischemic stroke, CT head exclude hemorrhage, blood glucose 50–400 mg/dL, SBP <185 dan DBP <110, platelet >100,000, INR <1.7, normal aPTT. Extended (4.5 jam): tambahan caveats — tidak >80 tahun, tidak DM + prior stroke combination, NIHSS tidak >25." },
+        { "text": "Dosing: 0.9 mg/kg (maximum 90 mg total). Bolus: 10% dari total dose IV selama 1 menit. Infusion: 90% sisanya IV selama 60 menit. Contoh: 70 kg → 63 mg total → 6.3 mg bolus + 56.7 mg infusion." },
+        { "text": "Post-tPA management: neuro checks tiap 15 menit × 2 jam, tiap 30 menit × 6 jam, tiap jam × 16 jam. BP monitoring ketat. Stop tPA jika: rapid neurological deterioration, new severe headache, new hypertension. Symptomatic hemorrhagic transformation: STAT CT + cryoprecipitate + FFP + stop anticoagulation." }
+      ],
+      "glossary_refs": ["tpa_alteplase", "hemorrhagic_transformation", "aspects_score"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_tPA_mechanism_01", "visual_tPA_dosing_protocol_01", "visual_ASPECTS_scoring_01"],
+      "bullets": [
+        {
+          "text": "IV tPA HARUS diberikan dalam <60 menit dari arrival (door-to-needle) untuk eligible patients.",
+          "sub": ["Door-to-CT: 25 menit", "CT interpretation + decision: 10 menit", "Drug preparation + infusion start: 25 menit", "Total: 60 menit target"],
+          "tone": "warn"
+        },
+        {
+          "text": "Kontraindikasi ABSOLUT tPA yang harus dihafal:",
+          "sub": ["Intracranial hemorrhage pada imaging", "Blood glucose <50 mg/dL (koreksi dulu, re-evaluate)", "Rapid spontaneous improvement (tidak lagi memenuhi criteria)", "Recent (<3 bulan) head trauma atau intracranial surgery"],
+          "tone": "warn"
+        },
+        {
+          "text": "Kontraindikasi RELATIF (perlu weigh benefit vs risk):",
+          "sub": ["Warfarin dengan INR 1.3–1.7: masih relative contra", "Recent (<10 hari) major surgery", "Seizure at onset (Todd's paralysis vs actual stroke?)", "Recent MI atau PE dalam 3 bulan"]
+        },
+        {
+          "text": "Extended window (3–4.5 jam) caveats: TAMBAHAN exclusions yang perlu diketahui.",
+          "sub": ["Age >80 tahun: relative contra dalam extended window", "DM + prior stroke combination: relative contra", "NIHSS >25: relative contra extended window", "Anticoagulation dengan any dose dalam 48 jam: contra"],
+          "tone": "ok"
+        },
+        {
+          "text": "Post-tPA monitoring protocol: 24 jam pertama adalah kritis untuk detect hemorrhagic transformation.",
+          "sub": ["Neuro checks: q15min × 2h, q30min × 6h, q1h × 16h", "BP monitoring: target SBP <180/105 dalam 24 jam post-tPA", "CT head di 24 jam untuk baseline dan exclude HT sebelum restart antiplatelet"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "exam_pearl",
+          "title": "Warfarin INR dan tPA: HATI-HATI",
+          "text": "INR >1.7 adalah ABSOLUTE contraindication untuk tPA. INR 1.3–1.7 masih RELATIVE contraindication. Tidak semua guidelines agree — beberapa center masih tidak memberikan tPA dengan INR >1.3 pada warfarin. Tanya senior SEBELUM memberi tPA pada pasien warfarin."
+        },
+        {
+          "tone": "clinical_pearl",
+          "title": "BP Pre-tPA: Target <185/110",
+          "text": "Jika SBP >185 atau DBP >110 saat hendak memberi tPA, berikan IV labetalol 10–20 mg atau nicardipine infusion untuk gradual reduction. Jangan beri tPA sampai BP stable <185/110. Pastikan BP check ulang 5 menit setelah obat sebelum proceed."
+        },
+        {
+          "tone": "warning",
+          "title": "Tanda Hemorrhagic Transformation Post-tPA",
+          "text": "Waspada deteriorasi neurologis mendadak dalam 24–36 jam post-tPA: NEW severe headache + worsening NIHSS + new hypertension = kemungkinan symptomatic ICH. Lakukan STAT CT head, stop tPA jika masih running, cek fibrinogen level, aktivasi transfusion protocol jika ada HT."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "tPA Dose Calculation: Praktis",
+          "text": "Dosis tPA 0.9 mg/kg, max 90 mg. Bolus 10% dalam 1 menit, sisanya 90% dalam 60 menit. Untuk pasien 60 kg: 54 mg total → 5.4 mg bolus + 48.6 mg infusion. Jangan exceed 90 mg meskipun pasien >100 kg."
+        }
+      ]
+    },
+    {
+      "id": "s08",
+      "title": "Mechanical Thrombectomy — LVO Protocol",
+      "kind": "Reading",
+      "summary": "MT adalah gold standard untuk LVO (ICA, M1, basilar). Window 0–24 jam dengan imaging selection. Target TICI 2b-3. NNT 2–3 untuk prevent poor outcome — superior dibanding tPA saja.",
+      "content": [
+        { "text": "Mechanical thrombectomy (MT) adalah gold standard untuk large vessel occlusion (LVO) — oklusi di ICA, proximal MCA (M1), basilar artery. Landmark trials (MR CLEAN, ESCAPE, SWIFT PRIME) established superiority MT versus IV tPA alone. Stent retrievers (Solitaire, Trevo) dan aspiration catheters (Penumbra) adalah devices utama." },
+        { "text": "Indication: clinical acute ischemic stroke (NIHSS >6) + LVO confirmed on imaging + time window 0–8 jam (standard) atau 0–24 jam (extended dengan imaging selection criteria: DAWN trial — clinical-core mismatch, atau DEFUSE 3 — perfusion-core mismatch, ASPECTS ≥6)." },
+        { "text": "Procedure: transfemoral access → guide catheter ke carotid/vertebral → microcatheter advance melalui thrombus → device deployed → retrieval. TICI grade: 0 (no flow) → 1 (penetration tanpa distal) → 2a (50–75%) → 2b (75–99%) → 3 (complete). Target: TICI 2b-3. Successful reperfusion achievable dalam 80–90% dengan modern devices." },
+        { "text": "Outcomes: 40–60% pasien mencapai good functional outcome (mRS 0–2) pada 3 bulan versus 25–30% dengan medical management saja. NNT 2–3. Door-to-groin puncture target <90 menit. Setiap 30 menit delay → 10% increase dalam mortality dan disability." }
+      ],
+      "glossary_refs": ["lvo", "mechanical_thrombectomy", "aspects_score"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_MT_devices_01", "visual_thrombectomy_procedure_01", "visual_TICI_score_01"],
+      "bullets": [
+        {
+          "text": "LVO (Large Vessel Occlusion) indications untuk thrombectomy yang HARUS diketahui:",
+          "sub": ["ICA occlusion: intracranial atau cervical", "M1 MCA occlusion: trunk paling proximal", "M2 MCA occlusion: selected cases dengan high NIHSS", "Basilar artery: HIGH MORTALITY tanpa thrombectomy"],
+          "tone": "ok"
+        },
+        {
+          "text": "Extended window (8–24 jam): BUTUH IMAGING SELECTION — tidak semua pasien eligible.",
+          "sub": ["DAWN criteria: clinical-core mismatch (deficits > infarct volume)", "DEFUSE 3 criteria: perfusion-core mismatch ratio >1.8", "ASPECTS ≥6 + good collaterals + mismatch → candidate extended window"],
+          "tone": "warn"
+        },
+        {
+          "text": "TICI score setelah thrombectomy: TARGET 2b-3 untuk consider procedure successful.",
+          "sub": ["TICI 0: no flow at all — procedure failed", "TICI 2b: 75–99% distal territory fills — near-complete reperfusion", "TICI 3: complete reperfusion — optimal outcome", "TICI 2a atau worse: consider additional passes atau different device"]
+        },
+        {
+          "text": "Bridging therapy (IV tPA + MT) vs direct MT: still debated, beberapa RCTs ongoing.",
+          "sub": ["Bridging: IV tPA dulu → attempt early reperfusion sebelum angio", "Direct MT: skip tPA → straight to angio room", "Current: bridging if eligible untuk tPA dan MT simultaneously"]
+        },
+        {
+          "text": "Complications MT yang harus monitored post-procedure:",
+          "sub": ["Symptomatic ICH: 3–5% — lebih tinggi dari tPA saja", "Arterial dissection atau perforation: rare <1%", "Distal embolization: small emboli ke branch arteries", "Access site complication: hematoma, pseudoaneurysm femoral"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "clinical_pearl",
+          "title": "Basilar Artery Occlusion: Maximum Aggression Warranted",
+          "text": "Basilar artery occlusion memiliki mortalitas >80% tanpa recanalization. Ini adalah neuroemergency tertinggi — mechanical thrombectomy justified bahkan dengan extended time window dan meskipun clinical presentation severe (locked-in syndrome). Jangan abandon based on severity alone."
+        },
+        {
+          "tone": "exam_pearl",
+          "title": "NIHSS Threshold untuk Thrombectomy",
+          "text": "NIHSS >6 adalah rough threshold untuk MT — curiga LVO. Score 5 atau kurang jarang benefit karena small vessel kemungkinan terlibat, bukan LVO. NIHSS >25 tidak exclude thrombectomy, tetapi prognosis lebih uncertain dan risk-benefit harus didiskusikan dengan keluarga."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "NNT Thrombectomy vs tPA",
+          "text": "NNT mechanical thrombectomy untuk prevent poor outcome: 2–3. NNT IV tPA dalam 3 jam: ~10. Ini menjelaskan mengapa thrombectomy diprioritaskan untuk LVO patients — jauh lebih efektif. Namun IV tPA tetap first-line karena tidak semua center memiliki kapabilitas thrombectomy 24/7."
+        },
+        {
+          "tone": "warning",
+          "title": "Extended Window Bukan untuk Semua",
+          "text": "Extended window (8–24 jam) TIDAK berlaku untuk semua pasien. Wajib ada imaging yang menunjukkan mismatch (salvageable penumbra). Pasien dengan large infarct (ASPECTS <6) atau tidak ada mismatch pada extended window — high risk procedural complication tanpa significant clinical benefit."
+        }
+      ]
+    },
+    {
+      "id": "s09",
+      "title": "Acute Complications & Supportive Care",
+      "kind": "Reading",
+      "summary": "Komplikasi utama: cerebral edema, hemorrhagic transformation, seizure, aspiration pneumonia. Early recognition dan targeted management kritis untuk outcome.",
+      "content": [
+        { "text": "Cerebral edema dan brain swelling adalah major complication dalam 24–72 jam setelah large infarction. Terjadi dari cytotoxic edema (failed Na-K pump) dan vasogenic edema (BBB breakdown). Management: head-of-bed elevation 30°, normothermia, osmotic therapy (mannitol atau hypertonic saline), sedation jika diintubasi. Malignant MCA infarction → decompressive craniectomy dalam 48 jam." },
+        { "text": "Hemorrhagic transformation (HT) terjadi 15–45% stroke (symptomatic HT <1% post-tPA). Management: STAT CT head, stop anticoagulation/antiplatelet, transfuse cryoprecipitate jika fibrinogen rendah, FFP jika coagulopathic, neurosurgery consultation jika massive ICH dengan midline shift." },
+        { "text": "Seizure terjadi 5–10% dari stroke patients. Management: protect airway, IV benzodiazepine (lorazepam 4 mg atau midazolam 10 mg), load phenytoin atau levetiracetam jika recurrent. Prophylactic antiepileptic tanpa seizure TIDAK direkomendasikan untuk semua stroke." },
+        { "text": "Aspiration pneumonia: dysphagia prevalence 15–55% dalam acute stroke. Prevention: NPO sampai swallow cleared, diet modification, NG feeding jika unable to swallow. DVT prophylaxis: early mobilization + sequential compression devices. Target glucose 140–180 mg/dL, aggressive fever control (target <37.5°C)." }
+      ],
+      "glossary_refs": ["hemorrhagic_transformation", "decompressive_craniectomy"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_cerebral_edema_mechanism_01", "visual_decompressive_craniectomy_01"],
+      "bullets": [
+        {
+          "text": "Penyebab deteriorasi neurologi POST-stroke: INGAT mnemonic HESPS.",
+          "sub": ["H = Hemorrhagic transformation", "E = Edema cerebral (expansion)", "S = Seizure (Todd's paralysis)", "P = Pneumonia aspiration (infection)", "S = Stroke extension (continued thromboembolism)"],
+          "tone": "warn"
+        },
+        {
+          "text": "Malignant MCA infarction: early decompressive craniectomy (<48 jam) dapat save life.",
+          "sub": ["Indikasi: large MCA territory + progressing herniation signs", "Age <60 tahun: benefit lebih jelas", "Informed consent critical: survival dengan significant disability"],
+          "tone": "warn"
+        },
+        {
+          "text": "Seizure management post-stroke: benzodiazepine FIRST, then load dengan ASM.",
+          "sub": ["Lorazepam 4 mg IV atau Midazolam 10 mg IM/IN: first-line", "Levetiracetam 1000 mg IV: preferred second-line (minimal drug interactions)", "Phenytoin: alternative tetapi drug interactions lebih banyak", "Prophylactic ASM tanpa seizure: TIDAK direkomendasikan routine"]
+        },
+        {
+          "text": "Hyperglycemia post-stroke: target moderat 140–180 mg/dL — aggressive correction TIDAK proven beneficial.",
+          "sub": ["Hyperglycemia >200 mg/dL: associated dengan larger infarct volume dan worse outcome", "Intensive insulin therapy (target euglycemia): TIDAK proven beneficial, risk hypoglycemia", "Monitor q4–6 hours, correct dengan short-acting insulin sliding scale"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "clinical_pearl",
+          "title": "Rapid Deterioration Post-Stroke: Systematic Approach",
+          "text": "Algoritma untuk rapid neurological deterioration post-stroke: (1) STAT CT head → exclude hemorrhage or herniation, (2) Check glucose → exclude hypoglycemia, (3) Check BP → extreme hypertension atau hypotension?, (4) EEG → subtle seizure activity?, (5) CXR + cultures → infection/aspiration?. Jangan assume satu causa tanpa systematic evaluation."
+        },
+        {
+          "tone": "warning",
+          "title": "Osmotic Therapy: Mannitol vs Hypertonic Saline",
+          "text": "Mannitol 0.5–1 g/kg IV PRN untuk acute ICP elevasi. Hypertonic saline (3% atau 23.4%) lebih sustained effect dan preferred dalam refractory ICP. KEDUANYA kontraindikasi jika BP sangat rendah. Tujuan: tidak menyelamatkan infarct — hanya bridge ke decompressive intervention."
+        },
+        {
+          "tone": "exam_pearl",
+          "title": "Decompressive Craniectomy: Timing dan Patient Selection",
+          "text": "DESTINY II trial: decompressive craniectomy dalam 48 jam untuk malignant MCA infarction menurunkan mortalitas dari 71% ke 43%, tetapi banyak survivors dengan severe disability (mRS 4–5). Pasien dan keluarga harus diinformed: prosedur ini menyelamatkan hidup, bukan necessarily menyelamatkan fungsi."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "Fever adalah Target Terapi, Bukan Hanya Monitoring",
+          "text": "Setiap 1°C increase di atas 37°C dalam first 24 jam stroke associated dengan NIHSS worsening dan larger final infarct volume. Paracetamol scheduled (bukan PRN) dan cooling blanket jika T >38°C. SELALU cari sumber infeksi: cultures blood dan urine, CXR untuk mendeteksi aspiration."
+        }
+      ]
+    },
+    {
+      "id": "s10",
+      "title": "Prognosis, Recovery & Secondary Prevention",
+      "kind": "Reading",
+      "summary": "Prognosis ditentukan NIHSS, infarct volume, age, dan reperfusion status. Rehabilitasi mulai dalam 24 jam. Secondary prevention: antiplatelet/anticoagulation + statin + BP control + lifestyle.",
+      "content": [
+        { "text": "Outcome predictors: NIHSS score pada admission (terkuat), age (tiap dekade tambah ~30% risk poor outcome), infarct volume, location (posterior worse), pre-stroke functional status, reperfusion status. Early clinical improvement (50% NIHSS improvement dalam 24 jam) associated dengan better outcome." },
+        { "text": "Recovery phases: acute (0–3 bulan) — maximum spontaneous recovery, brain plasticity tinggi; sub-acute (3–6 bulan) — continued recovery slower; chronic (>6 bulan) — plateau. Rehabilitasi multidisipliner (neurolog, physiatrist, PT, OT, SLP) mulai dalam 24 jam saat neurologis stabil." },
+        { "text": "Secondary prevention: antiplatelet (aspirin 81–325 mg) untuk non-cardioembolic stroke. Dual antiplatelet (aspirin + clopidogrel) dalam 21 hari untuk minor stroke atau TIA. Anticoagulation untuk AF (DOAC atau warfarin INR 2–3) — superior untuk preventing recurrent cardioembolic stroke. Statins high-intensity (atorvastatin 80 mg) untuk all stroke patients." },
+        { "text": "BP target post-stroke: <140/90 (lebih rendah dari pre-stroke untuk reduce recurrence). Preferred: ACE inhibitors atau ARBs. Smoking cessation adalah single most impactful lifestyle intervention — reduce recurrence 30–40%. PFO closure untuk cryptogenic stroke dalam selected young patients." }
+      ],
+      "glossary_refs": ["nihss", "secondary_prevention", "cardioembolic_stroke"],
+      "quiz_refs": [],
+      "visual_refs": ["visual_stroke_recovery_timeline_01", "visual_secondary_prevention_algorithm_01"],
+      "bullets": [
+        {
+          "text": "Secondary prevention berdasarkan stroke etiology: PALING PENTING untuk ujian.",
+          "sub": ["Atherothrombotic large vessel: antiplatelet (aspirin atau clopidogrel)", "Cardioembolic (AF, cardiomyopathy): anticoagulation (DOAC preferred)", "Small vessel lacunar: antihypertensive aggressive, antiplatelet", "Cryptogenic: antiplatelet; workup untuk PFO, thrombophilia, AF monitoring"],
+          "tone": "ok"
+        },
+        {
+          "text": "Statin high-intensity untuk SEMUA stroke pasien regardless of baseline cholesterol.",
+          "sub": ["Atorvastatin 80 mg atau rosuvastatin 20–40 mg: first-line", "LDL target: <70 mg/dL (very high risk = stroke)", "Statin juga memiliki anti-inflammatory dan pleiotropic effects pada vasculature"]
+        },
+        {
+          "text": "DOAC vs Warfarin untuk AF-related stroke: DOAC preferred kecuali ada kontraindikasi.",
+          "sub": ["Apixaban, dabigatran, rivaroxaban, edoxaban: semua effective", "DOAC: lebih convenient (no INR monitoring), less ICH risk", "Warfarin: untuk mechanical heart valve atau berat badan extreme", "Timing start: 24–48 jam untuk minor-moderate stroke, 1–2 minggu untuk large stroke"],
+          "tone": "ok"
+        },
+        {
+          "text": "Monitoring post-stroke: schedule follow-up untuk assess recovery dan optimize secondary prevention.",
+          "sub": ["4–6 minggu: assess medication tolerance, BP control, LDL", "3 bulan: functional outcome assessment (mRS), rehabilitation progress", "6–12 bulan: compliance secondary prevention, recurrence screen", "Annual: risk factor monitoring, medication review"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "clinical_pearl",
+          "title": "Timing Anticoagulation Post-Stroke untuk AF",
+          "text": "Timing start anticoagulation post-AF stroke masih controversial. General rule: minor stroke (NIHSS 0–5) → start 24–48 jam. Moderate stroke (NIHSS 6–15) → start 5–7 hari. Large stroke atau ICH transformation → wait 2 minggu. '1-3-6-12' rule: TIA 1 hari, minor 3 hari, moderate 6 hari, major 12 hari."
+        },
+        {
+          "tone": "exam_pearl",
+          "title": "Dual Antiplatelet Therapy (DAPT) Post-TIA/Minor Stroke",
+          "text": "POINT trial dan CHANCE trial: aspirin + clopidogrel dalam 24 jam dan dilanjutkan 21 hari untuk high-risk TIA atau minor stroke (NIHSS ≤3, ABCD2 ≥4) REDUCES stroke risk dibanding aspirin alone. Setelah 21 hari: switch ke clopidogrel monotherapy atau aspirin alone (DAPT long-term increases bleeding risk)."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "Cryptogenic Stroke = Extensive Workup Needed",
+          "text": "Cryptogenic stroke (tidak ada etiology yang teridentifikasi setelah standard workup) = indication untuk extended cardiac monitoring (prolonged ambulatory ECG 30 hari untuk detect paroxysmal AF), hypercoagulable workup, genetic thrombophilia screening, dan echocardiography untuk PFO. Tidak semua cryptogenic is 'embolic stroke of undetermined source' (ESUS)."
+        },
+        {
+          "tone": "warning",
+          "title": "Smoking Cessation: Intervensi Paling Impactful",
+          "text": "Smoking adalah salah satu risk factor stroke yang paling modifiable. Cessation menurunkan stroke recurrence risk 30–40% dalam 5 tahun. Gunakan semua tools: nicotine replacement therapy (patch, gum), varenicline (Chantix), bupropion, behavioral counseling. Setiap konsultasi post-stroke HARUS include smoking cessation counseling."
+        }
+      ]
+    },
+    {
+      "id": "s11",
+      "title": "Case Studies & Exam Correlations",
+      "kind": "Reading",
+      "summary": "5 representative clinical scenarios dengan full management reasoning. 8 exam-style MCQ questions dengan detailed solutions. Common exam traps dan pearl patterns.",
+      "content": [
+        { "text": "Case 1: 65-year-old male, sudden left-sided weakness + speech slurring, 1.5 jam dari onset, BP 168/95, NIHSS 14, CT normal, CTA: right M1 MCA occlusion. Diagnosis: acute ischemic stroke dengan LVO. Management: IV tPA (eligible: <3 jam, no contra, BP <185/110 after labetalol) + activate thrombectomy team. Decision: bridging strategy — tPA first + angiography for MT." },
+        { "text": "Case 2: 72-year-old female, found unresponsive, last known well 18 jam sebelumnya, NIHSS 9, CT normal, CTA: basilar artery occlusion. Dilemma: >4.5 jam → IV tPA contraindicated. Tetapi basilar occlusion = high mortality tanpa treatment. CT perfusion shows mismatch → mechanical thrombectomy dalam extended window justified (high mortality risk dari basilar occlusion justifies aggressive intervention)." },
+        { "text": "Case 3: 58-year-old female, sudden right hemiparesis, NIHSS 12, within tPA window. IV tPA given. 3 jam post-tPA: NIHSS turun dari 12 ke 1 (near-complete recovery). MRI-DWI 24 jam: NO infarction. Retrospective diagnosis: hemiplegic migraine (stroke mimic). Learning: rapid complete recovery post-tPA suggests mimic. DWI-MRI gold standard untuk confirm/exclude true infarction." },
+        { "text": "Case 4: 45-year-old male, cryptogenic stroke discharged dengan aspirin + statin. Follow-up 1 bulan: Echo menunjukkan EF 35% (dilated cardiomyopathy — previously undiagnosed). Management change: stop antiplatelet, start anticoagulation (DOAC) untuk AF-equivalent embolic risk dari cardiomyopathy. Secondary prevention harus evolve with new diagnostic findings." }
+      ],
+      "glossary_refs": ["tpa_alteplase", "mechanical_thrombectomy", "nihss"],
+      "quiz_refs": ["q_tPA_indication", "q_thrombectomy_window", "q_NIHSS_interpretation", "q_stroke_mimic"],
+      "visual_refs": ["visual_case_study_1_MRI_01", "visual_case_study_2_angiogram_01"],
+      "bullets": [
+        {
+          "text": "Exam MCQ pattern 1: Stroke + AF = Anticoagulation (bukan antiplatelet) untuk secondary prevention.",
+          "sub": ["DOAC (apixaban, rivaroxaban, dabigatran, edoxaban) preferred over warfarin", "Start anticoagulation setelah 24–48 jam untuk minor stroke, 1–2 minggu untuk major stroke", "INR target untuk warfarin AF: 2.0–3.0"],
+          "tone": "ok"
+        },
+        {
+          "text": "Exam MCQ pattern 2: NIHSS >6 + CT normal → SUSPECT LVO → ORDER CTA.",
+          "sub": ["CT normal tidak exclude LVO — CTA diperlukan", "NIHSS >11 strongly suggests LVO", "Mechanical thrombectomy eligible jika LVO confirmed"]
+        },
+        {
+          "text": "Exam MCQ pattern 3: Window 4.5–24 jam + symptom + suspected LVO → CT PERFUSION for mismatch.",
+          "sub": ["Extended window thrombectomy: BUTUH imaging evidence of mismatch", "DAWN: clinical-core mismatch (NIHSS ≥10 + infarct <31 mL age <80, atau NIHSS ≥20 + infarct <51 mL age >80)", "DEFUSE 3: perfusion-core mismatch ratio ≥1.8"]
+        },
+        {
+          "text": "Common exam TRAPS yang harus dihindari:",
+          "sub": ["Trap 1: 'CT normal = no stroke' → WRONG, CT sensitivity rendah early", "Trap 2: 'Minor stroke = no benefit tPA' → WRONG, tPA still beneficial NIHSS 3–10", "Trap 3: 'Basilar occlusion late = no thrombectomy' → WRONG, high mortality justifies aggressive intervention", "Trap 4: 'Post-TIA only aspirin needed' → WRONG, DAPT × 21 hari reduced early recurrence"]
+        }
+      ],
+      "callouts": [
+        {
+          "tone": "exam_pearl",
+          "title": "Top 5 Exam Topics Stroke yang Selalu Keluar",
+          "text": "1) tPA eligibility dan timing windows. 2) Mechanical thrombectomy indication (LVO + NIHSS threshold). 3) Stroke mimic differentiation (hypoglycemia, migraine, seizure). 4) Secondary prevention: antiplatelet vs anticoagulation by etiology. 5) Complication management: hemorrhagic transformation recognition dan management."
+        },
+        {
+          "tone": "clinical_pearl",
+          "title": "Clinical Reasoning Framework untuk Stroke MCQ",
+          "text": "Ketika mengerjakan stroke MCQ: (1) Identify onset timing, (2) Check NIHSS severity, (3) Look for LVO clues (high NIHSS, CT normal), (4) Check eligibility criteria, (5) Match etiology to secondary prevention. Gunakan algoritma sistematis, bukan intuisi."
+        },
+        {
+          "tone": "teaching_point",
+          "title": "Case-Based Learning untuk Stroke",
+          "text": "Setiap case stroke nyata mengandung multiple learning points: patofisiologi, diagnosis, terapi akut, dan pencegahan sekunder. Gunakan setiap encounter sebagai kesempatan untuk practice clinical reasoning — 'Apa diagnosis? Apa terapi? Mengapa? Apa komplikasi yang harus dipantau?'"
+        }
+      ]
+    }
+  ]
+}
