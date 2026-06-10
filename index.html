@@ -4327,6 +4327,41 @@
     .cx-md-compact blockquote {
       padding: 0.75em 0.9em 0.75em 0.95em;
     }
+
+    /* Monochrome specific styles for visibility */
+    .cortex-library-root[data-theme-id="monochrome"] .cortex-chat-bubble {
+      color: #111111 !important;
+    }
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user strong,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user b {
+      color: #000000 !important;
+    }
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user em,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user i {
+      color: #222222 !important;
+    }
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user code {
+      background: rgba(0, 0, 0, 0.08) !important;
+      color: #111111 !important;
+      border-color: rgba(0, 0, 0, 0.15) !important;
+    }
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user .cx-md-inline-code {
+      background: rgba(0, 0, 0, 0.08) !important;
+      color: #111111 !important;
+    }
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user a {
+      color: #111111 !important;
+      text-decoration-color: rgba(0, 0, 0, 0.45) !important;
+    }
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user .cx-md-table thead th {
+      background: linear-gradient(180deg, rgba(160, 160, 160, 0.22), rgba(80, 80, 80, 0.18)) !important;
+      color: #111111 !important;
+    }
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user .cx-md-table th,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md-user .cx-md-table td {
+      border-bottom-color: rgba(0, 0, 0, 0.15) !important;
+      color: #222222 !important;
+    }
   </style>
 
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
@@ -14996,7 +15031,7 @@
                         }),
                         React.createElement('div', { style: { display: 'flex', gap: 6, justifyContent: 'flex-end' } },
                           React.createElement('button', { onClick: () => setEditState(null), style: { padding: '6px 12px', borderRadius: 9, border: `1px solid rgba(255,255,255,0.2)`, background: 'transparent', color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: 700, cursor: 'pointer' } }, 'Batal'),
-                          React.createElement('button', { onClick: () => submitEdit(i, editState.text), style: { padding: '6px 14px', borderRadius: 9, border: 'none', background: DL.accent, color: '#fff', fontSize: 10, fontWeight: 800, cursor: 'pointer' } }, 'Kirim ↵'),
+                          React.createElement('button', { onClick: () => submitEdit(i, editState.text), style: { padding: '6px 14px', borderRadius: 9, border: 'none', background: DL.accent, color: DL.isMonochrome ? '#111111' : '#fff', fontSize: 10, fontWeight: 800, cursor: 'pointer' } }, 'Kirim ↵'),
                         ),
                       )
                       : React.createElement(MarkdownText, { text: msg.text, isUser: isUser, compact: compactLayout }),
@@ -15166,7 +15201,7 @@
                   onClick: runChat, disabled: !!composerBusy,
                   style: {
                     height: 28, padding: '0 14px', borderRadius: 8, border: 'none', flexShrink: 0,
-                    background: composerBusy ? 'rgba(255,255,255,0.07)' : ('linear-gradient(135deg,' + activeChatModel.color + ',' + DL.accent + ')'),
+                    background: composerBusy ? 'rgba(255,255,255,0.07)' : ('linear-gradient(135deg,' + activeChatModel.color + ',' + (DL.isMonochrome ? 'rgba(0,0,0,0.15)' : DL.accent) + ')'),
                     color: composerBusy ? DL.mute : '#fff', fontSize: 12, fontWeight: 700,
                     cursor: composerBusy ? 'not-allowed' : 'pointer',
                     transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 5,
@@ -15405,7 +15440,7 @@
                   className: 'cortex-motion-press',
                   style: {
                     flex: '0 0 auto', padding: '12px 24px', borderRadius: 14, border: 'none',
-                    background: imageBusy ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg,${activeImageModel.color},${DL.accent})`,
+                    background: imageBusy ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg,${activeImageModel.color},${DL.isMonochrome ? 'rgba(0,0,0,0.15)' : DL.accent})`,
                     color: imageBusy ? DL.mute : '#fff', fontSize: 13, fontWeight: 800,
                     cursor: (imageBusy || (!imagePrompt.trim() && !visualReference)) ? 'not-allowed' : 'pointer',
                     transition: 'all 0.3s ease',
@@ -15608,7 +15643,7 @@
                   style: {
                     padding: '12px 22px', borderRadius: 14, border: 'none',
                     background: ttsBusy ? 'rgba(255,255,255,0.06)' : ttsProvider === 'openai' ? `linear-gradient(135deg,#22c55e,#16a34a)` : `linear-gradient(135deg,${DL.teal},${DL.accent})`,
-                    color: ttsBusy ? DL.mute : '#fff', fontSize: 13, fontWeight: 800,
+                    color: ttsBusy ? DL.mute : (DL.isMonochrome && ttsProvider !== 'openai' ? '#111111' : '#fff'), fontSize: 13, fontWeight: 800,
                     cursor: (ttsBusy || !ttsText.trim()) ? 'not-allowed' : 'pointer',
                     transition: 'all 0.3s ease',
                     boxShadow: ttsBusy ? 'none' : ttsProvider === 'openai' ? '0 8px 22px #22c55e44' : `0 8px 22px ${DL.teal}44`,
