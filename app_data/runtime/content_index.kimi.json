@@ -1,9 +1,36 @@
 {
-  "generatedAt": "2026-06-07",
+  "generatedAt": "2026-06-10",
   "lectureDomains": [
     {
+      "id": "neuro_emergency",
+      "title": "Neurologi Klinis — Stroke & Neuroemergency",
+      "summary": "Modul klinis neurologi: stroke iskemik akut, manajemen trombektomi, tata laksana darurat neurologis.",
+      "moduleCount": 1,
+      "modules": [
+        {
+          "id": "mod_neuro_stroke_001",
+          "title": "Acute Ischemic Stroke: Pathophysiology, Diagnosis & Management",
+          "sourceFile": "app_data/domains/materi/modules/mod_neuro_stroke_001/module.json",
+          "sourceDocument": "app_data/domains/materi/modules/mod_neuro_stroke_001/content.md",
+          "topicTags": [
+            "Stroke",
+            "Neuroemergency",
+            "Thrombolysis",
+            "Thrombectomy"
+          ],
+          "status": "active",
+          "domainId": "neuro_emergency",
+          "order": 1,
+          "batchId": "batch_1",
+          "estimatedTimeMinutes": 210,
+          "sectionCount": 11,
+          "wordCount": 8500
+        }
+      ]
+    },
+    {
       "id": "6e",
-      "title": "Neurology / Batch 1 6E.",
+      "title": "Demo / Template Domain",
       "summary": "Sample domain for CORTEX-SHELL template.",
       "moduleCount": 1,
       "modules": [
@@ -23,7 +50,7 @@
       ]
     }
   ],
-  "lectureModuleCount": 1,
+  "lectureModuleCount": 2,
   "examSets": [
     {
       "id": "set_asli_01",

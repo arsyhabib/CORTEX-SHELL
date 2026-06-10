@@ -1,0 +1,29 @@
+{
+  "exam_set_id": "exam_asli_NNN",
+  "domain_id": "exam_asli",
+  "order": 0,
+  "title": "Ujian Blok Title Here",
+  "subtitle": "Session/Date Info",
+  "description": "Description of this exam set",
+  "version": "1.0.0",
+  "status": "published",
+  "metadata": {
+    "exam_date": "2025-05-15",
+    "duration_minutes": 120,
+    "total_questions": 0,
+    "passing_score": 70,
+    "language": "id",
+    "source": "Universitas XYZ",
+    "created_date": "2026-06-09",
+    "last_updated": "2026-06-09"
+  },
+  "statistics": {
+    "difficulty_distribution": {
+      "High-Yield": 0,
+      "Kunci": 0,
+      "Clinical Reasoning": 0
+    },
+    "topic_coverage": {}
+  },
+  "question_file": "questions.json"
+}

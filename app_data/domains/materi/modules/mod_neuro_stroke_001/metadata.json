@@ -1,0 +1,118 @@
+{
+  "module_id": "mod_neuro_stroke_001",
+  "title": "Acute Ischemic Stroke: Pathophysiology, Diagnosis & Management",
+  "subtitle": "From clinical presentation to acute intervention",
+  "domain": "neuro_emergency",
+  "batch_id": "batch_1",
+  "source_file": "Neuro_Emergency_2025_Batch1",
+  "source_author": "Dr. Neurology Curriculum",
+  "year": 2025,
+  "order": 1,
+  "status": "finalized",
+  "learning_goals": [
+    "Menjelaskan patofisiologi ischemic cascade dan timing window terapi yang berbeda-beda",
+    "Menganalisis presentasi klinis stroke iskemik dan mengidentifikasi deficit neurologi menggunakan NIHSS",
+    "Membedakan stroke iskemik dari hemorrhagic stroke dan stroke mimics menggunakan imaging",
+    "Menerapkan algoritma acute management termasuk thrombolysis (tPA) dan mechanical thrombectomy dalam konteks klinis",
+    "Mengevaluasi prognosis dan komplikasi akut stroke iskemik serta perencanaan secondary prevention"
+  ],
+  "sections": [
+    {
+      "section_id": "s01",
+      "title": "Epidemiology & Global Burden",
+      "order": 1,
+      "estimated_time_minutes": 15
+    },
+    {
+      "section_id": "s02",
+      "title": "Pathophysiology of Acute Ischemic Stroke",
+      "order": 2,
+      "estimated_time_minutes": 20
+    },
+    {
+      "section_id": "s03",
+      "title": "Clinical Presentation & Neurological Examination",
+      "order": 3,
+      "estimated_time_minutes": 20
+    },
+    {
+      "section_id": "s04",
+      "title": "Differential Diagnosis & Stroke Mimics",
+      "order": 4,
+      "estimated_time_minutes": 15
+    },
+    {
+      "section_id": "s05",
+      "title": "Neuroimaging & Diagnostic Modalities",
+      "order": 5,
+      "estimated_time_minutes": 25
+    },
+    {
+      "section_id": "s06",
+      "title": "Acute Management: First Hours & Triage",
+      "order": 6,
+      "estimated_time_minutes": 20
+    },
+    {
+      "section_id": "s07",
+      "title": "IV Thrombolysis with tPA (Alteplase)",
+      "order": 7,
+      "estimated_time_minutes": 25
+    },
+    {
+      "section_id": "s08",
+      "title": "Mechanical Thrombectomy for Large Vessel Occlusion",
+      "order": 8,
+      "estimated_time_minutes": 25
+    },
+    {
+      "section_id": "s09",
+      "title": "Supportive Care & Management of Acute Complications",
+      "order": 9,
+      "estimated_time_minutes": 20
+    },
+    {
+      "section_id": "s10",
+      "title": "Prognosis, Recovery & Secondary Prevention",
+      "order": 10,
+      "estimated_time_minutes": 20
+    },
+    {
+      "section_id": "s11",
+      "title": "Case Studies & Exam Correlations",
+      "order": 11,
+      "estimated_time_minutes": 30
+    }
+  ],
+  "estimated_total_time_minutes": 215,
+  "word_count_total": 8500,
+  "glossary_terms": 15,
+  "clinical_references": 3,
+  "visual_assets_required": 22,
+  "target_audience": [
+    "medical_students_y3_y4",
+    "internal_medicine_residents",
+    "neurology_residents",
+    "board_exam_candidates"
+  ],
+  "difficulty_level": "intermediate_to_advanced",
+  "topics": [
+    "stroke_ischemic",
+    "neurology_emergency",
+    "acute_management",
+    "neuroimaging",
+    "thrombolysis",
+    "thrombectomy",
+    "secondary_prevention"
+  ],
+  "created_at": "2025-02-09T00:00:00Z",
+  "updated_at": "2025-02-09T00:00:00Z",
+  "version": "1.0",
+  "confidence_level": "tinggi",
+  "quality_assessment": {
+    "content_completeness": "95%",
+    "evidence_based": true,
+    "clinically_relevant": true,
+    "suitable_for_boards": true
+  }
+}

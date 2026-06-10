@@ -1,0 +1,45 @@
+{
+  "domain_id": "bank_soal_ai",
+  "domain_type": "practice_generated",
+  "display_name": "Bank Soal AI",
+  "display_name_en": "AI Question Bank",
+  "description": "Soal latihan yang di-generate oleh AI berdasarkan materi dan ujian asli",
+  "icon": "🤖",
+  "color_theme": "purple",
+  "color_hex": "#a855f7",
+  "version": "2.0.0",
+  "created_date": "2026-06-09",
+  "last_updated": "2026-06-09",
+  "metadata": {
+    "source": "ai_generated",
+    "generation_model": "cortex_ai_engine",
+    "source_domains": ["materi", "exam_asli"],
+    "total_sets": 0,
+    "total_questions": 0,
+    "language": "id",
+    "difficulty_range": ["beginner", "intermediate", "advanced"]
+  },
+  "question_set_config": {
+    "naming_convention": "aibank_NNN",
+    "auto_increment": true,
+    "starting_number": 1,
+    "zero_padded": true,
+    "padding_digits": 3,
+    "default_questions_per_set": 60,
+    "default_time_per_question_minutes": 1
+  },
+  "generation_config": {
+    "enabled": true,
+    "auto_regenerate_on_materi_update": false,
+    "required_source_modules": 1,
+    "variation_count": 3
+  },
+  "features": {
+    "supports_difficulty_level": true,
+    "supports_ai_hints": true,
+    "supports_topic_clustering": true,
+    "supports_adaptive_generation": true,
+    "supports_performance_tracking": true,
+    "can_regenerate": true
+  }
+}

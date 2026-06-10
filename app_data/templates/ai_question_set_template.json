@@ -1,0 +1,43 @@
+{
+  "question_set_id": "aibank_NNN",
+  "domain_id": "bank_soal_ai",
+  "order": 0,
+  "title": "AI Generated Questions - Topic Title",
+  "subtitle": "Difficulty: Intermediate",
+  "description": "60 soal yang di-generate AI berdasarkan modul pembelajaran",
+  "version": "1.0.0",
+  "status": "published",
+  "metadata": {
+    "generated_date": "2026-06-09",
+    "generation_model": "cortex_ai_v1",
+    "source_module": "module_NNN",
+    "source_exam_set": "exam_asli_NNN",
+    "difficulty": "intermediate",
+    "total_questions": 60,
+    "time_per_question_minutes": 1,
+    "language": "id",
+    "created_date": "2026-06-09",
+    "last_updated": "2026-06-09"
+  },
+  "generation_params": {
+    "source_materials": {
+      "modules": ["module_NNN"],
+      "exam_reference": "exam_asli_NNN"
+    },
+    "question_types": ["multiple_choice"],
+    "topic_distribution": {},
+    "difficulty_distribution": {
+      "beginner": 20,
+      "intermediate": 40,
+      "advanced": 0
+    },
+    "variation_seed": 12345,
+    "regeneration_available": true
+  },
+  "statistics": {
+    "average_difficulty": 2.0,
+    "average_option_clarity": 4.5,
+    "ai_validation_score": 0.92
+  },
+  "question_file": "questions.json"
+}

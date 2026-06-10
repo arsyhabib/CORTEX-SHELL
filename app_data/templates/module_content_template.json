@@ -1,0 +1,57 @@
+{
+  "module_id": "module_NNN",
+  "expanded_sections": [
+    {
+      "section_id": "s01",
+      "order": 1,
+      "heading": "Section Heading",
+      "subheading": "Optional subheading",
+      "content_blocks": [
+        {
+          "type": "paragraph",
+          "text": "Paragraph text content here..."
+        },
+        {
+          "type": "list",
+          "subtype": "unordered",
+          "items": [
+            "Item 1",
+            "Item 2",
+            {
+              "text": "Item 3",
+              "subitems": [
+                "Sub 1",
+                "Sub 2"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "image_ref",
+          "asset_id": "img_001.png",
+          "caption": "Optional image caption",
+          "width_percent": 100,
+          "alignment": "center"
+        },
+        {
+          "type": "callout",
+          "tone": "info",
+          "title": "Important Note",
+          "content": "Callout text content"
+        }
+      ]
+    }
+  ],
+  "key_points": [
+    "Key point 1",
+    "Key point 2",
+    "Key point 3"
+  ],
+  "glossary_refs": [
+    {
+      "term": "Medical Term",
+      "meaning": "Definition of the medical term",
+      "usage_context": "Context where this term is used in this module"
+    }
+  ]
+}

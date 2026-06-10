@@ -1,0 +1,147 @@
+{
+  "_comment": "App identity configuration. Customizable without code changes. Generated from questionnaire.",
+  "_version": "1.0",
+  "_generated_at": "2026-06-10",
+
+  "app": {
+    "id": "cortex",
+    "name": "CORTEX",
+    "tagline": "Belajar Klinis. Lebih Dalam.",
+    "subtitle": "Medical Education Platform",
+    "brand_note": "Powered by CORTEX-SHELL",
+    "version": "1.0.0",
+    "loading_text": "Entering studio",
+    "welcome_badge_1": "Aurora",
+    "welcome_badge_2": "Starfield",
+    "welcome_badge_3": "Glass"
+  },
+
+  "institution": {
+    "name": "Universitas Anda",
+    "faculty": "Fakultas Kedokteran",
+    "department": "",
+    "city": "Jakarta",
+    "country": "Indonesia",
+    "year_founded": "2026",
+    "logo_description": "Lambang universitas lingkaran dengan tulisan nama institusi"
+  },
+
+  "branding": {
+    "primary_color": "#7c3aed",
+    "primary_color_light": "#a855f7",
+    "secondary_color": "#10b981",
+    "accent_color": "#38bdf8",
+    "danger_color": "#ef4444",
+    "warning_color": "#f59e0b",
+    "theme_default": "dark",
+    "icon_style": "rounded",
+    "font_display": "system-ui",
+    "logo_prompt": "Abstract neural network brain logo with purple and teal gradient, clean minimal medical tech style, white background, vector style"
+  },
+
+  "welcome": {
+    "headline": "CORTEX",
+    "subtitle_badge": "Immersive launch",
+    "tagline": "Ruang awal yang disiapkan untuk visual, chat, audio, dan studi interaktif.",
+    "cta_label": "Mulai",
+    "loading_text": "Entering studio",
+    "auto_advance_ms": 3200,
+    "show_feature_badges": true,
+    "feature_badges": ["Aurora", "Starfield", "Glass"]
+  },
+
+  "navigation": {
+    "label_home": "Beranda",
+    "label_materi": "Materi",
+    "label_soal": "Soal Ujian",
+    "label_bank_soal": "Bank Soal AI",
+    "label_glosarium": "Glosarium",
+    "label_ringkasan": "Ringkasan",
+    "label_visual": "Visual",
+    "label_flashcard": "Flashcard",
+    "label_progress": "Progres",
+    "label_search": "Cari",
+    "label_settings": "Pengaturan"
+  },
+
+  "content_domains": [
+    {
+      "id": "neuro_emergency",
+      "display_name": "Neurologi Klinis",
+      "icon": "🧠",
+      "description": "Stroke, Neuroemergency, Manajemen Neurologis",
+      "color": "#7c3aed",
+      "active": true
+    },
+    {
+      "id": "cardio",
+      "display_name": "Kardiologi",
+      "icon": "🫀",
+      "description": "Penyakit Jantung, EKG, Gagal Jantung",
+      "color": "#ef4444",
+      "active": false
+    },
+    {
+      "id": "pharmaco",
+      "display_name": "Farmakologi",
+      "icon": "💊",
+      "description": "Mekanisme Obat, Farmakokinetik, Terapi",
+      "color": "#10b981",
+      "active": false
+    },
+    {
+      "id": "anatomy",
+      "display_name": "Anatomi",
+      "icon": "🧬",
+      "description": "Anatomi Sistemik, Neuroanatomi, Radioanatomi",
+      "color": "#38bdf8",
+      "active": false
+    }
+  ],
+
+  "target_audience": {
+    "level": "S1 Kedokteran / Profesi Dokter",
+    "year_of_study": "Tahun 3–6",
+    "primary_language": "id",
+    "secondary_language": "en",
+    "bilingual_enabled": true,
+    "specialty_focus": "Umum (semua blok)"
+  },
+
+  "about": {
+    "text": "CORTEX adalah platform edukasi medis berbasis mobile-web yang dirancang untuk mendukung mahasiswa kedokteran dan dokter muda dalam belajar klinis secara mendalam, interaktif, dan sistematis.",
+    "developer_credit": "Dikembangkan dengan CORTEX-SHELL Framework",
+    "version_label": "Versi 1.0",
+    "contact_email": "",
+    "website_url": "",
+    "social_links": []
+  },
+
+  "help": {
+    "intro_text": "Gunakan navigasi bawah untuk berpindah antar modul. Ketuk kartu untuk membaca konten, geser untuk navigasi cepat.",
+    "faq": [
+      { "q": "Bagaimana cara memulai belajar?", "a": "Pilih domain dari beranda, lalu pilih modul yang tersedia." },
+      { "q": "Bagaimana cara mengerjakan soal?", "a": "Masuk ke menu Soal Ujian, pilih set soal, lalu kerjakan soal satu per satu." },
+      { "q": "Apakah ada mode offline?", "a": "Konten yang sudah dibuka tersedia secara lokal di perangkat Anda." }
+    ],
+    "support_contact": "",
+    "data_handling": "Semua data tersimpan lokal di perangkat Anda. Tidak ada data yang dikirim ke server."
+  },
+
+  "privacy": {
+    "text": "CORTEX tidak mengumpulkan, menyimpan, atau mentransmisikan data pribadi pengguna ke server manapun. Semua progres belajar, preferensi, dan riwayat tersimpan sepenuhnya di perangkat lokal pengguna menggunakan localStorage. Tidak ada akun, tidak ada login, tidak ada tracking.",
+    "data_collected": false,
+    "analytics_enabled": false,
+    "local_storage_only": true
+  },
+
+  "settings": {
+    "theme_options": ["dark", "light", "system"],
+    "default_theme": "dark",
+    "exam_timer_enabled": false,
+    "exam_timer_minutes": 60,
+    "flashcard_auto_flip_ms": 0,
+    "show_answer_evidence": true,
+    "bilingual_default": false
+  }
+}

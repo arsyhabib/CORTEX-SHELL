@@ -1,0 +1,113 @@
+{
+  "_comment": "AUTO-GENERATED search index. Do not manually edit. Regenerate by running the search index generator script after content updates.",
+  "_generator": "cortex-search-index-generator",
+  "generatedAt": "2026-06-10",
+  "version": "1.0",
+  "totalEntries": 0,
+  "schema_version": "batch_3",
+
+  "_schema_reference": {
+    "entry_fields": {
+      "id": "string — unique entry ID (e.g., mod_neuro_stroke_001_s01_glossary_penumbra)",
+      "type": "enum — 'module' | 'section' | 'glossary' | 'exam_set' | 'question' | 'visual'",
+      "title": "string — display title",
+      "body": "string — searchable text content (stripped of markdown)",
+      "tags": "string[] — topic tags for faceted search",
+      "domainId": "string — source domain ID",
+      "moduleId": "string | null — parent module ID (for sections, glossary)",
+      "examSetId": "string | null — parent exam set ID (for questions)",
+      "sectionId": "string | null — parent section ID (for glossary, visuals)",
+      "surface": "number[] — which surfaces this entry targets (e.g., [9, 10, 14])",
+      "weight": "number — search relevance weight (1.0 = normal, 2.0 = high-yield)",
+      "preview": "string — short preview text (max 120 chars)"
+    },
+    "type_examples": {
+      "module": {
+        "id": "mod_neuro_stroke_001",
+        "type": "module",
+        "title": "Acute Ischemic Stroke: Pathophysiology, Diagnosis & Management",
+        "body": "stroke iskemik akut patofisiologi diagnosis manajemen trombolisis trombektomi",
+        "tags": ["Stroke", "Neuroemergency", "Thrombolysis", "Thrombectomy"],
+        "domainId": "neuro_emergency",
+        "moduleId": "mod_neuro_stroke_001",
+        "examSetId": null,
+        "sectionId": null,
+        "surface": [2, 3, 4, 9, 10, 11, 12, 14, 15, 16],
+        "weight": 2.0,
+        "preview": "Modul komprehensif stroke iskemik akut mencakup epidemiologi, patofisiologi, diagnosis, dan tata laksana."
+      },
+      "section": {
+        "id": "mod_neuro_stroke_001_s02",
+        "type": "section",
+        "title": "Pathophysiology",
+        "body": "ischemic cascade penumbra core infarct atp depletion glutamate excitotoxicity calcium influx",
+        "tags": ["Pathophysiology", "Penumbra", "Ischemic cascade"],
+        "domainId": "neuro_emergency",
+        "moduleId": "mod_neuro_stroke_001",
+        "examSetId": null,
+        "sectionId": "s02",
+        "surface": [9, 10, 11],
+        "weight": 1.5,
+        "preview": "Kaskade iskemik dari oklusi ke kematian sel — penumbra, core, dan terapi reperfusi."
+      },
+      "glossary": {
+        "id": "mod_neuro_stroke_001_glossary_penumbra",
+        "type": "glossary",
+        "title": "Penumbra",
+        "body": "zona jaringan otak iskemik mengelilingi core infark masih viable salvageable reperfusi",
+        "tags": ["Pathophysiology", "Penumbra"],
+        "domainId": "neuro_emergency",
+        "moduleId": "mod_neuro_stroke_001",
+        "examSetId": null,
+        "sectionId": "s02",
+        "surface": [14, 18],
+        "weight": 1.0,
+        "preview": "Zona jaringan otak yang mengelilingi core infark, masih viable jika reperfusi tercapai."
+      },
+      "exam_set": {
+        "id": "set_asli_01",
+        "type": "exam_set",
+        "title": "Ujian Blok Neurology (Asli)",
+        "body": "ujian neurology soal pilihan ganda vignette klinis",
+        "tags": ["Neurologi", "Ujian Asli"],
+        "domainId": null,
+        "moduleId": null,
+        "examSetId": "set_asli_01",
+        "sectionId": null,
+        "surface": [17, 18],
+        "weight": 1.5,
+        "preview": "Set soal ujian neurology asli dari institusi."
+      },
+      "question": {
+        "id": "set_asli_01_q01",
+        "type": "question",
+        "title": "Soal 1 — Area Broca",
+        "body": "kelemahan mendadak lengan kanan kesulitan memproduksi kata area broca afasia motorik",
+        "tags": ["Afasia", "Stroke", "Lokalisasi lesi"],
+        "domainId": null,
+        "moduleId": null,
+        "examSetId": "set_asli_01",
+        "sectionId": null,
+        "surface": [17],
+        "weight": 1.0,
+        "preview": "Seorang pasien laki-laki usia 45 tahun mengeluhkan kelemahan mendadak pada lengan kanan..."
+      },
+      "visual": {
+        "id": "visual_stroke_epidemiology_01",
+        "type": "visual",
+        "title": "Global Stroke Epidemiology",
+        "body": "epidemiology global stroke incidence distribution regional infographic",
+        "tags": ["epidemiology", "global burden"],
+        "domainId": "neuro_emergency",
+        "moduleId": "mod_neuro_stroke_001",
+        "examSetId": null,
+        "sectionId": "s01",
+        "surface": [12, 13],
+        "weight": 0.8,
+        "preview": "Infographic distribusi insiden stroke global per 100,000 populasi."
+      }
+    }
+  },
+
+  "entries": []
+}

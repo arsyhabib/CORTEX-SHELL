@@ -1,0 +1,38 @@
+{
+  "domain_id": "materi",
+  "domain_type": "learning_content",
+  "display_name": "Materi Pembelajaran",
+  "display_name_en": "Learning Materials",
+  "description": "Konten pembelajaran dari slide dosen dan modul terstruktur",
+  "icon": "📚",
+  "color_theme": "blue",
+  "color_hex": "#3b82f6",
+  "version": "2.0.0",
+  "created_date": "2026-06-09",
+  "last_updated": "2026-06-09",
+  "metadata": {
+    "source": "university_slides",
+    "subject_area": "Neurology",
+    "academic_year": 2026,
+    "semester": 1,
+    "total_modules": 0,
+    "total_hours": 0,
+    "language": "id",
+    "instructor": "Dr. Habib Arsy"
+  },
+  "module_config": {
+    "naming_convention": "module_NNN",
+    "auto_increment": true,
+    "starting_number": 1,
+    "zero_padded": true,
+    "padding_digits": 3
+  },
+  "features": {
+    "supports_glossary": true,
+    "supports_visual_assets": true,
+    "supports_3d_models": true,
+    "supports_sections": true,
+    "supports_key_points": true,
+    "supports_learning_goals": true
+  }
+}
