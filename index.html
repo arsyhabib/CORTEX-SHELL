@@ -9327,15 +9327,31 @@
        PAGE 3 — MAIN LEARNING PAGE
        Slide-based medical content viewport
        ═══════════════════════════════════════════ */
-    function PageLearning({ onNavigate }) {
-      const [slideIdx, setSlideIdx] = React.useState(0);
-      const slides = [
-        { title: 'Sistem Saraf Pusat', sub: 'Pengenalan & Anatomi Dasar' },
-        { title: 'Otak Besar (Cerebrum)', sub: 'Struktur & Fungsi Lobus' },
-        { title: 'Otak Kecil (Cerebellum)', sub: 'Koordinasi Motorik' },
+    function PageLearning({ onNavigate, lectureModule, lectureModuleMeta }) {
+      const moduleSections = React.useMemo(() => {
+        const sections = Array.isArray(lectureModule && lectureModule.sections) ? lectureModule.sections : [];
+        return sections.map((s, idx) => ({
+          id: s.id || `s${String(idx + 1).padStart(2, '0')}`,
+          title: s.title || `Slide ${idx + 1}`,
+          sub: s.summary || (Array.isArray(s.content) && s.content.length > 0 ? (String(s.content[0].text || '').substring(0, 90) + '…') : ''),
+          content: Array.isArray(s.content) ? s.content.map(c => String(c.text || '')).filter(Boolean).join('\n\n') : '',
+          callout: Array.isArray(s.callouts) && s.callouts.length > 0 ? s.callouts[0] : null,
+          keyTerms: Array.isArray(s.glossary_refs) ? s.glossary_refs.slice(0, 7) : [],
+        }));
+      }, [lectureModule]);
+      const hasDynamic = moduleSections.length > 0;
+      const FALLBACK_SLIDES = [
+        { id: 'f1', title: 'Sistem Saraf Pusat', sub: 'Pengenalan & Anatomi Dasar', content: 'Sistem saraf pusat (SSP) terdiri dari otak dan medulla spinalis. SSP merupakan pusat pengolahan informasi utama dalam tubuh manusia, menerima input sensorik, mengintegrasikan data, dan mengirimkan respon motorik.\n\nOtak manusia memiliki berat sekitar 1,4 kg dan terdiri dari sekitar 86 miliar neuron yang saling terhubung melalui sinapsis.', callout: { tone: 'pearl', title: 'Clinical Pearl', text: 'Kerusakan pada area Broca menyebabkan afasia motorik — pasien memahami bahasa tetapi kesulitan memproduksi kata-kata.', icon: '💡' }, keyTerms: ['Neuron', 'Sinapsis', 'Cerebrum', 'Cerebellum', 'Medulla', 'Akson', 'Dendrit'] },
+        { id: 'f2', title: 'Otak Besar (Cerebrum)', sub: 'Struktur & Fungsi Lobus', content: 'Cerebrum terdiri dari dua hemisfer yang dihubungkan oleh corpus callosum. Setiap hemisfer memiliki empat lobus utama dengan fungsi yang berbeda.\n\nLobus frontal: fungsi eksekutif dan motorik. Lobus parietal: integrasi sensorik. Lobus temporal: memori dan bahasa. Lobus oksipital: pemrosesan visual.', callout: null, keyTerms: ['Frontal', 'Parietal', 'Temporal', 'Oksipital', 'Corpus callosum'] },
+        { id: 'f3', title: 'Otak Kecil (Cerebellum)', sub: 'Koordinasi Motorik', content: 'Cerebellum berperan dalam koordinasi gerakan motorik halus, keseimbangan, dan postur tubuh. Kerusakan cerebellum menyebabkan ataksia dan disdiadokokinesia.', callout: null, keyTerms: ['Ataksia', 'Purkinje', 'Granule', 'Koordinasi', 'Keseimbangan'] },
       ];
+      const slides = hasDynamic ? moduleSections : FALLBACK_SLIDES;
+      const [slideIdx, setSlideIdx] = React.useState(0);
+      React.useEffect(() => { setSlideIdx(0); }, [lectureModule && lectureModule.id]);
       const total = slides.length;
-      const s = slides[slideIdx];
+      const s = slides[Math.min(slideIdx, total - 1)];
+      const moduleTitle = (lectureModule && lectureModule.title) || (lectureModuleMeta && lectureModuleMeta.title) || 'Anatomi Manusia';
+      const CALLOUT_TONE_COLORS = { pearl: DL.green, clinical_pearl: DL.green, evidence: DL.teal, exam_pearl: DL.teal, note: DL.info, caution: DL.gold, danger: DL.red, warning: DL.red };
       const stickyPager = React.createElement('div', {
           style: {
             position: 'absolute',
@@ -9416,67 +9432,43 @@
         'data-screen-label': 'P3-Learning',
         style: { display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }
       },
-        /* Topbar */
         React.createElement(B1Topbar, {
           left: React.createElement('span', { onClick: () => onNavigate(2), style: { fontSize: 13, color: DL.accent, cursor: 'pointer' } }, '← Back'),
-          title: 'Anatomi Manusia',
-          subtitle: `Slide ${slideIdx + 1} / ${total}`,
-          right: React.createElement('span', { onClick: () => onNavigate(5), style: { fontSize: 16, cursor: 'pointer', opacity: 0.6 } }, '☰'),
+          title: moduleTitle.length > 22 ? moduleTitle.substring(0, 22) + '…' : moduleTitle,
+          subtitle: `Slide ${slideIdx + 1} / ${total}${!hasDynamic ? ' (demo)' : ''}`,
+          right: React.createElement('span', { onClick: () => onNavigate(4), style: { fontSize: 16, cursor: 'pointer', opacity: 0.6 } }, '☰'),
         }),
-        /* Slide progress */
         React.createElement('div', { style: { padding: '0 18px 8px' } },
           React.createElement(B1Progress, { value: ((slideIdx + 1) / total) * 100, h: 3 }),
         ),
-        /* Content viewport */
         React.createElement('div', { style: { flex: 1, overflowY: 'auto', padding: '0 18px calc(110px + env(safe-area-inset-bottom))' }, className: 'hide-scrollbar' },
-          /* Slide card */
-          React.createElement(B1Card, {
-            key: slideIdx, glow: true, style: {
-              marginBottom: 16, animation: 'scale-in 0.4s ease backwards',
-            }
-          },
+          React.createElement(B1Card, { key: `slide_${s.id}_${slideIdx}`, glow: true, style: { marginBottom: 16, animation: 'scale-in 0.4s ease backwards' } },
             React.createElement(B1Badge, { color: DL.teal }, `📖 Slide ${slideIdx + 1}`),
             React.createElement('div', { style: { fontSize: 20, fontWeight: 700, color: DL.text, marginTop: 12, lineHeight: 1.3 } }, s.title),
-            React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginTop: 4 } }, s.sub),
+            s.sub && React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginTop: 4 } }, s.sub),
           ),
-          /* Image placeholder */
           React.createElement(B1Card, { pad: 0, style: { marginBottom: 16, overflow: 'hidden' } },
-            React.createElement('div', {
-              style: {
-                height: 160, background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.08))',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8,
-              }
-            },
-              React.createElement('div', { style: { fontSize: 40, opacity: 0.4 } }, '🧠'),
-              React.createElement('div', { style: { fontSize: 11, color: DL.mute } }, 'Diagram: Struktur Otak Manusia'),
+            React.createElement('div', { style: { height: 120, background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(168,85,247,0.08))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 8 } },
+              React.createElement('div', { style: { fontSize: 34, opacity: 0.4 } }, '🧠'),
+              React.createElement('div', { style: { fontSize: 10, color: DL.mute } }, `Visual: ${s.title}`),
             )
           ),
-          /* Text content */
-          React.createElement('div', { style: { fontSize: 14, lineHeight: 1.75, color: DL.sub, textWrap: 'pretty' } },
-            'Sistem saraf pusat (SSP) terdiri dari otak dan medulla spinalis. SSP merupakan pusat pengolahan informasi utama dalam tubuh manusia, menerima input sensorik, mengintegrasikan data, dan mengirimkan respon motorik.',
-            React.createElement('br'), React.createElement('br'),
-            'Otak manusia memiliki berat sekitar 1,4 kg dan terdiri dari sekitar 86 miliar neuron yang saling terhubung melalui sinapsis.',
+          s.content && React.createElement('div', { style: { fontSize: 14, lineHeight: 1.75, color: DL.sub, textWrap: 'pretty', marginBottom: 12 } },
+            s.content.split('\n\n').map((para, i) => React.createElement('p', { key: i, style: { margin: '0 0 12px 0' } }, para))
           ),
-          /* Clinical callout */
-          React.createElement(B1Card, {
-            style: {
-              marginTop: 16, background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.25)',
-            }
-          },
+          s.callout && React.createElement(B1Card, { style: { marginBottom: 14, background: `${CALLOUT_TONE_COLORS[s.callout.tone] || DL.green}12`, borderColor: `${CALLOUT_TONE_COLORS[s.callout.tone] || DL.green}30` } },
             React.createElement('div', { style: { display: 'flex', gap: 10, alignItems: 'flex-start' } },
-              React.createElement('span', { style: { fontSize: 18 } }, '💡'),
+              React.createElement('span', { style: { fontSize: 18 } }, s.callout.icon || '💡'),
               React.createElement('div', null,
-                React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: DL.green } }, 'Clinical Pearl'),
-                React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginTop: 4, lineHeight: 1.6 } },
-                  'Kerusakan pada area Broca menyebabkan afasia motorik — pasien memahami bahasa tetapi kesulitan memproduksi kata-kata.'),
+                React.createElement('div', { style: { fontSize: 12, fontWeight: 700, color: CALLOUT_TONE_COLORS[s.callout.tone] || DL.green } }, s.callout.title || 'Clinical Note'),
+                React.createElement('div', { style: { fontSize: 12, color: DL.sub, marginTop: 4, lineHeight: 1.6 } }, s.callout.text),
               )
             )
           ),
-          /* Key terms */
-          React.createElement(B1Section, { title: 'Istilah Kunci', style: { marginTop: 18, marginBottom: 8 } }),
-          React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6 } },
-            ['Neuron', 'Sinapsis', 'Cerebrum', 'Cerebellum', 'Medulla', 'Akson', 'Dendrit'].map(t =>
-              React.createElement(B1Badge, { key: t, style: { cursor: 'pointer' } }, t)
+          s.keyTerms && s.keyTerms.length > 0 && React.createElement(React.Fragment, null,
+            React.createElement(B1Section, { title: 'Istilah Kunci', style: { marginTop: 12, marginBottom: 8 } }),
+            React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 } },
+              s.keyTerms.map((t, i) => React.createElement(B1Badge, { key: i, style: { cursor: 'pointer' } }, cortexHumanizeTerm ? cortexHumanizeTerm(t) : t))
             )
           ),
         ),
@@ -9488,8 +9480,19 @@
        PAGE 4 — SLIDE / SECTION DETAIL PAGE
        Deep dive into a specific topic section
        ═══════════════════════════════════════════ */
-    function PageSlideDetail({ onNavigate }) {
-      const chapters = [
+    function PageSlideDetail({ onNavigate, lectureModule, lectureModuleMeta }) {
+      const dynamicChapters = React.useMemo(() => {
+        const sections = Array.isArray(lectureModule && lectureModule.sections) ? lectureModule.sections : [];
+        if (!sections.length) return null;
+        return sections.map((s, idx) => ({
+          id: s.id || idx + 1,
+          t: s.title || `Section ${idx + 1}`,
+          dur: s.estimated_time_minutes ? `${s.estimated_time_minutes} min` : '20 min',
+          done: false,
+          current: idx === 0,
+        }));
+      }, [lectureModule]);
+      const FALLBACK_CHAPTERS = [
         { id: 1, t: 'Pengenalan Anatomi', dur: '25 min', done: true },
         { id: 2, t: 'Sel dan Jaringan', dur: '30 min', done: true },
         { id: 3, t: 'Sistem Rangka', dur: '35 min', done: true },
@@ -9505,6 +9508,13 @@
         { id: 13, t: 'Organ Sensorik', dur: '28 min', done: false },
         { id: 14, t: 'Sistem Reproduksi', dur: '35 min', done: false },
       ];
+      const chapters = dynamicChapters || FALLBACK_CHAPTERS;
+      const hasDynamic = !!dynamicChapters;
+      const heroTitle = (lectureModule && lectureModule.title) || (lectureModuleMeta && lectureModuleMeta.title) || 'Anatomi Manusia Dasar';
+      const heroSub = hasDynamic
+        ? `${chapters.length} sections • ${lectureModule.wordCount ? Math.ceil(lectureModule.wordCount / 180) + ' min read' : 'Lecture module'} • ${(lectureModule.domain || '').replace(/_/g, ' ')}`
+        : '14 chapters • 8 jam • Dr. Sarah Chen';
+      const completedCount = chapters.filter(c => c.done).length;
       return React.createElement('div', {
         'data-screen-label': 'P4-SlideDetail',
         style: { display: 'flex', flexDirection: 'column', height: '100%' }
@@ -9515,27 +9525,29 @@
           right: React.createElement('span', { style: { fontSize: 16, opacity: 0.5 } }, '⋯'),
         }),
         React.createElement('div', { style: { flex: 1, overflowY: 'auto', padding: '0 18px 20px' }, className: 'hide-scrollbar' },
-          /* Hero */
           React.createElement(B1Card, { glow: true, style: { marginBottom: 16, animation: 'scale-in 0.4s ease backwards' } },
             React.createElement('div', { style: { display: 'flex', gap: 14 } },
               React.createElement('div', { style: { fontSize: 48, animation: 'float 4s ease-in-out infinite' } }, '🧬'),
               React.createElement('div', { style: { flex: 1 } },
-                React.createElement(B1Badge, { color: DL.teal }, '🩺 Medis'),
-                React.createElement('div', { style: { fontSize: 18, fontWeight: 700, color: DL.text, marginTop: 6, lineHeight: 1.3 } }, 'Anatomi Manusia Dasar'),
-                React.createElement('div', { style: { fontSize: 11, color: DL.sub, marginTop: 4 } }, '14 chapters • 8 jam • Dr. Sarah Chen'),
+                React.createElement(B1Badge, { color: DL.teal }, '🩺 Materi'),
+                React.createElement('div', { style: { fontSize: 18, fontWeight: 700, color: DL.text, marginTop: 6, lineHeight: 1.3 } }, heroTitle),
+                React.createElement('div', { style: { fontSize: 11, color: DL.sub, marginTop: 4 } }, heroSub),
               ),
             ),
             React.createElement('div', { style: { marginTop: 14 } },
-              React.createElement(B1Progress, { value: 72, h: 5 }),
+              React.createElement(B1Progress, { value: hasDynamic ? 0 : 72, h: 5 }),
               React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', marginTop: 6 } },
-                React.createElement('span', { style: { fontSize: 10, color: DL.mute } }, '11/14 selesai'),
-                React.createElement('span', { style: { fontSize: 10, color: DL.accent, fontWeight: 700 } }, '72%'),
+                React.createElement('span', { style: { fontSize: 10, color: DL.mute } }, hasDynamic ? `0/${chapters.length} selesai` : `${completedCount}/${FALLBACK_CHAPTERS.length} selesai`),
+                React.createElement('span', { style: { fontSize: 10, color: DL.accent, fontWeight: 700 } }, hasDynamic ? '0%' : '72%'),
               ),
             ),
           ),
-          /* Stats */
           React.createElement('div', { style: { display: 'flex', gap: 8, marginBottom: 16 } },
-            [{ i: '⏱️', v: '5.8 jam', l: 'Waktu' }, { i: '⚡', v: '680 XP', l: 'Earned' }, { i: '🏅', v: '4', l: 'Badges' }].map((s, idx) =>
+            [
+              { i: '⏱️', v: hasDynamic && lectureModule.wordCount ? `${Math.ceil(lectureModule.wordCount / 180)} min` : '5.8 jam', l: 'Baca' },
+              { i: '📄', v: String(chapters.length), l: 'Sections' },
+              { i: '📖', v: hasDynamic ? String(lectureModule.wordCount || '—') : '8,500', l: 'Words' }
+            ].map((s, idx) =>
               React.createElement(B1Card, {
                 key: idx, pad: 10, style: {
                   flex: 1, textAlign: 'center', animation: 'stagger-in 0.48s cubic-bezier(0.34,1.56,0.64,1) backwards', animationDelay: `${0.1 + idx * 0.07}s`,
@@ -9547,8 +9559,7 @@
               )
             )
           ),
-          /* Chapters */
-          React.createElement(B1Section, { title: 'Chapters', action: `${chapters.length} total`, style: { marginBottom: 10 } }),
+          React.createElement(B1Section, { title: hasDynamic ? 'Sections' : 'Chapters', action: `${chapters.length} total`, style: { marginBottom: 10 } }),
           React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
             chapters.map((ch, i) => React.createElement(B1Card, {
               key: ch.id, pad: 12,
@@ -9776,7 +9787,7 @@
           React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
             results.map(function (r, i) {
               return React.createElement(B1Card, {
-                key: i, pad: 12, onClick: function () { onNavigate(3); },
+                key: i, pad: 12, onClick: r.action || function () { onNavigate(3); },
                 style: { animation: 'stagger-in 0.48s cubic-bezier(0.34,1.56,0.64,1) backwards', animationDelay: i * 0.05 + 's' },
               },
                 React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
@@ -9804,10 +9815,40 @@
       );
     }
 
-    function PageSearch({ onNavigate }) {
+    function PageSearch({ onNavigate, contentIndex, onSelectLecture, onSelectExamSet }) {
       const [query, setQuery] = React.useState('');
       const [focused, setFocused] = React.useState(true);
-      const allResults = [
+
+      const dynamicResults = React.useMemo(() => {
+        const results = [];
+        const DOMAIN_ICONS = { neuro_emergency: '🧠', neuro: '🧠', cardio: '🫀', pharmaco: '💊', anatomy: '🧬', default: '📖' };
+        (contentIndex && contentIndex.lectureDomains || []).forEach(domain => {
+          (domain.modules || []).forEach(mod => {
+            const domainKey = Object.keys(DOMAIN_ICONS).find(k => (domain.id || '').includes(k)) || 'default';
+            results.push({
+              icon: DOMAIN_ICONS[domainKey],
+              title: mod.title || mod.id,
+              type: 'Modul',
+              match: ((mod.title || '') + ' ' + (mod.topicTags || []).join(' ')).toLowerCase(),
+              moduleId: mod.id,
+              action: onSelectLecture ? () => { onSelectLecture(mod.id); onNavigate(3); } : undefined,
+            });
+          });
+        });
+        (contentIndex && contentIndex.examSets || []).forEach(set => {
+          results.push({
+            icon: '🧪',
+            title: set.title || set.id,
+            type: set.type === 'ai_generated' ? 'Bank Soal AI' : 'Set Soal Asli',
+            match: (set.title || '').toLowerCase(),
+            setId: set.id,
+            action: onSelectExamSet ? () => { onSelectExamSet(set.id); onNavigate(17); } : undefined,
+          });
+        });
+        return results;
+      }, [contentIndex, onSelectLecture, onSelectExamSet]);
+
+      const FALLBACK_RESULTS = [
         { icon: '🧬', title: 'Anatomi Manusia Dasar', type: 'Kursus', match: 'anatomi' },
         { icon: '🧠', title: 'Sistem Saraf Pusat', type: 'Slide', match: 'saraf' },
         { icon: '🫀', title: 'Kardiologi Klinis', type: 'Kursus', match: 'kardiologi' },
@@ -9816,11 +9857,21 @@
         { icon: '🔬', title: 'Sel dan Jaringan', type: 'Slide', match: 'sel' },
         { icon: '🫁', title: 'Sistem Pernapasan', type: 'Slide', match: 'napas' },
       ];
+      const allResults = dynamicResults.length > 0 ? dynamicResults : FALLBACK_RESULTS;
       const results = query.length > 0
         ? allResults.filter(r => r.title.toLowerCase().includes(query.toLowerCase()) || r.match.includes(query.toLowerCase()))
         : [];
-      const recents = ['Sistem Saraf', 'Kardiologi', 'Farmakologi', 'EKG'];
-      const trending = ['Anatomi Otak', 'Aritmia', 'Sinapsis', 'Neurotransmitter'];
+      const recents = React.useMemo(() => {
+        try { return JSON.parse(localStorage.getItem('cortex.recentSearches') || '[]').slice(0, 4); }
+        catch (e) { return ['Sistem Saraf', 'Kardiologi', 'Farmakologi', 'EKG']; }
+      }, []);
+      const trending = React.useMemo(() => {
+        const tags = [];
+        (contentIndex && contentIndex.lectureDomains || []).forEach(d => {
+          (d.modules || []).forEach(m => { (m.topicTags || []).forEach(t => { if (!tags.includes(t)) tags.push(t); }); });
+        });
+        return tags.length >= 4 ? tags.slice(0, 4) : ['Anatomi Otak', 'Aritmia', 'Sinapsis', 'Neurotransmitter'];
+      }, [contentIndex]);
 
       return React.createElement('div', {
         'data-screen-label': 'P6-Search',
@@ -10747,6 +10798,7 @@
     const CORTEX_BUILD_TAG = (() => { try { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")}`; } catch (e) { return "2026-06-04-c"; } })();
     const CORTEX_RUNTIME_CONTENT_INDEX_PATH = 'app_data/runtime/content_index.kimi.json';
     const CORTEX_RUNTIME_VISUAL_MANIFEST_PATH = 'app_data/runtime/visual_asset_manifest.generated.json';
+    const CORTEX_RUNTIME_APP_CONFIG_PATH = 'app_data/system/config/app_config.json';
 
     /** Detect if opened via file:// protocol (blocks fetch) */
     function cortexIsLocalFile() {
@@ -13581,67 +13633,103 @@
       );
     }
 
-    function PageFlashcard({ onNavigate, lectureModule }) {
+    function PageFlashcard({ onNavigate, lectureModule, examSet }) {
       const [flipped, setFlipped] = React.useState(false);
+      const [deckMode, setDeckMode] = React.useState('glossary');
+      const [cardIdx, setCardIdx] = React.useState(0);
       const [difficulty, setDifficulty] = React.useState('balanced');
-      const glossary = React.useMemo(() => cortexGetLectureGlossary(lectureModule, 6), [lectureModule]);
-      const activeCard = glossary[0] || { term: 'Lecture term', type: 'Review cue', def: 'Open a lecture module to populate this flashcard with live glossary content.' };
+
+      const glossaryCards = React.useMemo(() => {
+        const terms = cortexGetLectureGlossary(lectureModule, 20);
+        return terms.map(term => ({
+          id: term.id,
+          front: `Apa itu ${term.term}?`,
+          back: term.def || term.term,
+          label: term.type || 'Glosarium',
+        }));
+      }, [lectureModule]);
+
+      const examCards = React.useMemo(() => {
+        const qs = cortexGetExamQuestions(examSet);
+        return qs.map((q, i) => ({
+          id: `exam_${i}`,
+          front: q.stem,
+          back: `${String.fromCharCode(65 + (q.answer_index || 0))}. ${(q.options && q.options[q.answer_index]) || '—'}\n\n${q.explanation || ''}`,
+          label: q.confidence || 'Soal',
+        }));
+      }, [examSet]);
+
+      const hasGlossary = glossaryCards.length > 0;
+      const hasExam = examCards.length > 0;
+      const activeMode = (deckMode === 'exam' && hasExam) ? 'exam' : (hasGlossary ? 'glossary' : (hasExam ? 'exam' : 'glossary'));
+      const cards = activeMode === 'exam' ? examCards : glossaryCards;
+      const FALLBACK_CARD = { id: 'fallback', front: 'Lecture term', back: 'Buka modul kuliah untuk mengisi flashcard ini dengan konten glosarium.', label: 'Demo' };
+      const safeIdx = Math.min(cardIdx, Math.max(0, cards.length - 1));
+      const activeCard = cards.length > 0 ? cards[safeIdx] : FALLBACK_CARD;
+
+      const handleNext = React.useCallback(() => { setFlipped(false); setTimeout(() => setCardIdx(i => Math.min(i + 1, cards.length - 1)), 120); }, [cards.length]);
+      const handlePrev = React.useCallback(() => { setFlipped(false); setTimeout(() => setCardIdx(i => Math.max(i - 1, 0)), 120); }, []);
+
+      React.useEffect(() => { setCardIdx(0); setFlipped(false); }, [activeMode, lectureModule && lectureModule.id, examSet && examSet.exam_id]);
 
       return React.createElement(B2PageShell, {
         label: 'Flashcard',
         title: 'Flashcards',
-        subtitle: 'Review mode',
+        subtitle: activeMode === 'exam' ? 'Soal mode' : 'Glosarium mode',
         onBack: () => onNavigate(0),
-        right: React.createElement(B1Badge, null, `${glossary.length || 0} cards`),
+        right: React.createElement(B1Badge, { color: DL.teal }, `${cards.length || 0} kartu`),
       },
-        React.createElement(B3Hero, {
-          kicker: 'Spaced review lane',
-          title: 'Lecture Recall Card',
-          subtitle: 'This flashcard surface now draws its prompt from the active lecture glossary so the same concepts stay visible across read, review, and quiz surfaces.',
-          color: DL.teal,
+        (hasGlossary || hasExam) && React.createElement(B2Segmented, {
+          value: deckMode,
+          options: [
+            { value: 'glossary', label: 'Glosarium' },
+            { value: 'exam', label: 'Soal' },
+          ],
+          onChange: (v) => { setDeckMode(v); setCardIdx(0); setFlipped(false); },
+          style: { marginBottom: 14 },
         }),
 
         React.createElement(B1Card, {
           glow: true,
           onClick: () => setFlipped(!flipped),
           style: {
-            minHeight: 260, marginBottom: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            minHeight: 240, marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: flipped
               ? `linear-gradient(145deg,${DL.teal}22,${DL.accentB}1e)`
               : `linear-gradient(145deg,${DL.accent}28,${DL.accentB}1a)`,
           }
         },
-          React.createElement('div', { style: { textAlign: 'center', padding: '8px 4px' } },
-            React.createElement(B1Badge, { color: flipped ? DL.teal : DL.accent, style: { marginBottom: 16 } },
-              flipped ? 'Answer side' : 'Question side'),
-            React.createElement('div', { style: { fontSize: flipped ? 20 : 22, lineHeight: 1.35, color: DL.text, fontWeight: 900, textWrap: 'balance' } },
-              flipped
-                ? activeCard.def
-                : `What is ${activeCard.term}?`),
-            React.createElement('div', { style: { fontSize: 11, color: DL.sub, marginTop: 16 } },
-              'Tap card to flip. The active lecture controls which terms appear here.'),
+          React.createElement('div', { style: { textAlign: 'center', padding: '8px 12px' } },
+            React.createElement(B1Badge, { color: flipped ? DL.teal : DL.accent, style: { marginBottom: 14 } },
+              flipped ? 'Jawaban' : (activeCard.label || 'Pertanyaan')),
+            React.createElement('div', { style: { fontSize: flipped ? 16 : 18, lineHeight: 1.5, color: DL.text, fontWeight: flipped ? 700 : 900, textWrap: 'balance', whiteSpace: 'pre-wrap' } },
+              flipped ? activeCard.back : activeCard.front),
+            React.createElement('div', { style: { fontSize: 10, color: DL.sub, marginTop: 14 } },
+              `Ketuk untuk balik • Kartu ${safeIdx + 1} / ${Math.max(cards.length, 1)}`),
           ),
+        ),
+
+        React.createElement('div', { style: { display: 'flex', gap: 8, marginBottom: 14 } },
+          React.createElement(B1Button, { label: '← Sebelumnya', onClick: handlePrev, style: { flex: 1, opacity: safeIdx === 0 ? 0.35 : 1 } }),
+          React.createElement(B1Button, { label: 'Berikutnya →', onClick: handleNext, style: { flex: 1, opacity: safeIdx >= cards.length - 1 ? 0.35 : 1 } }),
         ),
 
         React.createElement(B1Section, { title: 'Confidence', style: { marginBottom: 9 } }),
         React.createElement(B2Segmented, {
           value: difficulty,
           options: [
-            { value: 'again', label: 'Again' },
-            { value: 'balanced', label: 'Balanced' },
-            { value: 'easy', label: 'Easy' },
+            { value: 'again', label: 'Ulangi' },
+            { value: 'balanced', label: 'Biasa' },
+            { value: 'easy', label: 'Mudah' },
           ],
           onChange: setDifficulty,
         }),
 
         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 14, marginBottom: 14 } },
-          React.createElement(B3MetricCard, { label: 'Deck', value: lectureModule && lectureModule.title ? 'Lecture' : 'General', sub: 'Current glossary', color: DL.accent }),
-          React.createElement(B3MetricCard, { label: 'Due', value: String(glossary.length || 0), sub: 'Available cards', color: DL.gold }),
-          React.createElement(B3MetricCard, { label: 'Focus', value: activeCard.type || 'Review', sub: 'Current term', color: DL.green }),
+          React.createElement(B3MetricCard, { label: 'Mode', value: activeMode === 'exam' ? 'Soal' : 'Glosarium', sub: 'Tipe kartu', color: DL.accent }),
+          React.createElement(B3MetricCard, { label: 'Total', value: String(cards.length || 0), sub: 'Kartu tersedia', color: DL.gold }),
+          React.createElement(B3MetricCard, { label: 'Posisi', value: `${safeIdx + 1}/${Math.max(cards.length, 1)}`, sub: 'Kartu aktif', color: DL.green }),
         ),
-
-        React.createElement(B2Callout, { tone: 'note', title: 'Review behavior' },
-          'This card flips immediately and stays tied to the active lecture glossary. Scheduling and spaced-repetition scoring can be layered in later without changing the shell.')
       );
     }
 
@@ -13675,8 +13763,8 @@
           React.createElement(B3MetricCard, { label: 'Lecture modules', value: String(lectureCount), sub: 'Across both core domains', color: DL.teal }),
           React.createElement(B3MetricCard, { label: 'Question sets', value: String(examSets.length), sub: 'Ready for review', color: DL.green }),
           React.createElement(B3MetricCard, { label: 'Questions', value: String(questionCount), sub: 'Reconstructed and repaired', color: DL.accent }),
-          React.createElement(B3MetricCard, { label: '3D models', value: '6', sub: 'Final ship runtime', color: DL.gold }),
-          React.createElement(B3MetricCard, { label: 'Visual assets', value: String(visualAssets.length), sub: 'Final batch library', color: DL.info }),
+          React.createElement(B3MetricCard, { label: 'Visual assets', value: String(visualAssets.length), sub: 'Placeholder + final assets', color: DL.gold }),
+          React.createElement(B3MetricCard, { label: '3D types', value: String(visualAssets.filter(a => (a.type || '').includes('3d') || (a.type || '').includes('anatomy')).length || 0), sub: 'Spatial models', color: DL.info }),
         ),
 
         React.createElement(B1Card, { pad: 15, style: { marginBottom: 14 } },
@@ -13934,8 +14022,37 @@
     }
 
 
-    function PageQuickRefModal({ onNavigate }) {
+    function PageQuickRefModal({ onNavigate, lectureModule }) {
       const [open, setOpen] = React.useState(true);
+
+      const dynamicItems = React.useMemo(() => {
+        const items = [];
+        const PEARL_TONES = new Set(['pearl', 'clinical_pearl', 'evidence', 'exam_pearl', 'caution', 'danger', 'warning']);
+        (lectureModule && lectureModule.sections || []).forEach(section => {
+          (section.callouts || []).forEach(callout => {
+            if (PEARL_TONES.has(callout.tone)) {
+              items.push({
+                text: callout.title || callout.text,
+                sub: callout.title ? callout.text : null,
+                section: section.title || '',
+                icon: callout.icon || '💡',
+                tone: callout.tone,
+              });
+            }
+          });
+        });
+        return items.slice(0, 10);
+      }, [lectureModule]);
+
+      const hasDynamic = dynamicItems.length > 0;
+      const FALLBACK_ITEMS = [
+        { text: 'Speech clarity', sub: 'Dummy reference item for rapid review.', icon: '💬', tone: 'pearl' },
+        { text: 'Pupil symmetry', sub: 'Dummy reference item for rapid review.', icon: '👁️', tone: 'pearl' },
+        { text: 'Limb strength', sub: 'Dummy reference item for rapid review.', icon: '💪', tone: 'pearl' },
+        { text: 'Level of alertness', sub: 'Dummy reference item for rapid review.', icon: '🧠', tone: 'pearl' },
+      ];
+      const items = hasDynamic ? dynamicItems : FALLBACK_ITEMS;
+      const refTitle = (lectureModule && lectureModule.title) ? String(lectureModule.title).substring(0, 28) + ' — Quick Ref' : 'Neuro Check Mini Guide';
 
       return React.createElement(B2PageShell, {
         label: 'QuickRef Modal',
@@ -13971,16 +14088,16 @@
             React.createElement('div', { style: { width: 42, height: 4, borderRadius: 999, background: 'rgba(255,255,255,0.22)', margin: '0 auto 13px' } }),
             React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 10 } },
               React.createElement('div', null,
-                React.createElement(B2Kicker, { color: DL.teal }, 'QuickRef'),
-                React.createElement('div', { style: { fontSize: 18, color: DL.text, fontWeight: 900 } }, 'Neuro Check Mini Guide'),
+                React.createElement(B2Kicker, { color: DL.teal }, hasDynamic ? 'QuickRef — Dynamic' : 'QuickRef'),
+                React.createElement('div', { style: { fontSize: 18, color: DL.text, fontWeight: 900 } }, refTitle),
               ),
               React.createElement('button', {
                 onClick: () => setOpen(false),
                 style: { width: 32, height: 32, borderRadius: 12, border: `1px solid ${DL.glassBorder}`, background: 'rgba(255,255,255,0.06)', color: DL.text, cursor: 'pointer' }
               }, 'x'),
             ),
-            ['Speech clarity', 'Pupil symmetry', 'Limb strength', 'Level of alertness'].map((item, i) =>
-              React.createElement(B2Bullet, { key: i, index: i, text: item, sub: ['Dummy reference item for rapid review.'] })
+            items.map((item, i) =>
+              React.createElement(B2Bullet, { key: i, index: i, text: item.text, sub: item.sub ? [item.sub] : [] })
             ),
             React.createElement(B1Button, { label: open ? 'Close reference' : 'Pin reference', full: true, onClick: () => setOpen(false), style: { marginTop: 12 } }),
           )
@@ -13988,12 +14105,13 @@
       );
     }
 
-    function PageHelpAboutPrivacy({ onNavigate }) {
+    function PageHelpAboutPrivacy({ onNavigate, appConfig }) {
       const [section, setSection] = React.useState('help');
+      const cfg = appConfig || {};
       const text = {
-        help: 'Find onboarding tips, navigation guidance, and support notes for the learning shell.',
-        about: 'Cortex Design Kernel v0.1 is a visual library for premium medical education screens.',
-        privacy: 'No patient data is stored in this static shell. Sensitive provider access stays behind local or server-side connectors.',
+        help: (cfg.help && cfg.help.text) || 'Gunakan navigasi untuk berpindah antar surface. Pilih modul dari domain yang tersedia untuk memulai sesi belajar.',
+        about: (cfg.about && cfg.about.text) || 'CORTEX-SHELL adalah platform edukasi medis berbasis web untuk mahasiswa kedokteran.',
+        privacy: (cfg.privacy && cfg.privacy.text) || 'Tidak ada data pasien yang disimpan. Konten bersifat edukatif dan anonim.',
       };
 
       return React.createElement(B2PageShell, {
@@ -14025,9 +14143,9 @@
           React.createElement(B2ReadingBlock, { lead: true }, text[section]),
           React.createElement(B1Divider, { style: { margin: '12px 0' } }),
           [
-            { t: 'Support contact', s: 'Use the sidebar developer contact if you need help with shell refinement or deployment.' },
-            { t: 'Version', s: 'Cortex Design Library.' },
-            { t: 'Data handling', s: 'Lecture and exam content are packaged for study use. Provider secrets stay outside the public shell.' },
+            { t: 'Support contact', s: (cfg.help && cfg.help.support_contact) || 'Hubungi pengembang melalui kontak yang tersedia di profil aplikasi.' },
+            { t: 'Versi', s: (cfg.about && cfg.about.version_label) || (cfg.app && cfg.app.version_label) || 'CORTEX-SHELL v1.0' },
+            { t: 'Pengelolaan data', s: (cfg.help && cfg.help.data_handling) || 'Konten materi dan soal dikemas untuk keperluan belajar. Data sensitif provider disimpan di luar shell.' },
           ].map((row, i) => React.createElement(B3Row, {
             key: i,
             title: row.t,
@@ -15864,6 +15982,7 @@
       const [contentIndexStatus, setContentIndexStatus] = React.useState('loading');
       const [visualManifest, setVisualManifest] = React.useState(null);
       const [visualManifestStatus, setVisualManifestStatus] = React.useState('loading');
+      const [appConfig, setAppConfig] = React.useState(null);
       const [selectedLectureId, setSelectedLectureId] = React.useState(() => {
         return params.get('lecture') || cortexGetStorage('cortex.selectedLectureId', '');
       });
@@ -15995,6 +16114,15 @@
           setVisualManifestStatus('error');
         });
         return () => { cancelled = true; };
+      }, []);
+
+      React.useEffect(() => {
+        cortexFetchJSONCandidates([
+          CORTEX_RUNTIME_APP_CONFIG_PATH,
+          'app_data/system/config/app_config.json',
+        ], (data) => !!(data && data.app)).then(({ data }) => {
+          setAppConfig(data);
+        }).catch(() => {});
       }, []);
 
       React.useEffect(() => {
@@ -16523,6 +16651,7 @@
           onSelectExamSet: (id) => { setSelectedExamSetId(id); setSelectedLectureId(''); setSelectedLecture(null); },
           moduleLoading,
           examLoading,
+          appConfig,
         };
         // [REMOVED] isContentViewing override
         if (page === 0) return React.createElement(CortexErrorBoundary, { key: `eb_${page}` },

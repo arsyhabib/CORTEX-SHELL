@@ -1,0 +1,98 @@
+{
+  "_comment": "Application-level configuration. Loaded at startup alongside content_index. All fields are customizable per deployment.",
+  "generatedAt": "2026-06-10",
+  "version": "1.0",
+
+  "app": {
+    "name": "CORTEX-SHELL",
+    "subtitle": "Medical Education Platform",
+    "tagline": "Belajar Klinis. Lebih Dalam.",
+    "institution": "",
+    "locale": "id-ID",
+    "version_label": "v1.0",
+    "logo_emoji": "🧠",
+    "accent_topic": "Neurologi Klinis"
+  },
+
+  "welcome": {
+    "headline": "Selamat Datang",
+    "subtitle": "Platform belajar klinis untuk mahasiswa kedokteran.",
+    "cta_label": "Mulai Belajar"
+  },
+
+  "home": {
+    "greeting_template": "Halo, {userName}",
+    "greeting_sub": "Lanjutkan perjalanan belajarmu",
+    "default_user_name": "Dokter",
+    "section_modules_title": "Modul Kuliah",
+    "section_quickactions_title": "Aksi Cepat",
+    "quick_actions": [
+      { "icon": "🧪", "label": "Latihan Quiz", "page": 17 },
+      { "icon": "📊", "label": "Progress", "page": 19 },
+      { "icon": "🃏", "label": "Flashcard", "page": 18 },
+      { "icon": "📖", "label": "Glosarium", "page": 14 }
+    ]
+  },
+
+  "help": {
+    "text": "Gunakan navigasi bawah atau FAB untuk berpindah antar surface. Pilih modul kuliah dari domain yang tersedia untuk memulai sesi belajar.",
+    "support_contact": "Hubungi pengembang melalui kontak yang tersedia di profil aplikasi.",
+    "version_label": "CORTEX-SHELL v1.0",
+    "data_handling": "Konten materi dan soal dikemas untuk keperluan belajar. Data sensitif provider disimpan di luar shell publik.",
+    "faq": [
+      {
+        "q": "Bagaimana cara memilih modul?",
+        "a": "Buka Studio (ikon home), pilih domain dari daftar, lalu tap modul yang ingin dipelajari."
+      },
+      {
+        "q": "Bagaimana cara memulai quiz?",
+        "a": "Buka surface Quiz (halaman 17), atau gunakan aksi cepat dari Home."
+      },
+      {
+        "q": "Apakah konten tersedia offline?",
+        "a": "Konten JSON dimuat sekali dan dapat disimpan di cache browser. Gambar dan aset 3D membutuhkan koneksi."
+      }
+    ]
+  },
+
+  "about": {
+    "text": "CORTEX-SHELL adalah platform edukasi medis berbasis web yang dirancang untuk mahasiswa kedokteran. Mendukung modul kuliah, bank soal, glosarium, flashcard, dan visual medis.",
+    "version_label": "CORTEX-SHELL v1.0",
+    "developer": "Cortex Medical Education",
+    "year": "2026"
+  },
+
+  "privacy": {
+    "text": "Tidak ada data pasien yang disimpan dalam aplikasi ini. Konten bersifat edukatif dan anonim. Akses provider sensitif dikelola di luar shell.",
+    "data_stored": ["localStorage: preferensi tema, nama pengguna, pencarian terakhir"],
+    "data_not_stored": ["Data pasien", "Informasi klinis sensitif", "Credentials provider"]
+  },
+
+  "search": {
+    "placeholder": "Cari modul, soal, istilah...",
+    "cancel_label": "Batal",
+    "fallback_recents": ["Stroke Iskemik", "Trombektomi", "NIHSS", "tPA"],
+    "fallback_trending": ["Stroke", "Neuroemergency", "Thrombolysis", "Thrombectomy"]
+  },
+
+  "settings": {
+    "app_name_display": "CORTEX-SHELL",
+    "account_status_label": "Learner profile",
+    "section_appearance": "Tampilan",
+    "section_behavior": "Perilaku",
+    "logout_confirm": "Yakin ingin logout?",
+    "exit_confirm": "Yakin ingin keluar dari aplikasi?"
+  },
+
+  "progress": {
+    "stat_labels": {
+      "modules": "Modul Kuliah",
+      "exam_sets": "Set Soal",
+      "questions": "Total Soal",
+      "visuals": "Aset Visual",
+      "models_3d": "Model 3D"
+    },
+    "domain_weight_title": "Bobot Domain",
+    "completion_title": "Penyelesaian Modul"
+  }
+}

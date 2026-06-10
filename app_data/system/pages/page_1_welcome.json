@@ -1,0 +1,22 @@
+{
+  "_comment": "Welcome/onboarding page configuration. Controls text content of the entry screen.",
+  "page_id": 1,
+  "component": "PageWelcomeRefined",
+  "version": "1.0",
+  "auto_advance_ms": 3200,
+
+  "content": {
+    "headline": "CORTEX",
+    "subtitle": "Medical Education Platform",
+    "tagline": "Belajar Klinis. Lebih Dalam.",
+    "brand_note": "Powered by CORTEX-SHELL",
+    "cta_label": "Mulai"
+  },
+
+  "animation": {
+    "step_delays_ms": [300, 760, 1320, 1940],
+    "exit_delay_ms": 3200,
+    "star_count": 16,
+    "cloud_count": 4
+  }
+}
