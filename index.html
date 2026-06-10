@@ -4328,6 +4328,49 @@
       padding: 0.75em 0.9em 0.75em 0.95em;
     }
 
+    /* Monochrome theme text visibility fixes */
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md {
+      color: #d8d8d8;
+    }
+
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md h1,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md h2,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md h3,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md h4 {
+      color: #e8e8e8;
+    }
+
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md strong,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md b {
+      color: #e8e8e8;
+    }
+
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md em,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md i {
+      color: #d8d8d8;
+    }
+
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md code {
+      background: rgba(100, 100, 100, 0.22);
+      color: #d8d8d8;
+      border-color: rgba(200, 200, 200, 0.26);
+    }
+
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md a {
+      color: #d0d0d0;
+      text-decoration: underline;
+    }
+
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md blockquote {
+      border-color: rgba(200, 200, 200, 0.18);
+      color: #d0d0d0;
+    }
+
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md ul li::marker,
+    .cortex-library-root[data-theme-id="monochrome"] .cx-md ol li::marker {
+      color: rgba(200, 200, 200, 0.80);
+    }
+
     /* Confetti Celebration Animation */
     @keyframes confetti-fall {
       to {
@@ -5643,23 +5686,23 @@
         colors: {
           bg: '#0a0a1a',
           bgAlt: '#12102a',
-          surface: 'rgba(120, 80, 255, 0.08)',
-          glass: 'rgba(120, 80, 255, 0.12)',
-          glassBorder: 'rgba(160, 120, 255, 0.25)',
-          glassHighlight: 'rgba(180, 140, 255, 0.15)',
+          surface: 'rgba(120, 80, 255, 0.12)',
+          glass: 'rgba(120, 80, 255, 0.18)',
+          glassBorder: 'rgba(160, 120, 255, 0.32)',
+          glassHighlight: 'rgba(180, 140, 255, 0.18)',
           accent1: '#a855f7',
           accent2: '#fbbf24',
           accent3: '#6366f1',
-          text: '#f0eaff',
-          textSecondary: 'rgba(220, 200, 255, 0.6)',
-          textMuted: 'rgba(200, 180, 255, 0.35)',
-          gradientMain: 'linear-gradient(135deg, #6366f1, #a855f7, #fbbf24)',
-          gradientCard: 'linear-gradient(145deg, rgba(99,102,241,0.15), rgba(168,85,247,0.08))',
-          gradientAccent: 'linear-gradient(135deg, #a855f7, #6366f1)',
+          text: '#e8e0ff',
+          textSecondary: 'rgba(220, 200, 255, 0.7)',
+          textMuted: 'rgba(200, 180, 255, 0.45)',
+          gradientMain: 'linear-gradient(135deg, #7c3aed, #a855f7, #fbbf24)',
+          gradientCard: 'linear-gradient(145deg, rgba(120,80,255,0.18), rgba(168,85,247,0.12))',
+          gradientAccent: 'linear-gradient(135deg, #c084fc, #7c3aed)',
           glow: '168, 85, 247',
-          shadowColor: 'rgba(99, 102, 241, 0.3)',
+          shadowColor: 'rgba(120, 80, 255, 0.35)',
         },
-        glass: { blur: 28, saturation: 200, bgOpacity: 0.1, borderOpacity: 0.2 },
+        glass: { blur: 30, saturation: 200, bgOpacity: 0.12, borderOpacity: 0.22 },
         borderRadius: 22,
         fontWeight: { heading: 700, body: 400 },
       },
@@ -5672,23 +5715,23 @@
         colors: {
           bg: '#050a18',
           bgAlt: '#0a1628',
-          surface: 'rgba(0, 220, 200, 0.06)',
-          glass: 'rgba(80, 200, 255, 0.1)',
-          glassBorder: 'rgba(100, 240, 255, 0.2)',
-          glassHighlight: 'rgba(130, 255, 230, 0.12)',
+          surface: 'rgba(0, 220, 200, 0.10)',
+          glass: 'rgba(80, 200, 255, 0.16)',
+          glassBorder: 'rgba(100, 240, 255, 0.28)',
+          glassHighlight: 'rgba(130, 255, 230, 0.16)',
           accent1: '#06d6a0',
           accent2: '#e040fb',
           accent3: '#00b4d8',
-          text: '#e0fff8',
-          textSecondary: 'rgba(200, 255, 240, 0.6)',
-          textMuted: 'rgba(180, 240, 230, 0.3)',
-          gradientMain: 'linear-gradient(135deg, #00b4d8, #06d6a0, #e040fb)',
-          gradientCard: 'linear-gradient(145deg, rgba(6,214,160,0.12), rgba(0,180,216,0.06))',
-          gradientAccent: 'linear-gradient(135deg, #06d6a0, #00b4d8)',
+          text: '#d8f8f0',
+          textSecondary: 'rgba(200, 255, 240, 0.75)',
+          textMuted: 'rgba(180, 240, 230, 0.50)',
+          gradientMain: 'linear-gradient(135deg, #00d9e9, #06d6a0, #e040fb)',
+          gradientCard: 'linear-gradient(145deg, rgba(6,214,160,0.16), rgba(0,180,216,0.10))',
+          gradientAccent: 'linear-gradient(135deg, #06e8b3, #00c4d9)',
           glow: '6, 214, 160',
-          shadowColor: 'rgba(0, 180, 216, 0.3)',
+          shadowColor: 'rgba(0, 200, 230, 0.35)',
         },
-        glass: { blur: 32, saturation: 180, bgOpacity: 0.08, borderOpacity: 0.18 },
+        glass: { blur: 34, saturation: 180, bgOpacity: 0.14, borderOpacity: 0.24 },
         borderRadius: 26,
         fontWeight: { heading: 600, body: 400 },
       },
@@ -5701,25 +5744,25 @@
         colors: {
           bg: '#0c0a08',
           bgAlt: '#1a1510',
-          surface: 'rgba(212, 175, 55, 0.06)',
-          glass: 'rgba(212, 175, 55, 0.08)',
-          glassBorder: 'rgba(212, 175, 55, 0.25)',
-          glassHighlight: 'rgba(255, 215, 100, 0.12)',
+          surface: 'rgba(212, 175, 55, 0.10)',
+          glass: 'rgba(212, 175, 55, 0.14)',
+          glassBorder: 'rgba(212, 175, 55, 0.32)',
+          glassHighlight: 'rgba(255, 215, 100, 0.16)',
           accent1: '#d4af37',
           accent2: '#e8c4a0',
           accent3: '#b8860b',
-          text: '#fff5e0',
-          textSecondary: 'rgba(255, 235, 200, 0.6)',
-          textMuted: 'rgba(220, 200, 160, 0.35)',
-          gradientMain: 'linear-gradient(135deg, #b8860b, #d4af37, #f5d67b)',
-          gradientCard: 'linear-gradient(145deg, rgba(212,175,55,0.1), rgba(184,134,11,0.05))',
-          gradientAccent: 'linear-gradient(135deg, #d4af37, #f5d67b)',
+          text: '#f0e8d8',
+          textSecondary: 'rgba(255, 235, 200, 0.75)',
+          textMuted: 'rgba(220, 200, 160, 0.50)',
+          gradientMain: 'linear-gradient(135deg, #c9950d, #dbb840, #f5d67b)',
+          gradientCard: 'linear-gradient(145deg, rgba(212,175,55,0.14), rgba(184,134,11,0.08))',
+          gradientAccent: 'linear-gradient(135deg, #dbb840, #f5d67b)',
           glow: '212, 175, 55',
-          shadowColor: 'rgba(212, 175, 55, 0.25)',
+          shadowColor: 'rgba(212, 175, 55, 0.32)',
         },
-        glass: { blur: 24, saturation: 160, bgOpacity: 0.06, borderOpacity: 0.22 },
-        borderRadius: 18,
-        fontWeight: { heading: 300, body: 300 },
+        glass: { blur: 26, saturation: 160, bgOpacity: 0.12, borderOpacity: 0.24 },
+        borderRadius: 20,
+        fontWeight: { heading: 400, body: 400 },
       },
 
       neon: {
@@ -5730,24 +5773,24 @@
         colors: {
           bg: '#030806',
           bgAlt: '#0a1a0f',
-          surface: 'rgba(0, 255, 120, 0.05)',
-          glass: 'rgba(0, 255, 120, 0.08)',
-          glassBorder: 'rgba(0, 255, 120, 0.2)',
-          glassHighlight: 'rgba(0, 255, 180, 0.1)',
+          surface: 'rgba(0, 255, 120, 0.10)',
+          glass: 'rgba(0, 255, 120, 0.14)',
+          glassBorder: 'rgba(0, 255, 120, 0.28)',
+          glassHighlight: 'rgba(0, 255, 180, 0.14)',
           accent1: '#00ff88',
           accent2: '#00e5ff',
           accent3: '#ff0080',
-          text: '#e0ffe8',
-          textSecondary: 'rgba(200, 255, 220, 0.6)',
-          textMuted: 'rgba(150, 255, 200, 0.3)',
-          gradientMain: 'linear-gradient(135deg, #00ff88, #00e5ff, #ff0080)',
-          gradientCard: 'linear-gradient(145deg, rgba(0,255,136,0.08), rgba(0,229,255,0.04))',
-          gradientAccent: 'linear-gradient(135deg, #00ff88, #00e5ff)',
+          text: '#d8ffe8',
+          textSecondary: 'rgba(200, 255, 220, 0.80)',
+          textMuted: 'rgba(180, 255, 210, 0.55)',
+          gradientMain: 'linear-gradient(135deg, #00ff99, #00e5ff, #ff0080)',
+          gradientCard: 'linear-gradient(145deg, rgba(0,255,136,0.14), rgba(0,229,255,0.08))',
+          gradientAccent: 'linear-gradient(135deg, #00ff99, #00e5ff)',
           glow: '0, 255, 136',
-          shadowColor: 'rgba(0, 255, 136, 0.3)',
+          shadowColor: 'rgba(0, 255, 136, 0.40)',
         },
-        glass: { blur: 20, saturation: 150, bgOpacity: 0.06, borderOpacity: 0.15 },
-        borderRadius: 12,
+        glass: { blur: 22, saturation: 150, bgOpacity: 0.12, borderOpacity: 0.22 },
+        borderRadius: 14,
         fontWeight: { heading: 700, body: 400 },
       },
 
@@ -5759,23 +5802,23 @@
         colors: {
           bg: '#1a0a14',
           bgAlt: '#24101c',
-          surface: 'rgba(255, 120, 100, 0.06)',
-          glass: 'rgba(255, 150, 120, 0.1)',
-          glassBorder: 'rgba(255, 180, 160, 0.2)',
-          glassHighlight: 'rgba(255, 200, 180, 0.12)',
+          surface: 'rgba(255, 120, 100, 0.12)',
+          glass: 'rgba(255, 150, 120, 0.16)',
+          glassBorder: 'rgba(255, 180, 160, 0.28)',
+          glassHighlight: 'rgba(255, 200, 180, 0.16)',
           accent1: '#ff6b6b',
           accent2: '#feca57',
           accent3: '#a29bfe',
-          text: '#fff0f0',
-          textSecondary: 'rgba(255, 220, 210, 0.65)',
-          textMuted: 'rgba(255, 200, 190, 0.35)',
-          gradientMain: 'linear-gradient(135deg, #ff6b6b, #feca57, #a29bfe)',
-          gradientCard: 'linear-gradient(145deg, rgba(255,107,107,0.12), rgba(254,202,87,0.06))',
-          gradientAccent: 'linear-gradient(135deg, #ff6b6b, #feca57)',
+          text: '#f5e5e5',
+          textSecondary: 'rgba(255, 220, 210, 0.80)',
+          textMuted: 'rgba(255, 200, 190, 0.55)',
+          gradientMain: 'linear-gradient(135deg, #ff7a7a, #fed570, #b5a8ff)',
+          gradientCard: 'linear-gradient(145deg, rgba(255,107,107,0.16), rgba(254,202,87,0.10))',
+          gradientAccent: 'linear-gradient(135deg, #ff7a7a, #fed570)',
           glow: '255, 107, 107',
-          shadowColor: 'rgba(255, 107, 107, 0.3)',
+          shadowColor: 'rgba(255, 107, 107, 0.40)',
         },
-        glass: { blur: 30, saturation: 190, bgOpacity: 0.1, borderOpacity: 0.18 },
+        glass: { blur: 32, saturation: 190, bgOpacity: 0.14, borderOpacity: 0.22 },
         borderRadius: 28,
         fontWeight: { heading: 800, body: 400 },
       },
@@ -5787,26 +5830,26 @@
         description: 'Minimal luxury grayscale',
         colors: {
           bg: '#090909',
-          bgAlt: '#121212',
-          surface: 'rgba(255,255,255,0.04)',
-          glass: 'rgba(255,255,255,0.07)',
-          glassBorder: 'rgba(255,255,255,0.24)',
-          glassHighlight: 'rgba(255,255,255,0.12)',
-          accent1: '#f5f5f5',
-          accent2: '#bdbdbd',
-          accent3: '#7a7a7a',
-          text: '#f7f7f7',
-          textSecondary: 'rgba(250,250,250,0.86)',
-          textMuted: 'rgba(245,245,245,0.66)',
-          gradientMain: 'linear-gradient(135deg, #f7f7f7, #cfcfcf, #8d8d8d)',
-          gradientCard: 'linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.045))',
-          gradientAccent: 'linear-gradient(135deg, #ffffff, #bfbfbf)',
-          glow: '245, 245, 245',
-          shadowColor: 'rgba(255,255,255,0.12)',
+          bgAlt: '#151515',
+          surface: 'rgba(255,255,255,0.08)',
+          glass: 'rgba(255,255,255,0.11)',
+          glassBorder: 'rgba(255,255,255,0.28)',
+          glassHighlight: 'rgba(255,255,255,0.16)',
+          accent1: '#e8e8e8',
+          accent2: '#a0a0a0',
+          accent3: '#606060',
+          text: '#e0e0e0',
+          textSecondary: 'rgba(224,224,224,0.88)',
+          textMuted: 'rgba(200,200,200,0.72)',
+          gradientMain: 'linear-gradient(135deg, #e0e0e0, #b0b0b0, #707070)',
+          gradientCard: 'linear-gradient(145deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06))',
+          gradientAccent: 'linear-gradient(135deg, #e8e8e8, #a8a8a8)',
+          glow: '224, 224, 224',
+          shadowColor: 'rgba(0,0,0,0.28)',
         },
-        glass: { blur: 26, saturation: 0, bgOpacity: 0.08, borderOpacity: 0.18 },
-        borderRadius: 22,
-        fontWeight: { heading: 800, body: 400 },
+        glass: { blur: 28, saturation: 0, bgOpacity: 0.1, borderOpacity: 0.2 },
+        borderRadius: 24,
+        fontWeight: { heading: 700, body: 400 },
       },
     };
 
@@ -5828,6 +5871,7 @@
         background: theme.colors.glass,
         border: `1px solid ${theme.colors.glassBorder}`,
         borderRadius: theme.borderRadius,
+        color: theme.colors.text,
         ...extra,
       };
     }
