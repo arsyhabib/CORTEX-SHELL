@@ -1,757 +1,496 @@
-# 🎯 CORTEX-SHELL CONTENT SCHEMA MASTER
-
-## Overview
-
-Total Surfaces/Pages yang perlu schema konten: **20**
-- 2 Main Pages (0, 1)
-- 18 Active Surfaces (2-23, excluding 5, 8, 20, 21)
+# CONTENT_SCHEMA_MASTER.md
+# CORTEX-SHELL — Master Schema Reference (All Content Domains)
+# Version: 2.0 | Permanent Anchor File | Batch 4
+# Date: 2026-06-10
 
 ---
 
-## 📊 CONTENT INVENTORY & MAPPING
+## PURPOSE
 
-### Pages (2)
-| ID | Label | Type | Content Type | Customizable | Status |
-|----|-------|------|--------------|--------------|--------|
-| 0 | Main Studio | Page | Navigation Hub | Anchor | Always Active |
-| 1 | Welcome | Page | Onboarding | Both | Entry Point |
+This document is the single source of truth for all JSON content schemas used by CORTEX-SHELL.
+Any AI agent generating content for this platform MUST read this document before producing output.
 
-### Surfaces - Foundation Group (3)
-| ID | Label | Type | Content Type | Customizable | Source |
-|----|-------|------|--------------|--------------|--------|
-| 2 | Home Dashboard | Surface | Hero + Quick Actions | Full | Domain Materi |
-| 3 | Learning Surface | Surface | Lesson Flow + Metadata | Full | Domain Materi |
-| 4 | Slide Detail | Surface | Content Panel + Assets | Full | Domain Materi |
+Two content domains exist:
+- **MATERI** — Lecture learning modules → `module.json`
+- **SOAL** — Exam question sets → `exam_set.json`
 
-### Surfaces - Discover Group (2)
-| ID | Label | Type | Content Type | Customizable | Source |
-|----|-------|------|--------------|--------------|--------|
-| 6 | Search | Surface | Indexed Content Lookup | Anchor | Generated Index |
-| 7 | Settings | Surface | User Preferences | Anchor | Config Files |
-
-### Surfaces - Review Group (4)
-| ID | Label | Type | Content Type | Customizable | Source |
-|----|-------|------|--------------|--------------|--------|
-| 9 | Typography Reading | Surface | Prose Content | Full | Domain Materi |
-| 10 | Bullet Content | Surface | Structured Points | Full | Domain Materi |
-| 11 | Clinical Pearl | Surface | Callouts + Tips | Full | Domain Materi |
-| 12 | Image Cards | Surface | Visual Library | Full | Domain Materi + Assets |
-
-### Surfaces - Reference Group (4)
-| ID | Label | Type | Content Type | Customizable | Source |
-|----|-------|------|--------------|--------------|--------|
-| 13 | Media Viewer | Surface | 3D Models + Visuals | Full | Assets + Domain Materi |
-| 14 | Glossary | Surface | Terms + Definitions | Full | Domain Materi |
-| 15 | Quick Summary | Surface | Key Points | Full | Domain Materi |
-| 16 | Bilingual | Surface | Dual Language Explanation | Full | Domain Materi |
-
-### Surfaces - Practice Group (3)
-| ID | Label | Type | Content Type | Customizable | Source |
-|----|-------|------|--------------|--------------|--------|
-| 17 | Quiz | Surface | Questions + Feedback | Full | Domain Exam Asli + AI Bank |
-| 18 | Flashcard | Surface | Card Pairs | Full | Domain Exam Asli + AI Bank |
-| 19 | Progress Dashboard | Surface | Metrics + Tracking | Anchor | User Data + Config |
-
-### Surfaces - Utilities Group (2)
-| ID | Label | Type | Content Type | Customizable | Source |
-|----|-------|------|--------------|--------------|--------|
-| 22 | QuickRef Modal | Surface | Reference Lookup | Full | Domain Materi |
-| 23 | Help & Info | Surface | Static Content + States | Both | Config + App States |
+Both are registered in `app_data/runtime/content_index.kimi.json`.
 
 ---
 
-## 🎯 CUSTOMIZABLE vs ANCHOR
+## PART A — MODULE.JSON SCHEMA (MATERI DOMAIN)
 
-### Anchor Content (System-level, don't customize):
-- Page 0: Main Studio (navigation)
-- Page 1: Welcome (entry flow)
-- Surface 6: Search (generated automatically)
-- Surface 7: Settings (system config)
-- Surface 19: Progress Dashboard (user data)
+### File Location Pattern
+```
+app_data/domains/materi/modules/[module_id]/module.json
+```
 
-### Fully Customizable Content (per domain/app):
-- Surface 2-4: Foundation (home, learning, detail)
-- Surface 9-18: Review, Reference, Practice
-- Surface 22: QuickRef
-- Surface 23: Help & Info
+### Top-Level Structure
+```json
+{
+  "id": "mod_[domain]_[topic_slug]_[NNN]",
+  "title": "Clinical Topic Name",
+  "subtitle": "Short descriptive subtitle",
+  "domain": "neuro_emergency",
+  "batch_id": "batch_1",
+  "source_pdf": "original_filename.pdf",
+  "source_filename": "original_filename.pdf",
+  "topicTags": ["Tag1", "Tag2"],
+  "summary": ["Key point 1.", "Key point 2."],
+  "exam_focus": ["High-yield fact 1.", "High-yield fact 2."],
+  "glossary": [...],
+  "bilingual": [...],
+  "visual_asset_manifest": [...],
+  "ai_additions": [...],
+  "sections": [...]
+}
+```
+
+### Module-Level Field Rules
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `id` | string | YES | Format: `mod_[domain]_[slug]_[NNN]`. Lowercase, underscores only. Unique across ALL modules. |
+| `title` | string | YES | 2–6 words, Title Case, English. Clinical topic name, no "Introduction to". |
+| `subtitle` | string | YES | 1 sentence, English. Expands on title. |
+| `domain` | string | YES | Matches domain ID in content_index (e.g. `neuro_emergency`). |
+| `batch_id` | string | YES | Format: `batch_[N]`. Tracks which processing batch generated this module. |
+| `source_pdf` | string | YES | Original PDF filename. Used for traceability. |
+| `topicTags` | string[] | YES | 4–10 keyword tags. Used by search. Title Case. |
+| `summary` | string[] | YES | 5–10 sentences. Module-level key takeaways. Feeds S11 Summary surface. |
+| `exam_focus` | string[] | YES | 5–10 high-yield exam facts. Feeds S12 Exam Tips surface. |
+| `glossary` | object[] | YES | Medical terms. See Glossary Object schema below. |
+| `bilingual` | object[] | OPTIONAL | Bahasa Indonesia translations/simplifications. |
+| `visual_asset_manifest` | object[] | CONDITIONAL | Required if any images found in source PDFs. |
+| `ai_additions` | object[] | OPTIONAL | Tracks the 40% AI-researched content. See AI Additions schema. |
+| `sections` | object[] | YES | 6–12 sections. Core content. See Section schema. |
 
 ---
 
-## 📦 BATCH DISTRIBUTION (3 Batches)
+### GLOSSARY OBJECT SCHEMA
 
-### Batch 1: Foundation + Discover (6 surfaces/pages)
-**Priority: HIGH** — Critical path surfaces
-- Page 0: Main Studio (system)
-- Page 1: Welcome (system)
-- Surface 2: Home Dashboard
-- Surface 3: Learning Surface
-- Surface 4: Slide Detail
-- Surface 6: Search (auto)
-- Surface 7: Settings (system)
+```json
+{
+  "id": "gls_[module_short]_[term_slug]",
+  "term": "Term Name",
+  "def": "Definition in 1–3 sentences.",
+  "type": "mechanism | anatomy | drug | clinical | procedure | score",
+  "aliases": ["alternate name", "abbreviation"]
+}
+```
 
-**Content Requirement:** Module metadata + overview + learning goals
-**Estimated Content Items:** 50-100
-**Timeline:** Weeks 1-2
-
-### Batch 2: Review + Reference (8 surfaces)
-**Priority: HIGH** — Main content delivery
-- Surface 9: Typography Reading
-- Surface 10: Bullet Content
-- Surface 11: Clinical Pearl
-- Surface 12: Image Cards
-- Surface 13: Media Viewer
-- Surface 14: Glossary
-- Surface 15: Quick Summary
-- Surface 16: Bilingual
-
-**Content Requirement:** Full module content + sections + visuals
-**Estimated Content Items:** 200-400
-**Timeline:** Weeks 3-4
-
-### Batch 3: Practice + Utilities (5 surfaces)
-**Priority: MEDIUM** — Assessment + Support
-- Surface 17: Quiz
-- Surface 18: Flashcard
-- Surface 19: Progress (system)
-- Surface 22: QuickRef
-- Surface 23: Help & Info
-
-**Content Requirement:** Questions + explanations + reference materials
-**Estimated Content Items:** 100-150
-**Timeline:** Weeks 5-6
+Rules:
+- `id` must be unique within the module
+- `type` must be one of the 6 enum values above
+- `aliases[]` is optional but strongly recommended for acronyms
+- Every term referenced in `sections[].glossary_refs[]` must have an entry here
 
 ---
 
-## 📋 CONTENT SCHEMA PER SURFACE
+### SECTION OBJECT SCHEMA
 
-### BATCH 1 SURFACES
-
-#### Surface 2: Home Dashboard
 ```json
 {
-  "surface_id": 2,
-  "domain": "materi",
-  "content_type": "hero_with_quick_actions",
-  "required_fields": {
-    "hero_title": "string",
-    "hero_subtitle": "string",
-    "hero_image": "asset_id",
-    "quick_actions": [
-      {
-        "id": "string",
-        "label": "string",
-        "icon": "emoji|icon_name",
-        "target_surface": "number",
-        "description": "string"
-      }
-    ],
-    "featured_content": [
-      {
-        "type": "module|section|quiz",
-        "id": "string",
-        "title": "string",
-        "progress": "number (0-100)"
-      }
-    ],
-    "stats": {
-      "modules_total": "number",
-      "modules_completed": "number",
-      "quiz_average": "number"
-    }
-  },
-  "customizable": true,
-  "source_domain": "materi"
+  "id": "s01",
+  "title": "Section Title",
+  "summary": "1–2 sentence section summary.",
+  "estimated_time_minutes": 15,
+  "content": [...],
+  "bullets": [...],
+  "callouts": [...],
+  "visual_refs": [...],
+  "glossary_refs": [...],
+  "bilingual": "Optional Bahasa explanation of section focus."
 }
 ```
 
-#### Surface 3: Learning Surface
+#### Section ID Rules
+- Format: `s` + 2-digit zero-padded index: `s01`, `s02`, ... `s11`
+- Must be sequential and unique within the module
+- Do NOT skip IDs
+
+#### content[] Object
 ```json
 {
-  "surface_id": 3,
-  "domain": "materi",
-  "content_type": "lesson_flow_with_metadata",
-  "required_fields": {
-    "module_id": "string",
-    "module_title": "string",
-    "module_subtitle": "string",
-    "overview": "string (100-300 words)",
-    "learning_goals": ["string"],
-    "sections": [
-      {
-        "section_id": "string",
-        "order": "number",
-        "heading": "string",
-        "subheading": "string",
-        "estimated_time": "number (minutes)"
-      }
-    ],
-    "progress_tracking": {
-      "current_section": "number",
-      "completion_percent": "number"
-    },
-    "nav_buttons": {
-      "previous": "bool",
-      "next": "bool",
-      "jump_to_section": "bool"
-    }
-  },
-  "customizable": true,
-  "source_domain": "materi"
+  "text": "Paragraph text. Full sentences. 3–8 sentences per block.",
+  "tone": "narrative | clinical | mechanism | evidence",
+  "source": "optional: PDF slide reference or external source"
 }
 ```
 
-#### Surface 4: Slide Detail
+#### bullets[] Object
 ```json
 {
-  "surface_id": 4,
-  "domain": "materi",
-  "content_type": "detail_panel_with_assets",
-  "required_fields": {
-    "section_id": "string",
-    "heading": "string",
-    "subheading": "string",
-    "content_blocks": [
-      {
-        "type": "paragraph|list|callout|table|image",
-        "text": "string",
-        "metadata": "object"
-      }
-    ],
-    "visual_assets": [
-      {
-        "asset_id": "string",
-        "type": "image|diagram|3d",
-        "caption": "string",
-        "source_ref": "string"
-      }
-    ],
-    "references": {
-      "glossary_refs": ["string"],
-      "quiz_refs": ["string"],
-      "source_refs": ["string"]
-    },
-    "sidebar": {
-      "key_points": ["string"],
-      "related_sections": ["string"]
-    }
-  },
-  "customizable": true,
-  "source_domain": "materi"
+  "text": "Bullet point text. 1–2 sentences.",
+  "sub": ["Sub-bullet 1", "Sub-bullet 2"],
+  "bold": true,
+  "source": "optional source"
 }
 ```
 
-#### Surface 6: Search (SYSTEM)
+#### callouts[] Object — CRITICAL
 ```json
 {
-  "surface_id": 6,
-  "domain": "system",
-  "content_type": "indexed_search",
-  "required_fields": {
-    "search_index": "auto_generated",
-    "indexed_content": [
-      {
-        "id": "string",
-        "type": "section|glossary_term|quiz_question|visual",
-        "title": "string",
-        "domain": "string",
-        "module_id": "string",
-        "tags": ["string"]
-      }
-    ],
-    "filters": {
-      "by_domain": ["string"],
-      "by_content_type": ["string"],
-      "by_difficulty": ["string"]
-    }
-  },
-  "customizable": false,
-  "auto_generated": true
+  "tone": "pearl | evidence | note | caution | danger",
+  "icon": "💡",
+  "title": "Short callout title",
+  "text": "Callout body text. Clinical relevance.",
+  "answer_evidence": "Source: Author et al. (Year) or Guideline Name"
 }
 ```
 
-#### Surface 7: Settings (SYSTEM)
+**Tone vocabulary (STRICT — use only these 5 values):**
+
+| tone | Usage | App Display |
+|---|---|---|
+| `pearl` | Clinical pearl, exam tip, memory aid | Green highlight |
+| `evidence` | Evidence-based statement with citation | Teal highlight |
+| `note` | Teaching point, clarification, explanation | Blue highlight |
+| `caution` | Warning, requires monitoring | Gold/yellow highlight |
+| `danger` | Red flag, contraindication, emergency | Red highlight |
+
+**LEGACY TONES — normalize these on input:**
+
+| Legacy Input | → | Normalize To |
+|---|---|---|
+| `clinical_pearl` | → | `pearl` |
+| `exam_pearl` | → | `evidence` |
+| `teaching_point` | → | `note` |
+| `warning` | → | `danger` |
+| `radiology_pearl` | → | `evidence` |
+
+**Quality Gate:** At least 60% of callouts must have `answer_evidence` populated.
+
+#### visual_refs[] Object
 ```json
 {
-  "surface_id": 7,
-  "domain": "system",
-  "content_type": "user_preferences",
-  "required_fields": {
-    "theme_selection": {
-      "available_themes": ["string"],
-      "current_theme": "string"
-    },
-    "display_settings": {
-      "font_size": "enum",
-      "layout_mode": "enum",
-      "motion_enabled": "boolean",
-      "haptic_enabled": "boolean",
-      "sound_enabled": "boolean"
-    },
-    "learning_settings": {
-      "daily_goal": "number",
-      "notification_enabled": "boolean",
-      "show_hints": "boolean"
-    },
-    "privacy_settings": {
-      "data_tracking": "boolean",
-      "analytics": "boolean"
-    }
-  },
-  "customizable": false,
-  "system_config": true
+  "id": "visual_[module_short]_[descriptor]_[N]",
+  "type": "diagram | radiograph | photo | chart | table | flowchart | microscopy | anatomy_3d | illustration | screenshot",
+  "src": "app_data/domains/materi/modules/[module_id]/assets/[filename].png",
+  "alt": "Detailed alt text for screen readers and AI processing.",
+  "caption": "Short display caption shown under the image.",
+  "source_slide": 14,
+  "clinical_relevance": "Why this image matters clinically.",
+  "needs_generation": true
+}
+```
+
+`needs_generation: true` = image must be AI-generated (not supplied from PDF). Set `false` if image is being supplied directly.
+
+#### glossary_refs[] Array
+```json
+["gls_neuro_nihss", "gls_neuro_tpa", "gls_neuro_penumbra"]
+```
+Array of glossary term IDs. Every ID listed here must exist in `module.glossary[]`.
+
+---
+
+### AI_ADDITIONS OBJECT SCHEMA
+
+Tracks all 40% AI-researched content (not from source PDFs).
+
+```json
+{
+  "section_id": "s05",
+  "type": "content | bullet | callout | glossary | summary | exam_focus",
+  "source_query": "What is the mechanism of tPA in acute ischemic stroke?",
+  "source_reference": "AHA/ASA 2019 Guidelines for Early Management of Acute Ischemic Stroke",
+  "confidence": "high | medium | low",
+  "note": "Optional: why this was added and how it complements PDF content"
+}
+```
+
+**Content Ratio Rule:**
+- 60% of all content must be traceable to source PDF pages
+- 40% may be AI-researched from authoritative sources (guidelines, textbooks, journals)
+- Every AI addition MUST be logged in `ai_additions[]`
+
+---
+
+### VISUAL_ASSET_MANIFEST OBJECT SCHEMA
+
+```json
+{
+  "id": "visual_[module_short]_[descriptor]_[N]",
+  "module_id": "mod_neuro_stroke_001",
+  "section_id": "s03",
+  "type": "diagram | radiograph | anatomy_3d | chart | flowchart | microscopy | table | illustration | photo | screenshot | reference_card",
+  "generation_prompt": "Detailed AI image generation prompt. Include: subject, style, labels, colors, clinical accuracy requirements.",
+  "alt": "Full alt text description.",
+  "status": "pending | generated | approved | replaced",
+  "src": "app_data/domains/materi/modules/[module_id]/assets/[filename].png"
 }
 ```
 
 ---
 
-### BATCH 2 SURFACES
+## PART B — EXAM_SET.JSON SCHEMA (SOAL DOMAIN)
 
-#### Surface 9: Typography Reading
+### File Location Patterns
+```
+Exam Asli:    app_data/domains/soal/exam_asli/[exam_id].json
+Bank Soal AI: app_data/domains/soal/bank_soal_ai/[exam_id].json
+```
+
+### Top-Level Structure
 ```json
 {
-  "surface_id": 9,
-  "domain": "materi",
-  "content_type": "detailed_prose",
-  "required_fields": {
-    "section_id": "string",
-    "heading": "string",
-    "subheading": "string",
-    "content_paragraphs": [
-      {
-        "order": "number",
-        "text": "string (200-500 words of detailed prose)"
-      }
-    ],
-    "visual_references": ["string"],
-    "callouts": [
-      {
-        "type": "info|warning|important",
-        "text": "string"
-      }
-    ],
-    "tables": [
-      {
-        "table_id": "string",
-        "title": "string",
-        "columns": ["string"],
-        "rows": [["string"]]
-      }
-    ],
-    "glossary_hover_terms": ["string"]
-  },
-  "customizable": true,
-  "source_domain": "materi"
+  "exam_id": "set_asli_NN",
+  "title": "Ujian Akhir Blok Neurologi 2025",
+  "type": "asli",
+  "subject": "Neurologi Klinis",
+  "year": "2025",
+  "questions": [...],
+  "metadata": {...}
 }
 ```
 
-#### Surface 10: Bullet Content
+### Top-Level Field Rules
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `exam_id` | string | YES | `set_asli_NN` or `bank_soal_ai_NN`. Must match the `id` registered in content_index. |
+| `title` | string | YES | Indonesian for asli (e.g., "Ujian Akhir Blok Neurologi 2025"). English/mixed for ai_generated. |
+| `type` | string | YES | Enum: `"asli"` or `"ai_generated"` ONLY. |
+| `subject` | string | YES | Medical block/subject (e.g., `"Neurologi Klinis"`, `"Kardiologi"`). |
+| `year` | string | YES | 4-digit year string. For ai_generated, use generation year. |
+| `questions` | object[] | YES | Array of question objects. Must not be empty. Minimum 10 questions per set. |
+| `metadata` | object | YES | Batch processing metadata block. See schema below. |
+
+---
+
+### QUESTION OBJECT SCHEMA
+
 ```json
 {
-  "surface_id": 10,
-  "domain": "materi",
-  "content_type": "structured_bullets",
-  "required_fields": {
-    "section_id": "string",
-    "heading": "string",
-    "bullet_structure": [
-      {
-        "level": "number (1-3)",
-        "text": "string (informative, complete sentence)",
-        "emphasis": "none|bold|important"
-      }
-    ],
-    "key_takeaways": ["string"],
-    "visual_reference": ["string"],
-    "related_glossary": ["string"]
-  },
-  "customizable": true,
-  "source_domain": "materi"
+  "number": 1,
+  "stem": "Full question text. Clinical vignette format preferred. 2–5 sentences.",
+  "options": [
+    "Option A text",
+    "Option B text",
+    "Option C text",
+    "Option D text"
+  ],
+  "answer_index": 0,
+  "explanation": "Why the correct answer is correct. Why distractors are wrong. 3–6 sentences.",
+  "confidence": "definite | probable | uncertain",
+  "answer_evidence": "Source citation or guideline reference.",
+  "topic_tags": ["Tag1", "Tag2"],
+  "difficulty": "easy | medium | hard"
 }
 ```
 
-#### Surface 11: Clinical Pearl
-```json
-{
-  "surface_id": 11,
-  "domain": "materi",
-  "content_type": "callouts_and_tips",
-  "required_fields": {
-    "pearls": [
-      {
-        "pearl_id": "string",
-        "type": "exam_tip|clinical|mnemonik|warning|radiology|surgical",
-        "title": "string",
-        "content": "string (1-2 sentences)",
-        "visual_ref": "asset_id|null",
-        "icon": "emoji"
-      }
-    ],
-    "section_mapping": [
-      {
-        "section_id": "string",
-        "relevant_pearls": ["string"]
-      }
-    ]
-  },
-  "customizable": true,
-  "source_domain": "materi"
-}
+#### Question Field Rules
+
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `number` | integer | YES | Sequential starting from 1. |
+| `stem` | string | YES | Full question text. Do NOT abbreviate. Clinical vignette preferred. |
+| `options` | string[4] | YES | EXACTLY 4 options. Index 0=A, 1=B, 2=C, 3=D. All options must be plausible. |
+| `answer_index` | integer | YES | 0-based index of correct option (0–3). |
+| `explanation` | string | YES | 3–6 sentences. Explain correct answer + why each distractor is wrong. |
+| `confidence` | string | YES | For asli: always `"definite"`. For ai_generated: `"definite"`, `"probable"`, or `"uncertain"`. |
+| `answer_evidence` | string | RECOMMENDED | Citation. Required for all `"definite"` confidence questions. |
+| `topic_tags` | string[] | OPTIONAL | 2–4 topic keywords for cross-referencing with modules. |
+| `difficulty` | string | OPTIONAL | `"easy"`, `"medium"`, or `"hard"`. |
+
+#### CRITICAL: Answer Index Rules
+```
+"options": ["A text", "B text", "C text", "D text"]
+              ↑           ↑           ↑           ↑
+           index 0     index 1     index 2     index 3
+
+"answer_index": 0  → Correct answer is "A text"
+"answer_index": 2  → Correct answer is "C text"
 ```
 
-#### Surface 12: Image Cards
-```json
-{
-  "surface_id": 12,
-  "domain": "materi",
-  "content_type": "visual_library",
-  "required_fields": {
-    "image_collection": [
-      {
-        "asset_id": "string",
-        "title": "string",
-        "description": "string",
-        "visual_type": "anatomy|clinical|diagram|infographic",
-        "file_path": "string",
-        "tags": ["string"],
-        "related_sections": ["string"],
-        "teaching_point": "string"
-      }
-    ],
-    "filters": {
-      "by_type": ["string"],
-      "by_section": ["string"],
-      "by_topic": ["string"]
-    },
-    "gallery_settings": {
-      "grid_columns": "number",
-      "card_size": "enum"
-    }
-  },
-  "customizable": true,
-  "source_domain": "materi"
-}
-```
+NEVER use 1-based indexing. NEVER use letter strings like `"A"` or `"B"` as `answer_index`.
 
-#### Surface 13: Media Viewer
-```json
-{
-  "surface_id": 13,
-  "domain": "materi",
-  "content_type": "3d_and_visual_reference",
-  "required_fields": {
-    "models_3d": [
-      {
-        "model_id": "string",
-        "title": "string",
-        "type": "anatomy|pathology",
-        "file_path": "string (GLB/GLTF)",
-        "interactive_hotspots": [
-          {
-            "id": "string",
-            "label": "string",
-            "tooltip": "string",
-            "position": [0, 0, 0]
-          }
-        ],
-        "teaching_notes": "string"
-      }
-    ],
-    "reference_images": [
-      {
-        "image_id": "string",
-        "title": "string",
-        "file_path": "string",
-        "description": "string"
-      }
-    ]
-  },
-  "customizable": true,
-  "source_domain": "materi"
-}
-```
+---
 
-#### Surface 14: Glossary
-```json
-{
-  "surface_id": 14,
-  "domain": "materi",
-  "content_type": "terms_and_definitions",
-  "required_fields": {
-    "glossary_terms": [
-      {
-        "term_id": "string",
-        "term": "string",
-        "pronunciation": "string|null",
-        "meaning": "string (100-200 words)",
-        "meaning_simple": "string (1-sentence simple version)",
-        "usage_context": "string",
-        "related_terms": ["string"],
-        "section_refs": ["string"],
-        "language_pair": {
-          "id": "string",
-          "en": "string",
-          "id": "string"
-        }
-      }
-    ],
-    "search_enabled": true,
-    "filter_by_section": true
-  },
-  "customizable": true,
-  "source_domain": "materi"
-}
-```
+### METADATA OBJECT SCHEMA
 
-#### Surface 15: Quick Summary
 ```json
 {
-  "surface_id": 15,
-  "domain": "materi",
-  "content_type": "condensed_key_points",
-  "required_fields": {
-    "module_id": "string",
-    "summary_points": [
-      {
-        "order": "number",
-        "point": "string (1-2 sentences, information dense)",
-        "emphasis_level": "high|medium|low"
-      }
-    ],
-    "key_takeaways_count": "number (8-15)",
-    "next_step_suggestion": "surface_id",
-    "related_visuals": ["string"],
-    "mnemonics": ["string"]
-  },
-  "customizable": true,
-  "source_domain": "materi"
-}
-```
-
-#### Surface 16: Bilingual
-```json
-{
-  "surface_id": 16,
-  "domain": "materi",
-  "content_type": "dual_language_explanation",
-  "required_fields": {
-    "section_id": "string",
-    "explanation_pairs": [
-      {
-        "pair_id": "string",
-        "id": "string",
-        "en": "string",
-        "complexity_level": "simple|intermediate|advanced"
-      }
-    ],
-    "language_toggle": true,
-    "glossary_support": true,
-    "pronunciation_guide": "bool"
-  },
-  "customizable": true,
-  "source_domain": "materi"
+  "metadata": {
+    "batch_id": "batch_1",
+    "source_pdf": "original_exam_filename.pdf",
+    "extraction_method": "vision_ocr | text_extraction | manual",
+    "total_questions": 40,
+    "processed_at": "2026-06-10",
+    "agent_notes": "Any processing notes or flags from the extracting agent."
+  }
 }
 ```
 
 ---
 
-### BATCH 3 SURFACES
+## PART C — CONTENT_INDEX.KIMI.JSON REGISTRATION
 
-#### Surface 17: Quiz
+After generating ANY module.json or exam_set.json, the file MUST be registered in:
+```
+app_data/runtime/content_index.kimi.json
+```
+
+### Registration Format for New Module
+
+Add to `lectureDomains[matching_domain].modules[]`:
 ```json
 {
-  "surface_id": 17,
-  "domain": "exam",
-  "content_type": "interactive_quiz",
-  "required_fields": {
-    "question": {
-      "id": "string",
-      "stem": "string",
-      "stimulus": "string|null",
-      "options": [
-        {
-          "id": "A|B|C|D|E",
-          "text": "string",
-          "is_correct": "boolean"
-        }
-      ]
-    },
-    "answer": {
-      "correct_id": "string",
-      "explanation_short": "string (1-2 sentences)",
-      "explanation_long": "string (100+ words)",
-      "supplementary_material": "string (200+ words)"
-    },
-    "metadata": {
-      "difficulty": "mudah|sedang|sulit",
-      "source": "string",
-      "topic_tags": ["string"],
-      "related_sections": ["string"]
-    }
-  },
-  "customizable": true,
-  "source_domain": "exam_asli|bank_soal_ai"
+  "id": "mod_[domain]_[slug]_[NNN]",
+  "title": "Module Title",
+  "sourceFile": "app_data/domains/materi/modules/[module_id]/module.json",
+  "topicTags": ["Tag1", "Tag2"],
+  "status": "active",
+  "domainId": "[domain_id]",
+  "order": 2,
+  "batchId": "batch_N",
+  "estimatedTimeMinutes": 180,
+  "sectionCount": 10,
+  "wordCount": 7500
 }
 ```
 
-#### Surface 18: Flashcard
+Also increment `lectureModuleCount` and domain's `moduleCount`.
+
+### Registration Format for New Exam Set
+
+Add to `examSets[]`:
 ```json
 {
-  "surface_id": 18,
-  "domain": "exam",
-  "content_type": "spaced_repetition_cards",
-  "required_fields": {
-    "flashcard": {
-      "id": "string",
-      "front": "string (question/prompt)",
-      "back": "string (answer/definition)",
-      "hint": "string|null"
-    },
-    "metadata": {
-      "difficulty": "mudah|sedang|sulit",
-      "category": "string",
-      "related_question_id": "string|null"
-    },
-    "tracking": {
-      "times_shown": "number",
-      "times_correct": "number",
-      "last_reviewed": "date|null"
-    }
-  },
-  "customizable": true,
-  "source_domain": "exam_asli|bank_soal_ai"
+  "id": "set_asli_NN",
+  "title": "Exam Set Title",
+  "type": "asli",
+  "questionCount": 40,
+  "sourceFile": "app_data/domains/soal/exam_asli/[exam_id].json",
+  "source_label": "Univ / Block Name"
 }
 ```
 
-#### Surface 19: Progress Dashboard (SYSTEM)
-```json
-{
-  "surface_id": 19,
-  "domain": "system",
-  "content_type": "metrics_and_tracking",
-  "required_fields": {
-    "metrics": {
-      "total_modules": "number",
-      "modules_completed": "number",
-      "completion_percent": "number",
-      "current_streak": "number (days)",
-      "total_quizzes": "number",
-      "average_score": "number"
-    },
-    "progress_by_section": [
-      {
-        "section_id": "string",
-        "name": "string",
-        "completion": "number (0-100)"
-      }
-    ],
-    "learning_insights": {
-      "strongest_areas": ["string"],
-      "areas_to_improve": ["string"],
-      "recommended_next": "string"
-    }
-  },
-  "customizable": false,
-  "system_generated": true
-}
-```
-
-#### Surface 22: QuickRef Modal
-```json
-{
-  "surface_id": 22,
-  "domain": "materi",
-  "content_type": "quick_reference_lookup",
-  "required_fields": {
-    "reference_items": [
-      {
-        "ref_id": "string",
-        "category": "string",
-        "title": "string",
-        "content": "string (concise)",
-        "tags": ["string"],
-        "pinnable": true
-      }
-    ],
-    "categories": ["string"],
-    "search_enabled": true,
-    "pin_feature": true
-  },
-  "customizable": true,
-  "source_domain": "materi"
-}
-```
-
-#### Surface 23: Help & Info
-```json
-{
-  "surface_id": 23,
-  "domain": "system",
-  "content_type": "static_content_and_states",
-  "required_fields": {
-    "sections": {
-      "help": [
-        {
-          "id": "string",
-          "title": "string",
-          "content": "string",
-          "category": "string"
-        }
-      ],
-      "about": {
-        "app_name": "string",
-        "version": "string",
-        "description": "string",
-        "credits": "string"
-      },
-      "privacy": {
-        "title": "string",
-        "content": "string (full privacy policy)"
-      }
-    },
-    "empty_states": {
-      "no_content": "message",
-      "loading": "message",
-      "error": "message",
-      "offline": "message"
-    }
-  },
-  "customizable": true,
-  "source_domain": "config"
-}
-```
+Also increment `examSetCount` and `examQuestionCount`.
 
 ---
 
-## 🔗 CONTENT DEPENDENCIES
+## PART D — VISUAL_ASSET_MANIFEST REGISTRATION
 
+After identifying ANY image/diagram in source PDFs, add an entry to:
 ```
-Domain Materi
-  └─ Surfaces: 2, 3, 4, 9, 10, 11, 12, 13, 14, 15, 16, 22
-
-Domain Exam Asli
-  └─ Surfaces: 17, 18
-
-Domain Bank Soal AI (Generated)
-  └─ Surfaces: 17, 18
-
-System/Generated
-  └─ Surfaces: 0, 1, 6, 7, 19, 23
+app_data/runtime/visual_asset_manifest.generated.json
 ```
+
+```json
+{
+  "id": "visual_neuro_ischemic_cascade_01",
+  "module_id": "mod_neuro_stroke_001",
+  "section_id": "s03",
+  "type": "diagram",
+  "generation_prompt": "Create a clean medical education diagram of the ischemic cascade...",
+  "alt": "Flowchart showing: ATP depletion → Na/K pump failure → glutamate release → calcium influx → cell death",
+  "status": "pending",
+  "src": "app_data/domains/materi/modules/mod_neuro_stroke_001/assets/ischemic_cascade.png"
+}
+```
+
+**Visual ID Naming Convention:**
+```
+visual_[module_short]_[descriptor]_[sequential_N]
+
+Examples:
+  visual_neuro_ischemic_cascade_01
+  visual_cardio_ecg_stemi_01
+  visual_pharmaco_receptor_map_01
+  visual_neuro_nihss_table_01
+```
+
+No two entries across ALL modules may share the same `id`.
 
 ---
 
-## 📝 FIELD VALIDATION RULES
+## PART E — SURFACE CONSUMPTION MAP
 
-For each surface content:
-- ✅ Required fields must not be empty
-- ✅ Text fields: minimum character count (varies by field)
-- ✅ Arrays: minimum/maximum item counts
-- ✅ References: must point to existing IDs
-- ✅ Assets: must reference valid file paths
-- ✅ IDs: must follow naming convention
+Which app surfaces consume which JSON fields:
+
+| Surface | Component | Key Fields Read |
+|---|---|---|
+| S3 PageLearning | Section list nav | `module.sections[].title`, `.summary`, `.content[0].text`, `.callouts[0]`, `.glossary_refs` |
+| S4 PageSlideDetail | Chapter nav | `module.sections[].title`, `.estimated_time_minutes` |
+| S5 PageLearningContent | Full reader | `module.sections[]` — all fields |
+| S6 PageSearch | Search results | `contentIndex.lectureDomains[].modules[].title`, `.topicTags`; `contentIndex.examSets[].title` |
+| S9 PageModuleIntro | Hero card | `module.title`, `.subtitle`, `.domain`, `.topicTags`, `.summary[0]` |
+| S10 PageModuleLearn | Section reader | `module.sections[].content[]`, `.callouts[]`, `.visual_refs[]`, `.glossary_refs[]` |
+| S11 PageModuleSummary | Summary list | `module.summary[]` |
+| S12 PageModuleExam | Exam tips | `module.exam_focus[]` |
+| S13 PageModuleVisual | Image gallery | `module.visual_asset_manifest[]` |
+| S14 PageModuleGlossary | Term list | `module.glossary[]` |
+| S15 PageModuleBilingual | Bilingual | `module.bilingual[]`, `sections[].bilingual` |
+| S16 PageModuleProgress | Progress | `module.sections[].id`, `.title`, `.estimated_time_minutes` |
+| S17 PageQuiz | Quiz engine | `examSet.questions[]` — all fields |
+| S18 PageFlashcard | Flip cards | `module.glossary[]` (front mode); `examSet.questions[]` (exam mode) |
+| S22 PageQuickRefModal | Pearl list | `module.sections[].callouts[]` where `tone` in {pearl, evidence, caution, danger} |
 
 ---
 
-## Next Section: Refined Prompts + Batch 1 Details
+## PART F — SCHEMA VALIDATION QUICK REFERENCE
 
-[Continued in next part...]
+Before submitting any generated JSON, verify ALL of the following:
+
+### module.json Checklist
+- [ ] `id` is unique, follows `mod_[domain]_[slug]_[NNN]` format
+- [ ] `sections[]` has 6–12 entries with sequential `s01`–`sNN` IDs
+- [ ] Every ID in `glossary_refs[]` has a matching entry in `module.glossary[]`
+- [ ] Callout `tone` values use ONLY: `pearl`, `evidence`, `note`, `caution`, `danger`
+- [ ] At least 60% of callouts have `answer_evidence` populated
+- [ ] `summary[]` has 5–10 string entries
+- [ ] `exam_focus[]` has 5–10 string entries
+- [ ] All non-PDF content logged in `ai_additions[]`
+- [ ] Content ratio is approximately 60% PDF-sourced / 40% AI-researched
+- [ ] File registered in `content_index.kimi.json`
+- [ ] All identified images registered in `visual_asset_manifest.generated.json`
+
+### exam_set.json Checklist
+- [ ] `exam_id` follows `set_asli_NN` or `bank_soal_ai_NN` naming
+- [ ] `type` is exactly `"asli"` or `"ai_generated"` (no other values)
+- [ ] Every question has EXACTLY 4 options
+- [ ] `answer_index` is an integer 0–3 (not a letter, not 1-based)
+- [ ] Every question has `explanation` (3–6 sentences)
+- [ ] At least 80% of questions have `answer_evidence`
+- [ ] `metadata` block is complete with `batch_id`, `source_pdf`, `processed_at`
+- [ ] File registered in `content_index.kimi.json`
+- [ ] `examSetCount` and `examQuestionCount` updated in content_index
+
+---
+
+## PART G — ID ALLOCATION TABLES
+
+Use these ranges to prevent ID collisions across batches:
+
+### Module ID Ranges
+| Batch | Module ID Range |
+|---|---|
+| Batch 1 (demo) | `mod_*_001` |
+| Batch 2 | `mod_*_002` – `mod_*_011` |
+| Batch 3 | `mod_*_012` – `mod_*_021` |
+| Batch 4 | `mod_*_022` – `mod_*_031` |
+
+### Exam Set ID Ranges
+| Type | Batch | ID Range |
+|---|---|---|
+| Exam Asli | Batch 1 | `set_asli_01` – `set_asli_03` |
+| Exam Asli | Batch 2 | `set_asli_04` – `set_asli_06` |
+| Bank Soal AI | Batch 1 | `bank_soal_ai_01` – `bank_soal_ai_05` |
+| Bank Soal AI | Batch 2 | `bank_soal_ai_06` – `bank_soal_ai_10` |
+
+### Visual Asset ID Ranges
+| Module Short | Starting N |
+|---|---|
+| `neuro` | 01 |
+| `cardio` | 01 |
+| `pharmaco` | 01 |
+| `anatomy` | 01 |
+| Rule | Each module starts from `_01` — use module prefix to avoid collision |
+
+---
+
+*This document supersedes all partial schema references in individual package guides.*  
+*Ground truth example: `app_data/domains/materi/modules/mod_neuro_stroke_001/module.json`*  
+*Last updated: 2026-06-10 | Batch 4 Anchor*
