@@ -14027,6 +14027,7 @@
         { id: 'featherless', label: 'Gemma 3 4B', shortLabel: 'Gemma 4B', provider: 'Featherless', color: '#a855f7', ready: featherlessReady },
         { id: 'featherless-12b', label: 'Gemma 3 12B', shortLabel: 'Gemma 12B', provider: 'Featherless', color: '#c084fc', ready: featherlessReady },
         { id: 'minimax', label: 'MiniMax 3', shortLabel: 'MiniMax', provider: 'MiniMax', color: '#f59e0b', ready: minimaxReady },
+        { id: 'minimax-m3', label: 'MiniMax M3', shortLabel: 'MiniMax M3', provider: 'MiniMax', color: '#f97316', ready: minimaxReady },
       ];
       const imageModels = [
         { id: 'gemini', label: 'Gemini 3.1 Flash', sub: 'Gemini Image', color: '#06d6a0', bgGrad: 'linear-gradient(135deg,#06d6a0,#0ea5e9)' },
@@ -14151,6 +14152,7 @@
             featherless: `Kamu adalah Gemma 3 4B (bukan Gemini), model open-source Google via Featherless AI, di CORTEX AI Workspace. ${FMT}`,
             'featherless-12b': `Kamu adalah Gemma 3 12B (bukan Gemini), model open-source Google via Featherless AI, di CORTEX AI Workspace. ${FMT}`,
             minimax: `Kamu adalah MiniMax 3, AI buatan MiniMax, di CORTEX AI Workspace. ${FMT}`,
+            'minimax-m3': `Kamu adalah MiniMax M3, AI buatan MiniMax, di CORTEX AI Workspace. ${FMT}`,
           };
           const sysTxt = sysPrompts[chatModel] || '';
           function withSysMsg(msgs, aiRole) { return sysTxt ? [{ role: 'user', content: sysTxt }, { role: aiRole, content: 'Siap, saya mengerti.' }, ...msgs] : msgs; }
@@ -14181,10 +14183,11 @@
             const p = await cortexRequest({ provider: 'deepseek', route: '/providers/deepseek/chat/completions', signal, body: { model: providerModel('deepseek', 'chat'), messages: sysTxt ? [{ role: 'system', content: sysTxt }, ...dMsgs] : dMsgs, temperature: 0.7, max_tokens: 8192 }, directRoute: deepseekChatUrl() });
             text = extractText(p) || 'DeepSeek tidak mengembalikan respons.';
           }
-          else if (chatModel === 'minimax') {
+          else if (chatModel === 'minimax' || chatModel === 'minimax-m3') {
             const mMsgs = toMsgsWithImage(history, finalPrompt, 'assistant', attached && !hasBinaryDoc ? attached : null);
             const mSys = sysPrompts[chatModel] || '';
-            const p = await cortexRequest({ provider: 'minimax', route: '/providers/minimax/chat/completions', signal, body: { model: providerModel('minimax', 'chat'), messages: mSys ? [{ role: 'system', content: mSys }, ...mMsgs] : mMsgs, temperature: 0.7, max_tokens: 8192 }, directRoute: minimaxChatUrl() });
+            const requestModel = chatModel === 'minimax-m3' ? 'MiniMax-M3' : providerModel('minimax', 'chat');
+            const p = await cortexRequest({ provider: 'minimax', route: '/providers/minimax/chat/completions', signal, body: { model: requestModel, messages: mSys ? [{ role: 'system', content: mSys }, ...mMsgs] : mMsgs, temperature: 0.7, max_tokens: 8192 }, directRoute: minimaxChatUrl() });
             text = extractText(p) || 'MiniMax tidak mengembalikan respons.';
           }
           else {

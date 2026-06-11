@@ -120,6 +120,13 @@ const CURATED_CATALOG = {
       provider: "MiniMax",
       route: "/providers/minimax/chat/completions",
     },
+    {
+      id: "MiniMax-M3",
+      label: "MiniMax M3",
+      note: "Model unggulan (flagship) MiniMax untuk coding, tugas agentik, dan konteks panjang.",
+      provider: "MiniMax",
+      route: "/providers/minimax/chat/completions",
+    },
   ],
   visual: [
     {
