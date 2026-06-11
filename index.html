@@ -17981,7 +17981,7 @@
                       borderRadius: 13,
                       background: isSel
                         ? `linear-gradient(135deg,${DL.accent}2e,${DL.accentB}18)`
-                        : `linear-gradient(135deg,${DL.glass},${DL.surface}99)`,
+                        : `linear-gradient(135deg,${DL.glass},${String(DL.surface || '').startsWith('rgb') ? DL.surface : DL.surface + '99'})`,
                       border: isSel
                         ? `1px solid ${DL.accent}55`
                         : `1px solid ${DL.glassBorder}`,
@@ -18049,7 +18049,7 @@
                     borderRadius: 14,
                     background: isSel
                       ? `linear-gradient(135deg,${DL.gold}2e,${DL.accent}18)`
-                      : `linear-gradient(135deg,${DL.glass},${DL.surface}99)`,
+                      : `linear-gradient(135deg,${DL.glass},${String(DL.surface || '').startsWith('rgb') ? DL.surface : DL.surface + '99'})`,
                     border: isSel
                       ? `1px solid ${DL.gold}55`
                       : `1px solid ${DL.glassBorder}`,
