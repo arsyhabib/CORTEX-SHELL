@@ -299,9 +299,13 @@ const server = createServer(async (req, res) => {
         max_tokens: body.max_tokens ?? 512,
         stream: false,
       };
-      const data = await fetchJson(`${PROVIDER_CONFIG.minimax.baseUrl}/chat/completions`, {
+      const apiKey = PROVIDER_CONFIG.minimax.apiKey;
+      const baseUrl = apiKey.startsWith("sk-cp-")
+        ? "https://api.minimax.io/v1"
+        : "https://api.minimax.chat/v1";
+      const data = await fetchJson(`${baseUrl}/chat/completions`, {
         method: "POST",
-        headers: authHeaders(PROVIDER_CONFIG.minimax.apiKey),
+        headers: authHeaders(apiKey),
         body: JSON.stringify(payload),
       });
       writeJson(res, 200, data);

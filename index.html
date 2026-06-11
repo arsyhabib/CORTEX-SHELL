@@ -13860,7 +13860,13 @@
       function deepseekChatUrl() { return 'https://api.deepseek.com/chat/completions'; }
       function featherlessChatUrl() { return 'https://api.featherless.ai/v1/chat/completions'; }
       function openaiChatUrl() { return 'https://api.openai.com/v1/chat/completions'; }
-      function minimaxChatUrl() { return 'https://api.minimax.chat/v1/chat/completions'; }
+      function minimaxChatUrl() {
+        const key = providerKey('minimax');
+        if (key.startsWith('sk-cp-')) {
+          return 'https://api.minimax.io/v1/chat/completions';
+        }
+        return 'https://api.minimax.chat/v1/chat/completions';
+      }
       function openaiImageUrl() { return 'https://api.openai.com/v1/images/generations'; }
       function openaiTtsUrl() { return 'https://api.openai.com/v1/audio/speech'; }
       function openaiVideoUrl() { return 'https://api.openai.com/v1/video/generations'; }

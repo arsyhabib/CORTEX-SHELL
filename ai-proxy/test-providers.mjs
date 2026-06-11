@@ -180,6 +180,20 @@ if (process.env.OPENAI_API_KEY) {
   );
 }
 
+if (process.env.MINIMAX_API_KEY) {
+  tests.push({
+    name: "minimax-chat",
+    run: () => postJson("/providers/minimax/chat/completions", {
+      model: "minimax-3",
+      messages: [
+        { role: "user", content: "Balas persis: MINIMAX SIAP" },
+      ],
+      temperature: 0,
+      max_tokens: 24,
+    }),
+  });
+}
+
 const results = [];
 for (const test of tests) {
   const startedAt = Date.now();
