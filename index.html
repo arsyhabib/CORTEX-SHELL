@@ -17132,6 +17132,7 @@
       const compact = mode !== 'desktop';
       const allowFabDrag = mode === 'desktop';
       const [fabOpen, setFabOpen] = React.useState(false);
+      const [hoveredActionId, setHoveredActionId] = React.useState(null);
       const lectureDomainsList = Array.isArray(contentIndex && contentIndex.lectureDomains) ? contentIndex.lectureDomains : [];
       // Progress summary data (from contentIndex for Page 19 preview)
       const cortexProgressStats = React.useMemo(() => {
@@ -17623,37 +17624,93 @@
                 borderColor: DL.glassBorder,
               }
             },
-              React.createElement('div', { style: { color: DL.text, fontSize: 13, fontWeight: 900, marginBottom: 8 } }, 'Quick Actions'),
+              React.createElement('div', {
+                style: {
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  color: DL.text,
+                  fontSize: 12,
+                  fontWeight: 900,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                  marginBottom: 10,
+                }
+              },
+                React.createElement('span', { style: { color: currentTheme.colors.accent1 } }, '✦'),
+                'Quick Actions'
+              ),
               React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-                CORTEX_STUDIO_QUICK_ACTIONS.map(function (btn) {
+                CORTEX_STUDIO_QUICK_ACTIONS.map(function (btn, idx) {
+                  const isHovered = hoveredActionId === btn.id;
                   return React.createElement('button', {
                     key: btn.id, type: 'button',
                     onClick: function () { onNavigate && onNavigate(btn.page); },
+                    onMouseEnter: function () { setHoveredActionId(btn.id); },
+                    onMouseLeave: function () { setHoveredActionId(null); },
                     className: 'cortex-motion-press',
                     style: {
-                      display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px',
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
                       borderRadius: 14, cursor: 'pointer', textAlign: 'left',
-                      background: 'rgba(255,255,255,0.05)', border: '1px solid ' + DL.glassBorder,
-                      color: DL.text, transition: 'all 0.2s ease', width: '100%',
+                      width: '100%',
+                      background: isHovered
+                        ? `linear-gradient(135deg, ${currentTheme.colors.accent1}1f, rgba(255,255,255,0.08) 50%, ${currentTheme.colors.accent2 || currentTheme.colors.accent1}0c)`
+                        : 'rgba(255,255,255,0.04)',
+                      border: '1px solid ' + (isHovered ? `${currentTheme.colors.accent1}44` : DL.glassBorder),
+                      color: DL.text,
+                      boxShadow: isHovered
+                        ? `0 6px 20px ${currentTheme.colors.shadowColor || 'rgba(0,0,0,0.3)'}, 0 0 10px ${currentTheme.colors.accent1}1a`
+                        : 'none',
+                      transform: isHovered ? 'translateY(-2px) scale(1.015)' : 'translateY(0) scale(1)',
+                      transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                      animation: 'buttery-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both',
+                      animationDelay: `${0.1 + idx * 0.04}s`,
                     }
                   },
                     React.createElement('div', {
                       style: {
-                        width: 34, height: 34, flex: '0 0 auto', borderRadius: 11,
+                        width: 3,
+                        height: isHovered ? 22 : 8,
+                        borderRadius: 1.5,
+                        background: isHovered
+                          ? `linear-gradient(to bottom, ${currentTheme.colors.accent1}, ${currentTheme.colors.accent2 || currentTheme.colors.accent1})`
+                          : 'rgba(255,255,255,0.12)',
+                        boxShadow: isHovered ? `0 0 6px ${currentTheme.colors.accent1}` : 'none',
+                        transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                        marginRight: -2,
+                        flexShrink: 0,
+                      }
+                    }),
+                    React.createElement('div', {
+                      style: {
+                        width: 32, height: 32, flex: '0 0 auto', borderRadius: 10,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: `linear-gradient(135deg, ${currentTheme.colors.accent1}22, ${currentTheme.colors.accent2}14)`,
-                        border: `1px solid ${DL.glassBorder}`,
+                        background: isHovered
+                          ? `linear-gradient(135deg, ${currentTheme.colors.accent1}33, ${currentTheme.colors.accent2 || currentTheme.colors.accent1}22)`
+                          : `linear-gradient(135deg, ${currentTheme.colors.accent1}1a, ${currentTheme.colors.accent2 || currentTheme.colors.accent1}0e)`,
+                        border: `1px solid ${isHovered ? currentTheme.colors.accent1 + '66' : DL.glassBorder}`,
+                        transform: isHovered ? 'scale(1.08) rotate(4deg)' : 'scale(1) rotate(0deg)',
+                        transition: 'all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
                       }
                     },
-                      React.createElement(CortexLuxeIcon, { name: btn.icon, size: 16, color: '#ffffff', accent: currentTheme.colors.accent1 })
+                      React.createElement(CortexLuxeIcon, { name: btn.icon, size: 14, color: isHovered ? '#ffffff' : 'rgba(255,255,255,0.85)', accent: currentTheme.colors.accent1 })
                     ),
                     React.createElement('div', { style: { minWidth: 0, flex: 1 } },
-                      React.createElement('div', { style: { fontSize: 13, fontWeight: 800, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, btn.label),
-                      React.createElement('div', { style: { fontSize: 9, color: DL.mute, marginTop: 2 } }, btn.sub),
+                      React.createElement('div', { style: { fontSize: 12.5, fontWeight: 850, lineHeight: 1.25, color: isHovered ? currentTheme.colors.accent1 : DL.text, transition: 'color 0.25s ease', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, btn.label),
+                      React.createElement('div', { style: { fontSize: 9, color: isHovered ? (DL.textSecondary || DL.sub) : DL.mute, transition: 'color 0.25s ease', marginTop: 2 } }, btn.sub),
                     ),
-                    React.createElement('svg', { width: 13, height: 13, viewBox: '0 0 24 24', fill: 'none', stroke: currentTheme.colors.accent1, strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', opacity: 0.7 },
-                      React.createElement('polyline', { points: '9 18 15 12 9 6' }),
-                    ),
+                    React.createElement('svg', {
+                      width: 12, height: 12, viewBox: '0 0 24 24', fill: 'none',
+                      stroke: isHovered ? currentTheme.colors.accent1 : DL.mute,
+                      strokeWidth: 2.5, strokeLinecap: 'round', strokeLinejoin: 'round',
+                      style: {
+                        opacity: isHovered ? 1 : 0.6,
+                        transform: isHovered ? 'translateX(3px)' : 'translateX(0)',
+                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      }
+                    },
+                      React.createElement('polyline', { points: '9 18 15 12 9 6' })
+                    )
                   );
                 })
               ),
