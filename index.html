@@ -12961,7 +12961,7 @@
       const fallback = {
         transportMode: 'auto',
         provider: 'CORTEX Secure Router',
-        providerLabel: 'Gemini + DeepSeek + Featherless + OpenAI via local secure proxy',
+        providerLabel: 'Gemini + DeepSeek + Featherless + OpenAI + MiniMax via local secure proxy',
         proxyUrl: '',
         mode: 'production',
         apiKeys: {
@@ -15876,6 +15876,7 @@
             { title: 'OpenAI', sub: openaiReady ? 'GPT-4.1 nano · GPT Image 2' : 'API key belum diisi', ready: openaiReady, color: DL.green },
             { title: 'DeepSeek', sub: deepseekReady ? 'V4 Flash reasoning' : 'API key belum diisi', ready: deepseekReady, color: DL.accentB },
             { title: 'Featherless', sub: featherlessReady ? 'Gemma 3 4B · 12B · Vision' : 'API key belum diisi', ready: featherlessReady, color: DL.accent },
+            { title: 'MiniMax', sub: minimaxReady ? 'MiniMax 3 chat completions' : 'API key belum diisi', ready: minimaxReady, color: '#f59e0b' },
           ].map(function (card) {
             return React.createElement('div', {
               key: card.title,
@@ -15933,7 +15934,7 @@
             React.createElement('span', { style: { width: 5, height: 5, borderRadius: '50%', background: connColor, flexShrink: 0 } }),
             React.createElement('span', null, proxyBase ? 'Proxy' : directMode ? 'Direct' : 'Secret-safe'),
             React.createElement('span', { style: { opacity: 0.4 } }, '·'),
-            React.createElement('span', null, `${[geminiReady, deepseekReady, featherlessReady, openaiReady].filter(Boolean).length}/4 active`),
+            React.createElement('span', null, `${[geminiReady, deepseekReady, featherlessReady, openaiReady, minimaxReady].filter(Boolean).length}/5 active`),
           ),
           React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 4 } },
             React.createElement('span', { style: { opacity: 0.5 } }, `Chat · Image · Video · TTS`),
@@ -16041,13 +16042,14 @@
 
     function PageProviderAdvancedSettings({ onNavigate }) {
       const initialRuntime = React.useMemo(cortexReadAIWorkspaceRuntime, []);
-      const [providerEnabled, setProviderEnabled] = React.useState(Boolean(initialRuntime.proxyUrl || initialRuntime.apiKeys && (initialRuntime.apiKeys.gemini || initialRuntime.apiKeys.deepseek || initialRuntime.apiKeys.featherless || initialRuntime.apiKeys.openai)));
+      const [providerEnabled, setProviderEnabled] = React.useState(Boolean(initialRuntime.proxyUrl || initialRuntime.apiKeys && (initialRuntime.apiKeys.gemini || initialRuntime.apiKeys.deepseek || initialRuntime.apiKeys.featherless || initialRuntime.apiKeys.openai || initialRuntime.apiKeys.minimax)));
       const [transportMode, setTransportMode] = React.useState(initialRuntime.transportMode || (initialRuntime.proxyUrl ? 'proxy' : 'direct'));
       const [proxyUrl, setProxyUrl] = React.useState(initialRuntime.proxyUrl || '');
       const [geminiKey, setGeminiKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.gemini) || '');
       const [deepseekKey, setDeepseekKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.deepseek) || '');
       const [featherlessKey, setFeatherlessKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.featherless) || '');
       const [openaiKey, setOpenaiKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.openai) || '');
+      const [minimaxKey, setMinimaxKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.minimax) || '');
       const [hapticEnabled, setHapticEnabled] = React.useState(true);
       const [intensity, setIntensity] = React.useState('balanced');
       const [duration, setDuration] = React.useState(620);
@@ -16071,8 +16073,8 @@
           transportMode,
           provider: 'CORTEX Secure Router',
           providerLabel: transportMode === 'direct'
-            ? 'Direct browser calls to Gemini + DeepSeek + Featherless + OpenAI'
-            : 'Gemini + DeepSeek + Featherless + OpenAI via local secure proxy',
+            ? 'Direct browser calls to Gemini + DeepSeek + Featherless + OpenAI + MiniMax'
+            : 'Gemini + DeepSeek + Featherless + OpenAI + MiniMax via local secure proxy',
           proxyUrl,
           mode: 'production',
           apiKeys: {
@@ -16080,6 +16082,7 @@
             deepseek: deepseekKey.trim(),
             featherless: featherlessKey.trim(),
             openai: openaiKey.trim(),
+            minimax: minimaxKey.trim(),
           },
           providers: initialRuntime.providers,
         };
@@ -16097,7 +16100,7 @@
         React.createElement(B3Hero, {
           kicker: 'Provider architecture',
           title: 'Provider Router and Motion Controls',
-          subtitle: 'Gemini diutamakan untuk multimodal utama, DeepSeek untuk reasoning lane cepat, Featherless untuk model multimodal kecil pada Basic plan, dan OpenAI untuk chat cepat serta image low-output. Untuk mode pribadi, credential bisa disimpan lokal di browser dan dipakai langsung dari GitHub Pages.',
+          subtitle: 'Gemini diutamakan untuk multimodal utama, DeepSeek untuk reasoning lane cepat, Featherless untuk model multimodal kecil pada Basic plan, OpenAI untuk chat cepat, dan MiniMax untuk advanced token plan plus. Untuk mode pribadi, credential bisa disimpan lokal di browser dan dipakai langsung dari GitHub Pages.',
           color: DL.gold,
         }),
 
@@ -16154,6 +16157,13 @@
               type: 'password',
               style: { width: '100%', padding: '11px 13px', borderRadius: 14, border: `1px solid ${DL.glassBorder}`, background: 'rgba(255,255,255,0.05)', color: DL.text, fontSize: 13 },
             }),
+            React.createElement('input', {
+              value: minimaxKey,
+              onChange: e => setMinimaxKey(e.target.value),
+              placeholder: 'MiniMax API key',
+              type: 'password',
+              style: { width: '100%', padding: '11px 13px', borderRadius: 14, border: `1px solid ${DL.glassBorder}`, background: 'rgba(255,255,255,0.05)', color: DL.text, fontSize: 13 },
+            }),
           ),
           React.createElement('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 12 } },
             React.createElement(B1Button, { label: 'Save runtime', onClick: saveRuntime, style: { minWidth: 138 } }),
@@ -16169,6 +16179,7 @@
                   setDeepseekKey((example.apiKeys && example.apiKeys.deepseek) || '');
                   setFeatherlessKey((example.apiKeys && example.apiKeys.featherless) || '');
                   setOpenaiKey((example.apiKeys && example.apiKeys.openai) || '');
+                  setMinimaxKey((example.apiKeys && example.apiKeys.minimax) || '');
                   setRuntimeSaveState('Contoh runtime dimuat. Isi key Anda sendiri lalu simpan.');
                 } catch (error) { }
               },
