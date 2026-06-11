@@ -14014,7 +14014,7 @@
       function buildOpenAiVisionMessages(promptText, reference) {
         const parts = [];
         if (reference && reference.base64) {
-          parts.push({ type: 'image_url', image_url: { url: `data:${reference.mimeType || 'image/png'};base64,${reference.base64}`, detail: 'auto' } });
+          parts.push({ type: 'image_url', image_url: { url: `data:${reference.mimeType || 'image/png'};base64,${reference.base64}` } });
         }
         if (promptText) parts.push({ type: 'text', text: promptText });
         return [{ role: 'user', content: parts.length ? parts : promptText }];
@@ -14136,7 +14136,7 @@
             return msgs.map(function (m, i) {
               if (i === msgs.length - 1 && m.role === 'user' && file && file.base64) {
                 const parts = [];
-                parts.push({ type: 'image_url', image_url: { url: `data:${file.mimeType || 'image/jpeg'};base64,${file.base64}`, detail: 'auto' } });
+                parts.push({ type: 'image_url', image_url: { url: `data:${file.mimeType || 'image/jpeg'};base64,${file.base64}` } });
                 if (m.content && m.content !== '(lampiran media)') parts.push({ type: 'text', text: m.content });
                 return { role: 'user', content: parts };
               }
