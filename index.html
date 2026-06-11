@@ -3947,6 +3947,42 @@
       color: #fff;
     }
 
+    .cx-md mark {
+      background: rgba(245, 158, 11, 0.22);
+      color: #fbbf24;
+      border-bottom: 1.5px solid rgba(245, 158, 11, 0.45);
+      padding: 0 4px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .cx-md u {
+      text-decoration: underline;
+      text-decoration-style: solid;
+      text-decoration-color: rgba(192, 132, 252, 0.45);
+      text-underline-offset: 3px;
+    }
+
+    .cx-md sup {
+      font-size: 0.72em;
+      vertical-align: super;
+      line-height: 0;
+      color: #c084fc;
+      font-weight: 600;
+      position: relative;
+      top: -0.2em;
+    }
+
+    .cx-md sub {
+      font-size: 0.72em;
+      vertical-align: sub;
+      line-height: 0;
+      color: #c084fc;
+      font-weight: 600;
+      position: relative;
+      bottom: -0.2em;
+    }
+
     .cx-md em,
     .cx-md i {
       font-style: italic;
@@ -13481,7 +13517,10 @@
           .replace(/(^|\n)[ \t]*[•◦‣▪◆·]\s+/g, '$1- ')
           .replace(/(^|\n)[ \t]*([–—])\s+/g, '$1- ')
           .replace(/(^|\n)[ \t]*([0-9]+)\)\s+/g, '$1$2. ')
-          .replace(/\n{3,}/g, '\n\n');
+          .replace(/\n{3,}/g, '\n\n')
+          .replace(/==([^=\n\r]+)==/g, '<mark>$1</mark>')
+          .replace(/\+\+([^\+\n\r]+)\+\+/g, '<u>$1</u>')
+          .replace(/\^([^\^\n\r ]+)\^/g, '<sup>$1</sup>');
       }).join('').trimEnd();
     }
     function cortexMarkdownExtractCodeBlocks(raw) {
@@ -13507,7 +13546,7 @@
     }
     function cortexMarkdownSanitizeHtml(html) {
       if (typeof document === 'undefined') return String(html || '');
-      const allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'BUTTON', 'CODE', 'DEL', 'DIV', 'EM', 'FIGURE', 'FIGCAPTION', 'H1', 'H2', 'H3', 'H4', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE', 'S', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TABLE', 'TBODY', 'TD', 'TH', 'THEAD', 'TR', 'UL']);
+      const allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'BUTTON', 'CODE', 'DEL', 'DIV', 'EM', 'FIGURE', 'FIGCAPTION', 'H1', 'H2', 'H3', 'H4', 'HR', 'I', 'IMG', 'LI', 'MARK', 'OL', 'P', 'PRE', 'S', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TABLE', 'TBODY', 'TD', 'TH', 'THEAD', 'TR', 'U', 'UL']);
       const dropCompletely = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'IFRAME', 'OBJECT', 'EMBED', 'LINK', 'META', 'SVG', 'MATH']);
       const allowedAttrsByTag = {
         A: new Set(['href', 'title', 'target', 'rel']),
@@ -13589,7 +13628,7 @@
       if (cortexMarkdownRendererCache) return cortexMarkdownRendererCache;
       if (typeof marked === 'undefined' || !marked || typeof marked.Renderer !== 'function') return null;
       const renderer = new marked.Renderer();
-      renderer.html = function (html) { return cortexMarkdownEscapeHtml(html); };
+      renderer.html = function (html) { return html; };
       renderer.heading = function (text, level) {
         const safeLevel = Math.max(1, Math.min(4, level || 1));
         return `<h${safeLevel} class="cx-md-heading cx-md-heading-${safeLevel}" data-level="${safeLevel}">${text}</h${safeLevel}>`;
