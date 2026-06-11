@@ -13877,7 +13877,10 @@
         if (!directMode) throw new Error('Proxy belum aktif. Pilih Direct mode di Provider Settings.');
         const key = providerKey(provider); if (!key) throw new Error('API key ' + provider + ' belum diisi.');
         const headers = { 'Content-Type': 'application/json' }; if (provider !== 'gemini') headers.Authorization = 'Bearer ' + key;
-        const sendBody = directBody !== undefined ? directBody : body;
+        let sendBody = directBody !== undefined ? directBody : body;
+        if (provider === 'minimax' && key.startsWith('sk-cp-') && sendBody && sendBody.model === 'minimax-3') {
+          sendBody = Object.assign({}, sendBody, { model: 'MiniMax-Text-01' });
+        }
         const r = await fetch(directRoute, Object.assign({ method: 'POST', headers, body: JSON.stringify(sendBody) }, sig)); const p = await r.json();
         if (!r.ok) throw new Error((p && p.error && p.error.message) || p.error || ('HTTP ' + r.status)); return p;
       }

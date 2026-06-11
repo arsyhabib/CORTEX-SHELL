@@ -300,7 +300,11 @@ const server = createServer(async (req, res) => {
         stream: false,
       };
       const apiKey = PROVIDER_CONFIG.minimax.apiKey;
-      const baseUrl = apiKey.startsWith("sk-cp-")
+      const isTokenPlan = apiKey.startsWith("sk-cp-");
+      if (isTokenPlan && payload.model === "minimax-3") {
+        payload.model = "MiniMax-Text-01";
+      }
+      const baseUrl = isTokenPlan
         ? "https://api.minimax.io/v1"
         : "https://api.minimax.chat/v1";
       const data = await fetchJson(`${baseUrl}/chat/completions`, {
