@@ -19570,9 +19570,10 @@
 
         // 1. Android/Chrome/Firefox (Standard Web Vibration API)
         if ('vibrate' in navigator) {
-          let duration = 12; // light
-          if (type === 'medium') duration = 24;
-          if (type === 'heavy') duration = 40;
+          // Increased base durations to ensure ERM and standard haptic motors can spin up
+          let duration = 35; // light (subtle tick)
+          if (type === 'medium') duration = 65; // medium (clear tap)
+          if (type === 'heavy') duration = 120; // heavy (distinct click/alert)
 
           const scaledDuration = Math.round(duration * (hapticIntensity / 100));
           if (scaledDuration > 0) {
@@ -19583,25 +19584,39 @@
         else {
           let iOSSwitch = document.getElementById('cortex-ios-haptic-trigger');
           if (!iOSSwitch) {
+            // Must keep elements in layout (no display:none, no offscreen left: -9999px)
+            // but completely invisible and non-blocking
             iOSSwitch = document.createElement('input');
             iOSSwitch.type = 'checkbox';
             iOSSwitch.setAttribute('switch', '');
             iOSSwitch.id = 'cortex-ios-haptic-trigger';
-            iOSSwitch.style.position = 'absolute';
-            iOSSwitch.style.opacity = '0';
+            iOSSwitch.style.position = 'fixed';
+            iOSSwitch.style.opacity = '0.001';
             iOSSwitch.style.pointerEvents = 'none';
             iOSSwitch.style.width = '1px';
             iOSSwitch.style.height = '1px';
-            iOSSwitch.style.left = '-9999px';
+            iOSSwitch.style.left = '0';
+            iOSSwitch.style.bottom = '0';
+            iOSSwitch.style.zIndex = '-9999';
 
             const label = document.createElement('label');
             label.htmlFor = 'cortex-ios-haptic-trigger';
             label.id = 'cortex-ios-haptic-label';
-            label.style.display = 'none';
+            label.style.position = 'fixed';
+            label.style.opacity = '0.001';
+            label.style.pointerEvents = 'none';
+            label.style.width = '1px';
+            label.style.height = '1px';
+            label.style.left = '0';
+            label.style.bottom = '0';
+            label.style.zIndex = '-9999';
 
             document.body.appendChild(iOSSwitch);
             document.body.appendChild(label);
           }
+          
+          // Trigger click on both the label and input to maximize iOS WebKit dispatch compatibility
+          iOSSwitch.click();
           const labelElement = document.getElementById('cortex-ios-haptic-label');
           if (labelElement) {
             labelElement.click();
