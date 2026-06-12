@@ -19568,6 +19568,8 @@
 
         const hapticIntensity = Number(localStorage.getItem('cortex.hapticIntensity') || '70');
 
+        console.log('[Cortex Haptic] Triggered:', type, 'Intensity:', hapticIntensity);
+
         // 1. Android/Chrome/Firefox (Standard Web Vibration API)
         if ('vibrate' in navigator) {
           // Increased base durations to ensure ERM and standard haptic motors can spin up
@@ -19615,10 +19617,10 @@
             document.body.appendChild(label);
           }
           
-          // Trigger click on both the label and input to maximize iOS WebKit dispatch compatibility
-          iOSSwitch.click();
           const labelElement = document.getElementById('cortex-ios-haptic-label');
           if (labelElement) {
+            // ONLY click the label to trigger the switch. Clicking BOTH input and label
+            // cancels out the state change instantly, which stops haptic from triggering!
             labelElement.click();
           }
         }
@@ -19627,9 +19629,12 @@
       }
     };
 
-    // Global event listener to capture tap/click events on interactive elements
-    document.addEventListener('pointerdown', function (e) {
-      const target = e.target.closest(
+    // Global touch/pointer handler
+    const handleTouchOrPointer = function (e) {
+      const targetElement = e.target.closest ? e.target : e.target.parentElement;
+      if (!targetElement || !targetElement.closest) return;
+
+      const target = targetElement.closest(
         '.cortex-motion-press, button, [role="button"], .b1-card, .b3-choice, input[type="range"], .cortex-dock-item, .cortex-sidebar-fab, .cortex-action-btn'
       );
       if (!target) return;
@@ -19654,7 +19659,15 @@
       }
 
       window.cortexTriggerHaptic(type);
-    }, { passive: true });
+    };
+
+    // Register with capture phase to run BEFORE React's stopPropagation/capture logic
+    document.addEventListener('touchstart', handleTouchOrPointer, { capture: true, passive: true });
+    document.addEventListener('mousedown', function(e) {
+      // Avoid firing twice on mobile (which fires touchstart and then mousedown)
+      if (e.detail === 0 || (window.TouchEvent && e instanceof TouchEvent)) return;
+      handleTouchOrPointer(e);
+    }, { capture: true, passive: true });
   </script>
 
   <script type="text/babel">
