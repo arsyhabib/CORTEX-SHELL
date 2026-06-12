@@ -90,6 +90,81 @@
       --cortex-text-zoom: 1;
     }
 
+    /* ── High-Performance & Reduced Motion overrides ── */
+    .cortex-reduced-motion {
+      --cortex-theme-blur: 0px !important;
+      --cortex-tilt-x: 0 !important;
+      --cortex-tilt-y: 0 !important;
+      --cortex-depth-x: 0px !important;
+      --cortex-depth-y: 0px !important;
+      --cortex-wallpaper-shift-x: 0px !important;
+      --cortex-wallpaper-shift-y: 0px !important;
+      --cortex-card-tilt-x: 0deg !important;
+      --cortex-card-tilt-y: 0deg !important;
+      --cortex-card-shift-x: 0px !important;
+      --cortex-card-shift-y: 0px !important;
+      --cortex-button-tilt-x: 0deg !important;
+      --cortex-button-tilt-y: 0deg !important;
+      --cortex-button-shift-x: 0px !important;
+      --cortex-button-shift-y: 0px !important;
+    }
+
+    .cortex-reduced-motion *,
+    .cortex-reduced-motion *::after,
+    .cortex-reduced-motion *::before {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+
+    .cortex-reduced-motion .cortex-motion-page>*,
+    .cortex-reduced-motion .cortex-motion-card,
+    .cortex-reduced-motion button {
+      animation-name: buttery-pop-optimized !important;
+      animation-duration: 0.22s !important;
+      animation-delay: 0s !important;
+      animation-fill-mode: both !important;
+      animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    @keyframes buttery-pop-optimized {
+      0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .cortex-reduced-motion .cortex-library-content.cortex-page-enter-forward,
+    .cortex-reduced-motion .cortex-library-content.cortex-page-enter-back {
+      animation-duration: 0.22s !important;
+      animation-name: cortex-page-enter-optimized !important;
+      animation-delay: 0s !important;
+    }
+
+    @keyframes cortex-page-enter-optimized {
+      0% {
+        opacity: 0;
+        transform: translate3d(12px, 0, 0);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    .cortex-reduced-motion .cortex-wallpaper-layer,
+    .cortex-reduced-motion .cortex-theme-bubble-orb,
+    .cortex-reduced-motion .cortex-live-ribbon,
+    .cortex-reduced-motion [class*="float"],
+    .cortex-reduced-motion [class*="shimmer"],
+    .cortex-reduced-motion [style*="animation"] {
+      animation: none !important;
+      transform: none !important;
+    }
+
     /* ═══════════════════════════════════════════
    KEYFRAME ANIMATIONS
    ═══════════════════════════════════════════ */
@@ -9830,7 +9905,7 @@
        PAGE 7 — SETTINGS BASIC
        Clean settings with haptic/tactile controls
        ═══════════════════════════════════════════ */
-    function PageSettings({ onNavigate, themeId: themeIdProp, theme: themeProp, onThemeChange, highlightTone: highlightToneProp, onHighlightToneChange }) {
+    function PageSettings({ onNavigate, themeId: themeIdProp, theme: themeProp, onThemeChange, highlightTone: highlightToneProp, onHighlightToneChange, reducedMotion: reducedMotionProp, onReducedMotionChange }) {
       const themeKeys = ['neural', 'aurora', 'gold', 'neon', 'bloom', 'monochrome'];
       const [localThemeId, setLocalThemeId] = React.useState('neural');
       const currentThemeId = themeIdProp || localThemeId;
@@ -9847,7 +9922,9 @@
       const [hapticIntensity, setHapticIntensity] = React.useState(70);
       const [notifications, setNotifications] = React.useState(true);
       const [autoPlay, setAutoPlay] = React.useState(false);
-      const [reducedMotion, setReducedMotion] = React.useState(false);
+      const [localReducedMotion, setLocalReducedMotion] = React.useState(false);
+      const reducedMotion = reducedMotionProp !== undefined ? reducedMotionProp : localReducedMotion;
+      const setReducedMotion = onReducedMotionChange || setLocalReducedMotion;
       const [accountLoggedIn, setAccountLoggedIn] = React.useState(() => {
         const stored = cortexGetStorage('cortex.accountLoggedIn', null);
         return stored === null ? true : stored === '1';
@@ -16598,6 +16675,10 @@
         let resetInterval = null;
 
         const onPointerMove = (e) => {
+          if (document.documentElement.classList.contains('cortex-reduced-motion')) {
+            cortexSetMotionVars(0, 0, 0);
+            return;
+          }
           if (frame) cancelAnimationFrame(frame);
           if (resetInterval) {
             cancelAnimationFrame(resetInterval);
@@ -16651,6 +16732,10 @@
         const write = (nextX, nextY, force) => {
           if (motionRef.current.frame) cancelAnimationFrame(motionRef.current.frame);
           motionRef.current.frame = requestAnimationFrame(() => {
+            if (document.documentElement.classList.contains('cortex-reduced-motion')) {
+              cortexSetMotionVars(0, 0, 0);
+              return;
+            }
             motionRef.current.x = motionRef.current.x * 0.79 + nextX * 0.21;
             motionRef.current.y = motionRef.current.y * 0.79 + nextY * 0.21;
             cortexSetMotionVars(motionRef.current.x, motionRef.current.y, force || 0);
@@ -18332,6 +18417,25 @@
       const [highlightTone, setHighlightTone] = React.useState(() => {
         return cortexGetStorage('cortex.highlightTone', 'theme');
       });
+      const [reducedMotion, setReducedMotion] = React.useState(() => {
+        const stored = cortexGetStorage('cortex.reducedMotion', null);
+        if (stored !== null) return stored === '1';
+        if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
+          const ua = navigator.userAgent.toLowerCase();
+          const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+          return isMobile;
+        }
+        return false;
+      });
+
+      React.useEffect(() => {
+        cortexSetStorage('cortex.reducedMotion', reducedMotion ? '1' : '0');
+        if (reducedMotion) {
+          document.documentElement.classList.add('cortex-reduced-motion');
+        } else {
+          document.documentElement.classList.remove('cortex-reduced-motion');
+        }
+      }, [reducedMotion]);
       const [textZoom, setTextZoom] = React.useState(() => {
         const stored = Number(cortexGetStorage('cortex.textZoom', '1'));
         return Number.isFinite(stored) && stored >= 0.88 && stored <= 1.24 ? stored : 1;
@@ -18983,6 +19087,8 @@
           onThemeChange: setThemeId,
           highlightTone,
           onHighlightToneChange: setHighlightTone,
+          reducedMotion,
+          onReducedMotionChange: setReducedMotion,
           contentIndex,
           contentIndexStatus,
           visualManifest,
