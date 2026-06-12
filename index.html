@@ -9918,9 +9918,21 @@
         ? '#ffd84f'
         : currentTheme.colors.accent1;
       const [darkMode, setDarkMode] = React.useState(true);
-      const [haptic, setHaptic] = React.useState(true);
-      const [hapticIntensity, setHapticIntensity] = React.useState(70);
+      const [haptic, setHaptic] = React.useState(() => {
+        return cortexGetStorage('cortex.haptic', '1') === '1';
+      });
+      const [hapticIntensity, setHapticIntensity] = React.useState(() => {
+        return Number(cortexGetStorage('cortex.hapticIntensity', '70'));
+      });
       const [notifications, setNotifications] = React.useState(true);
+
+      React.useEffect(() => {
+        cortexSetStorage('cortex.haptic', haptic ? '1' : '0');
+      }, [haptic]);
+
+      React.useEffect(() => {
+        cortexSetStorage('cortex.hapticIntensity', String(hapticIntensity));
+      }, [hapticIntensity]);
       const [autoPlay, setAutoPlay] = React.useState(false);
       const [localReducedMotion, setLocalReducedMotion] = React.useState(false);
       const reducedMotion = reducedMotionProp !== undefined ? reducedMotionProp : localReducedMotion;
@@ -10143,7 +10155,14 @@
                 ),
                 React.createElement('input', {
                   type: 'range', min: 0, max: 100, value: hapticIntensity,
-                  onChange: e => setHapticIntensity(Number(e.target.value)),
+                  onChange: e => {
+                    const val = Number(e.target.value);
+                    setHapticIntensity(val);
+                    localStorage.setItem('cortex.hapticIntensity', String(val));
+                    if (window.cortexTriggerHaptic) {
+                      window.cortexTriggerHaptic('light');
+                    }
+                  },
                   style: { width: '100%', accentColor: DL.accent },
                 }),
               ),
@@ -10154,6 +10173,14 @@
                     : hapticIntensity <= 66 && i === 1 ? DL.accent
                       : hapticIntensity > 66 && i === 2 ? DL.accent : undefined,
                   style: { flex: 1, justifyContent: 'center', cursor: 'pointer', fontSize: 9 },
+                  onClick: () => {
+                    const val = i === 0 ? 30 : i === 1 ? 65 : 100;
+                    setHapticIntensity(val);
+                    localStorage.setItem('cortex.hapticIntensity', String(val));
+                    if (window.cortexTriggerHaptic) {
+                      window.cortexTriggerHaptic(i === 0 ? 'light' : i === 1 ? 'medium' : 'heavy');
+                    }
+                  }
                 }, l)),
               ),
               React.createElement('div', { style: { fontSize: 10, color: DL.mute, marginTop: 8 } },
@@ -16182,13 +16209,19 @@
       const [featherlessKey, setFeatherlessKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.featherless) || '');
       const [openaiKey, setOpenaiKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.openai) || '');
       const [minimaxKey, setMinimaxKey] = React.useState((initialRuntime.apiKeys && initialRuntime.apiKeys.minimax) || '');
-      const [hapticEnabled, setHapticEnabled] = React.useState(true);
+      const [hapticEnabled, setHapticEnabled] = React.useState(() => {
+        return cortexGetStorage('cortex.haptic', '1') === '1';
+      });
       const [intensity, setIntensity] = React.useState('balanced');
       const [duration, setDuration] = React.useState(620);
       const [visualFallback, setVisualFallback] = React.useState(true);
       const [uploadMode, setUploadMode] = React.useState('inline');
       const [runtimeSaveState, setRuntimeSaveState] = React.useState('Belum disimpan.');
       const [apply, setApply] = React.useState({ buttons: true, cards: true, quiz: true, nav: true });
+
+      React.useEffect(() => {
+        cortexSetStorage('cortex.haptic', hapticEnabled ? '1' : '0');
+      }, [hapticEnabled]);
 
       const ApplyRow = ({ keyName, title, sub }) => React.createElement(B3Row, {
         title,
@@ -19526,6 +19559,87 @@
         navigator.serviceWorker.register('./sw.js').catch(function () { });
       });
     }
+
+    // Universal Haptic/Tactile Feedback Trigger for PWA iOS and Android
+    window.cortexTriggerHaptic = function(type) {
+      try {
+        const hapticEnabled = localStorage.getItem('cortex.haptic') !== '0';
+        if (!hapticEnabled) return;
+
+        const hapticIntensity = Number(localStorage.getItem('cortex.hapticIntensity') || '70');
+
+        // 1. Android/Chrome/Firefox (Standard Web Vibration API)
+        if ('vibrate' in navigator) {
+          let duration = 12; // light
+          if (type === 'medium') duration = 24;
+          if (type === 'heavy') duration = 40;
+
+          const scaledDuration = Math.round(duration * (hapticIntensity / 100));
+          if (scaledDuration > 0) {
+            navigator.vibrate(scaledDuration);
+          }
+        }
+        // 2. iOS 18+ Switch workaround (Taptic Engine emulation via checkbox switch)
+        else {
+          let iOSSwitch = document.getElementById('cortex-ios-haptic-trigger');
+          if (!iOSSwitch) {
+            iOSSwitch = document.createElement('input');
+            iOSSwitch.type = 'checkbox';
+            iOSSwitch.setAttribute('switch', '');
+            iOSSwitch.id = 'cortex-ios-haptic-trigger';
+            iOSSwitch.style.position = 'absolute';
+            iOSSwitch.style.opacity = '0';
+            iOSSwitch.style.pointerEvents = 'none';
+            iOSSwitch.style.width = '1px';
+            iOSSwitch.style.height = '1px';
+            iOSSwitch.style.left = '-9999px';
+
+            const label = document.createElement('label');
+            label.htmlFor = 'cortex-ios-haptic-trigger';
+            label.id = 'cortex-ios-haptic-label';
+            label.style.display = 'none';
+
+            document.body.appendChild(iOSSwitch);
+            document.body.appendChild(label);
+          }
+          const labelElement = document.getElementById('cortex-ios-haptic-label');
+          if (labelElement) {
+            labelElement.click();
+          }
+        }
+      } catch (err) {
+        console.warn('Haptic feedback failed:', err);
+      }
+    };
+
+    // Global event listener to capture tap/click events on interactive elements
+    document.addEventListener('pointerdown', function (e) {
+      const target = e.target.closest(
+        '.cortex-motion-press, button, [role="button"], .b1-card, .b3-choice, input[type="range"], .cortex-dock-item, .cortex-sidebar-fab, .cortex-action-btn'
+      );
+      if (!target) return;
+
+      // For B1Card, only vibrate if it has cursor pointer styling (meaning it is interactive)
+      if (target.classList.contains('b1-card')) {
+        const style = window.getComputedStyle(target);
+        if (style.cursor !== 'pointer') return;
+      }
+
+      // Determine feedback intensity
+      let type = 'light';
+      if (target.dataset.haptic) {
+        type = target.dataset.haptic;
+      } else if (
+        target.classList.contains('cortex-sidebar-fab') ||
+        target.classList.contains('cortex-dock-item') ||
+        target.classList.contains('cortex-topbar-search') ||
+        target.classList.contains('b3-choice')
+      ) {
+        type = 'medium';
+      }
+
+      window.cortexTriggerHaptic(type);
+    }, { passive: true });
   </script>
 
   <script type="text/babel">
